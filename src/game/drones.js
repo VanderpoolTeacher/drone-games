@@ -3,6 +3,10 @@ import { MAP } from './map.js';
 
 const DRONE_SIZE = 16;
 const WAYPOINT_REACH_PX = 2;
+const ISR_JITTER_PX = 12;
+const TRAIL_SAMPLE_MS = 50;
+const TRAIL_MAX_SAMPLES = 8;
+const TRAIL_MAX_AGE_S = 1.2;
 
 export function spawnDrone(state, type) {
   const corridors = MAP.corridors[type];
@@ -29,7 +33,7 @@ export function spawnDrone(state, type) {
     phase: 'cruise',
     targetId: type === 'owa' ? corridor.targetStructureId : null,
     dropPoint: type === 'payloadDelivery' ? corridor.dropPoint : null,
-    jitterOffset: null,
+    jitterOffset: type === 'isr' ? rollIsrJitter() : null,
     trail: type === 'isr' ? [] : null,
     trailSampleTimer: 0,
     commitLineFrame: 0,
@@ -39,6 +43,12 @@ export function spawnDrone(state, type) {
 }
 
 export function renderDrones(ctx, state) {
+  for (const d of state.drones) {
+    if (d.type === 'isr' && d.trail?.length) {
+      renderIsrTrail(ctx, d.trail);
+    }
+  }
+
   for (const d of state.drones) {
     ctx.fillStyle = CONFIG.colors.threatRed;
     ctx.fillRect(Math.floor(d.x - DRONE_SIZE / 2), Math.floor(d.y - DRONE_SIZE / 2), DRONE_SIZE, DRONE_SIZE);
@@ -131,6 +141,8 @@ function runDevSpawner(state, dt) {
 }
 
 function updateIsr(d, dt) {
+  updateIsrTrail(d, dt);
+
   if (d.phase === 'exiting') {
     d.vx = 0;
     d.vy = CONFIG.drones.isr.speed;
@@ -145,5 +157,68 @@ function updateIsr(d, dt) {
     return;
   }
 
-  advanceCruise(d, dt);
+  const waypointPx = tileToPixel(corridor.waypoints[d.wpIdx]);
+  const target = {
+    x: waypointPx.x + (d.jitterOffset?.dx ?? 0),
+    y: waypointPx.y + (d.jitterOffset?.dy ?? 0),
+  };
+
+  const dx = target.x - d.x;
+  const dy = target.y - d.y;
+  const dist = Math.hypot(dx, dy);
+
+  const speed = CONFIG.drones.isr.speed;
+
+  if (dist <= WAYPOINT_REACH_PX) {
+    d.wpIdx += 1;
+    d.jitterOffset = rollIsrJitter();
+    return;
+  }
+
+  const step = speed * dt;
+  if (step >= dist) {
+    d.x = target.x;
+    d.y = target.y;
+    d.wpIdx += 1;
+    d.jitterOffset = rollIsrJitter();
+    return;
+  }
+
+  d.vx = (dx / dist) * speed;
+  d.vy = (dy / dist) * speed;
+  d.x += d.vx * dt;
+  d.y += d.vy * dt;
+}
+
+function rollIsrJitter() {
+  return {
+    dx: (Math.random() * 2 - 1) * ISR_JITTER_PX,
+    dy: (Math.random() * 2 - 1) * ISR_JITTER_PX,
+  };
+}
+
+function updateIsrTrail(d, dt) {
+  d.trailSampleTimer += dt * 1000;
+  while (d.trailSampleTimer >= TRAIL_SAMPLE_MS) {
+    d.trailSampleTimer -= TRAIL_SAMPLE_MS;
+    d.trail.push({ x: d.x, y: d.y, age: 0 });
+    if (d.trail.length > TRAIL_MAX_SAMPLES) d.trail.shift();
+  }
+  for (const s of d.trail) s.age += dt;
+  d.trail = d.trail.filter(s => s.age < TRAIL_MAX_AGE_S);
+}
+
+function renderIsrTrail(ctx, trail) {
+  for (const s of trail) {
+    const alphaStep = 1 - s.age / TRAIL_MAX_AGE_S;
+    if (alphaStep <= 0) continue;
+    ctx.fillStyle = quantizeTrailColor(alphaStep);
+    ctx.fillRect(Math.floor(s.x - 1), Math.floor(s.y - 1), 2, 2);
+  }
+}
+
+function quantizeTrailColor(alphaStep) {
+  if (alphaStep > 0.66) return CONFIG.colors.threatRed;
+  if (alphaStep > 0.33) return '#a0302c';
+  return '#5a1b19';
 }
