@@ -9,7 +9,7 @@ export const CONFIG = {
   // Rendering
   virtualWidth: 480,
   virtualHeight: 270,
-  scale: 3,
+  scale: 4,
   tileSize: 24,
   targetFPS: 60,
 

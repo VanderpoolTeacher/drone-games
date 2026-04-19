@@ -36,3 +36,15 @@ YYYY-MM-DD — Decision. Reason.
 ---
 
 <!-- Add new entries below this line. Most recent at the bottom. -->
+
+2026-04-19 — Virtual resolution scale bumped 3× → 4× so 480×270 fills a 1920×1080 display fullscreen.
+
+2026-04-19 — Playable grid locked at 20×8 tiles (480×192 px), not the "~11 tall" STYLE.md previously suggested. UI chrome (24 top + 32 bottom) is solid, not overlay — clearer and preserves full pixel budget for gameplay.
+
+2026-04-19 — Map shape: Lower Manhattan close-up. Water on W, S, E edges (Hudson, NY Harbor, East River); land on N edge representing rest-of-Manhattan. Chosen over full-borough variants for tile-budget reasons on a 20×8 grid.
+
+2026-04-19 — Navigation model: geography-driven ingress corridors with per-drone-type path behavior (ISR weaves from N, OWA straight-line from S with terminal commit, Payload horizontal from W/E). Authored waypoint lists in map data, not procedural. Matches real C-UAS ingress doctrine.
+
+2026-04-19 — Path visibility: pre-wave chevrons telegraph active edges + drone types; actual flight paths not drawn. Player learns routes by observation of the first drone of each corridor.
+
+2026-04-19 — Placement zones: 14 hand-picked cells marked visually, not free placement. Keeps balance tractable for v1 and preserves the "rooftop/plaza" NYC read.

@@ -18,7 +18,7 @@ Retro arcade aesthetic. Pixel art, bold colors, CRT vibes. Think early-90s arcad
   - Defenses: 24 × 24 px
   - UI icons: 16 × 16 px
   - Critical structures: 32 × 32 px
-- **Grid:** map logic runs on a 24 × 24 px tile grid (20 tiles wide × ~11 tall)
+- **Grid:** map logic runs on a 24 × 24 px tile grid. Playable area is **20 × 8 tiles** (480 × 192 px) — plus 24 px top bar and 32 px bottom palette per the UI layout block. 22 px residual vertical space splits as 11 px padding above and below the grid.
 
 ## Color palette
 

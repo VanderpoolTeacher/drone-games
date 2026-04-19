@@ -28,12 +28,12 @@ Supporting docs (update as you go, don't build from):
 
 ## Project structure (target)
 
-Currently only `config.js` and docs exist at root. As code lands, organize it like this:
+Code layout:
 
 ```
 /
 ├── index.html          # Entry point, canvas + minimal UI chrome
-├── config.js           # All tunable values (currently at root; moves to src/ when src/ appears)
+├── src/config.js       # All tunable values
 ├── src/
 │   ├── main.js         # Boot + game loop
 │   ├── game/           # Core game logic (state, waves, economy)
