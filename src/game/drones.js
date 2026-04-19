@@ -2,6 +2,7 @@ import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 
 const DRONE_SIZE = 16;
+const WAYPOINT_REACH_PX = 2;
 
 export function spawnDrone(state, type) {
   const corridors = MAP.corridors[type];
@@ -64,4 +65,50 @@ export function tileToPixel(tile) {
     x: tile.x * tileSize + tileSize / 2,
     y: CONFIG.topBarHeight + padTop + tile.y * tileSize + tileSize / 2,
   };
+}
+
+export function updateDrones(state, dt) {
+  for (const d of state.drones) {
+    advanceCruise(d, dt);
+  }
+
+  state.drones = state.drones.filter(d => !isOffGrid(d));
+}
+
+function advanceCruise(d, dt) {
+  const corridor = MAP.corridors[d.type][d.corridorIdx];
+  if (d.wpIdx >= corridor.waypoints.length) {
+    d.phase = 'exiting';
+    return;
+  }
+
+  const target = tileToPixel(corridor.waypoints[d.wpIdx]);
+  const dx = target.x - d.x;
+  const dy = target.y - d.y;
+  const dist = Math.hypot(dx, dy);
+
+  if (dist <= WAYPOINT_REACH_PX) {
+    d.wpIdx += 1;
+    return;
+  }
+
+  const speed = CONFIG.drones[d.type].speed;
+  const step = speed * dt;
+  if (step >= dist) {
+    d.x = target.x;
+    d.y = target.y;
+    d.wpIdx += 1;
+    return;
+  }
+
+  d.vx = (dx / dist) * speed;
+  d.vy = (dy / dist) * speed;
+  d.x += d.vx * dt;
+  d.y += d.vy * dt;
+}
+
+function isOffGrid(d) {
+  const w = CONFIG.virtualWidth;
+  const h = CONFIG.virtualHeight;
+  return d.x < -24 || d.x > w + 24 || d.y < -24 || d.y > h + 24;
 }
