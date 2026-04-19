@@ -97,7 +97,7 @@ export function updateDrones(state, dt) {
   for (const d of state.drones) {
     if (d.type === 'isr') updateIsr(d, dt);
     else if (d.type === 'owa') updateOwa(d, dt, state);
-    else if (d.type === 'payloadDelivery') advanceCruise(d, dt);
+    else if (d.type === 'payloadDelivery') updatePayload(d, dt, state);
   }
 
   state.drones = state.drones.filter(d => d.phase !== 'done' && !isOffGrid(d));
@@ -279,4 +279,19 @@ function structurePixelPos(id) {
   const s = MAP.structures.find(x => x.id === id);
   if (!s) return null;
   return tileToPixel(s.tile);
+}
+
+const PAYLOAD_DROP_PX = 8;
+
+function updatePayload(d, dt, state) {
+  advanceCruise(d, dt);
+
+  if (!d.dropPoint) return;
+  const drop = tileToPixel(d.dropPoint);
+  const dx = drop.x - d.x;
+  const dy = drop.y - d.y;
+  if (Math.hypot(dx, dy) <= PAYLOAD_DROP_PX) {
+    state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
+    d.phase = 'done';
+  }
 }
