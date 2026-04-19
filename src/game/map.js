@@ -1,0 +1,44 @@
+const TILE_STRING = `
+LLLLLLLLLLLLLLLLLLLL
+LLLLLLLLLLLLLLLLLLLL
+WLLLLLLLLLLLLLLLLLLW
+WLLLLLLLLLLLLLLLLLLW
+WWLLLLLLLLLLLLLLLLWW
+WWLLLLLLLLLLLLLLLLWW
+WWWLLLLLLLLLLLLLLWWW
+WWWWLLLLLLLLLLLWWWWW
+`.trim().split('\n').map(row => row.split('').map(ch => ch === 'L' ? 'land' : 'water'));
+
+export const MAP = {
+  shape: 'lowerManhattan',
+  gridW: 20,
+  gridH: 8,
+  tileSize: 24,
+  padTop: 11,
+  padBottom: 11,
+  tiles: TILE_STRING,
+  structures: [
+    { id: 'power',    type: 'power',    tile: { x: 16, y: 2 }, displayName: 'Con Ed Substation' },
+    { id: 'comms',    type: 'comms',    tile: { x: 9,  y: 4 }, displayName: '33 Thomas St' },
+    { id: 'cityHall', type: 'cityHall', tile: { x: 4,  y: 6 }, displayName: 'NYC City Hall' },
+  ],
+  placementZones: [
+    { x: 1,  y: 1 }, { x: 6,  y: 1 }, { x: 11, y: 1 }, { x: 16, y: 1 },
+    { x: 10, y: 2 }, { x: 13, y: 3 },
+    { x: 6,  y: 4 }, { x: 13, y: 4 },
+    { x: 3,  y: 5 }, { x: 8,  y: 5 }, { x: 12, y: 5 },
+    { x: 7,  y: 6 }, { x: 13, y: 6 },
+    { x: 5,  y: 7 },
+  ],
+  spawnEdges: {
+    N: { active: true,  waves: [1, 2, 3, 4, 5], droneTypes: ['isr'] },
+    S: { active: false, waves: [3, 4, 5],        droneTypes: ['owa'] },
+    W: { active: false, waves: [4, 5],           droneTypes: ['payloadDelivery'] },
+    E: { active: false, waves: [4, 5],           droneTypes: ['payloadDelivery'] },
+  },
+  corridors: {
+    isr: [],
+    owa: [],
+    payloadDelivery: [],
+  },
+};
