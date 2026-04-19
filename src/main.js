@@ -3,6 +3,7 @@ import { gameState } from './game/state.js';
 import { renderMap } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
 import { updateExplosions, renderExplosions } from './game/explosions.js';
+import { renderDrones } from './game/drones.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -26,6 +27,7 @@ function frame(tMs) {
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 
   renderMap(ctx, tMs);
+  renderDrones(ctx, gameState);
   renderExplosions(ctx, gameState);
   renderChrome(ctx);
 
