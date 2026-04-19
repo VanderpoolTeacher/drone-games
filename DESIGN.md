@@ -1,4 +1,4 @@
-# Drone Defense: NYC — Design Doc
+# Drone Defense — Design Doc
 
 ## Design thesis
 
@@ -15,7 +15,7 @@ Every mechanic in this document serves one or both of these ideas. If a mechanic
 
 ## Overview
 
-Real-time tower defense. Player is a tactical commander protecting New York City from coordinated drone attacks using real-world-inspired counter-UAS (C-UAS) technology.
+Real-time tower defense. Player is a tactical commander protecting the city from coordinated drone attacks using real-world-inspired counter-UAS (C-UAS) technology.
 
 ## Experience goals
 
@@ -37,7 +37,7 @@ Placement is the primary strategic decision; manual ability activation is deferr
 
 ## Game view
 
-- Top-down tactical map of NYC (stylized, doesn't need to be geographically accurate)
+- Top-down tactical map of the city (stylized, doesn't need to be geographically accurate)
 - Clean command-center UI with:
   - Resource counter
   - Wave indicator + countdown to next wave
@@ -181,7 +181,7 @@ Critical structures are fixed points on the map — power station, comms hub, ci
 
 ## Prototype scope (v1)
 
-- Single NYC map
+- Single city map
 - 3 drone types (ISR, OWA, Payload-Delivery)
 - 4 defenses (RF Jammer, Interceptor, Laser, HPM)
 - 3 critical structures

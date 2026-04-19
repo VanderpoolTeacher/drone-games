@@ -38,7 +38,7 @@ Template:
 - Loaded index.html via `npx serve`, map renders as spec'd
 
 ### What worked
-- Lower Manhattan silhouette reads clearly at 480x270 × 4x scale
+- Peninsula silhouette reads clearly at 480x270 × 4x scale
 - Structure placeholders, zones, coastline, chrome bars all render at the right positions
 - Pulse timing on zones is crisp (1-frame state change, no tween)
 

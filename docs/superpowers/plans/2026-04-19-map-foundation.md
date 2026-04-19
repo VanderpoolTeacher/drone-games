@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Render the static NYC map from the approved spec (`docs/superpowers/specs/2026-04-18-map-layout-design.md`) in a browser — land, water, coastline, three critical structures, 14 placement zones, UI chrome — as the foundation every later subsystem (drones, placement, waves) builds on.
+**Goal:** Render the static city map from the approved spec (`docs/superpowers/specs/2026-04-18-map-layout-design.md`) in a browser — land, water, coastline, three critical structures, 14 placement zones, UI chrome — as the foundation every later subsystem (drones, placement, waves) builds on.
 
 **Architecture:** Vanilla HTML5 Canvas + ES modules, no build step. Boot code creates a 480×270 virtual canvas scaled 4× to fill 1920×1080, then runs a requestAnimationFrame loop that delegates to a map renderer. Map data is a plain object in `src/game/map.js`; rendering is split across `src/game/mapRenderer.js` (map layers) and `src/ui/uiChrome.js` (chrome bars).
 
@@ -120,13 +120,13 @@ Append below the `<!-- Add new entries below this line. Most recent at the botto
 
 2026-04-19 — Playable grid locked at 20×8 tiles (480×192 px), not the "~11 tall" STYLE.md previously suggested. UI chrome (24 top + 32 bottom) is solid, not overlay — clearer and preserves full pixel budget for gameplay.
 
-2026-04-19 — Map shape: Lower Manhattan close-up. Water on W, S, E edges (Hudson, NY Harbor, East River); land on N edge representing rest-of-Manhattan. Chosen over full-borough variants for tile-budget reasons on a 20×8 grid.
+2026-04-19 — Map shape: coastal peninsula (downtown). Water on W, S, E edges (West River, South Harbor, East River); land on N edge representing inland. Chosen over full-borough variants for tile-budget reasons on a 20×8 grid.
 
 2026-04-19 — Navigation model: geography-driven ingress corridors with per-drone-type path behavior (ISR weaves from N, OWA straight-line from S with terminal commit, Payload horizontal from W/E). Authored waypoint lists in map data, not procedural. Matches real C-UAS ingress doctrine.
 
 2026-04-19 — Path visibility: pre-wave chevrons telegraph active edges + drone types; actual flight paths not drawn. Player learns routes by observation of the first drone of each corridor.
 
-2026-04-19 — Placement zones: 14 hand-picked cells marked visually, not free placement. Keeps balance tractable for v1 and preserves the "rooftop/plaza" NYC read.
+2026-04-19 — Placement zones: 14 hand-picked cells marked visually, not free placement. Keeps balance tractable for v1 and preserves the "rooftop/plaza" city read.
 ```
 
 - [ ] **Step 6: Verify no broken config.js references**
@@ -170,7 +170,7 @@ Content:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drone Defense: NYC</title>
+  <title>Drone Defense</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     html, body {
@@ -270,7 +270,7 @@ WWWWLLLLLLLLLLLWWWWW
 `.trim().split('\n').map(row => row.split('').map(ch => ch === 'L' ? 'land' : 'water'));
 
 export const MAP = {
-  shape: 'lowerManhattan',
+  shape: 'coastalPeninsula',
   gridW: 20,
   gridH: 8,
   tileSize: 24,
@@ -278,9 +278,9 @@ export const MAP = {
   padBottom: 11,
   tiles: TILE_STRING,
   structures: [
-    { id: 'power',    type: 'power',    tile: { x: 16, y: 2 }, displayName: 'Con Ed Substation' },
-    { id: 'comms',    type: 'comms',    tile: { x: 9,  y: 4 }, displayName: '33 Thomas St' },
-    { id: 'cityHall', type: 'cityHall', tile: { x: 4,  y: 6 }, displayName: 'NYC City Hall' },
+    { id: 'power',    type: 'power',    tile: { x: 16, y: 2 }, displayName: 'Power Substation' },
+    { id: 'comms',    type: 'comms',    tile: { x: 9,  y: 4 }, displayName: 'Comms Tower' },
+    { id: 'cityHall', type: 'cityHall', tile: { x: 4,  y: 6 }, displayName: 'City Hall' },
   ],
   placementZones: [
     { x: 1,  y: 1 }, { x: 6,  y: 1 }, { x: 11, y: 1 }, { x: 16, y: 1 },
@@ -334,7 +334,7 @@ Expected: `invalid placements: []`.
 git add src/game/map.js
 git commit -m "Task 2: add static map data module
 
-Lower Manhattan silhouette tiles, 3 structures, 14 placement zones,
+Peninsula silhouette tiles, 3 structures, 14 placement zones,
 spawn edges with wave progression. Corridors stubbed for a later plan.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
@@ -479,7 +479,7 @@ requestAnimationFrame(frame);
 Run `npx serve` and load the page. Expected:
 - A navy background (bg-dark).
 - A lighter blue-grey (bg-mid) block covering the map region between y=24 and y=238.
-- A Lower-Manhattan-shaped land silhouette in dark navy with subtle grid lines inside it.
+- A peninsula-shaped land silhouette in dark navy with subtle grid lines inside it.
 - A 1px cyan line tracing the coastline around the land silhouette.
 - Land is wider at the top, narrower at the bottom (tapered shape).
 - No console errors.
@@ -770,7 +770,7 @@ Run `npx serve` and load the page. Confirm each item:
 - [ ] Land shape: wider at top (rows 0–1 span full width), tapers to narrower at bottom (row 7 is 11 tiles wide).
 - [ ] 1px cyan coastline outlines the land.
 - [ ] 14 cyan diamonds pulse once per second at the placement-zone positions.
-- [ ] 3 white 32×32 squares (with cyan center pixel) at (16,2), (9,4), (4,6) — Con Ed NE, 33 Thomas center, City Hall SW.
+- [ ] 3 white 32×32 squares (with cyan center pixel) at (16,2), (9,4), (4,6) — Power Substation NE, Comms Tower center, City Hall SW.
 - [ ] 11px bg-dark padding above the bottom bar.
 - [ ] Bottom 32px bar in bg-mid, 1px white top border.
 - [ ] Browser console shows zero errors.
@@ -792,7 +792,7 @@ In `PLAYTESTS.md`, replace the `_No playtests yet._` placeholder with:
 - Loaded index.html via `npx serve`, map renders as spec'd
 
 ### What worked
-- Lower Manhattan silhouette reads clearly at 480x270 × 4x scale
+- Peninsula silhouette reads clearly at 480x270 × 4x scale
 - Structure placeholders, zones, coastline, chrome bars all render at the right positions
 - Pulse timing on zones is crisp (1-frame state change, no tween)
 

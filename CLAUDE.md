@@ -1,4 +1,4 @@
-# Drone Defense: NYC
+# Drone Defense
 
 Tower defense prototype. Solo project, built for an applied AI design thinking class. Currently in prototype + playtesting phase.
 
@@ -65,7 +65,7 @@ No automated tests. Before claiming a change works:
 
 ## V1 scope (current build target)
 
-Single NYC map, 5–10 minute session, 5 waves. Three drone types, three critical structures, and three defenses required (HPM is the stretch fourth — see Working style).
+Single city map, 5–10 minute session, 5 waves. Three drone types, three critical structures, and three defenses required (HPM is the stretch fourth — see Working style).
 
 - **Drones (real doctrinal names):** ISR Drone (surveillance/scouting), OWA Drone (one-way attack / kamikaze), Payload-Delivery Drone (heavy armored cargo)
 - **Required defenses:** RF Jammer (soft-kill), Interceptor (hard-kill kinetic), Directed Energy / Laser (hard-kill DEW)

@@ -1,8 +1,8 @@
-# Map Layout Design — Drone Defense: NYC
+# Map Layout Design — Drone Defense
 
 **Date:** 2026-04-18
 **Status:** Approved via brainstorm (sections 1 + 2)
-**Scope:** The v1 NYC map — shape, grid, structures, ingress corridors, placement zones, visual rendering, pre-wave telegraphs.
+**Scope:** The v1 city map — shape, grid, structures, ingress corridors, placement zones, visual rendering, pre-wave telegraphs.
 
 This spec covers **only** the map. Wave balancing, HUD details, entity code, and the build order live in their own docs (`DESIGN.md`, `CLAUDE.md`, `config.js`, `TODO.md`).
 
@@ -27,17 +27,17 @@ The map must make both thesis points legible through *geometry*: ingress corrido
 - **Playable grid:** **20 × 8 tiles** (480 px wide × 192 px tall).
 - **UI chrome:** 24 px top bar + 32 px bottom palette (solid, per `STYLE.md`).
 - **Vertical layout:** 24 (top bar) + 192 (grid) + 32 (palette) = 248 px. The remaining 22 px is split as 11 px padding above the grid and 11 px below (both rendered as bg-dark, part of the map visual). Simple, symmetric, all grid rows align cleanly.
-- **Map shape inside the grid:** Lower Manhattan close-up. Land on the majority of tiles; water along the W, E, and S edges (Hudson, East River, NY Harbor). N edge is land — "rest of Manhattan."
+- **Map shape inside the grid:** coastal peninsula (downtown). Land on the majority of tiles; water along the W, E, and S edges (West River, East River, South Harbor). N edge is land — "inland."
 
 ## Structure positions
 
-Three critical structures, placed in a triangle formation grounded in real Lower Manhattan:
+Three critical structures, placed in a triangle formation across downtown:
 
 | Structure | Tile (col, row) | Real-world analog |
 |---|---|---|
-| ⚡ Power | (16, 2) | Con Ed 14th St substation (NE, East River side) |
-| 📡 Comms | (9, 4) | AT&T 33 Thomas St "Long Lines" (center, TriBeCa) |
-| 🏛 City Hall | (4, 6) | NYC City Hall (SW, Broadway/Park Row) |
+| ⚡ Power | (16, 2) | coastal power substation (NE, East River side) |
+| 📡 Comms | (9, 4) | central comms relay (center, downtown) |
+| 🏛 City Hall | (4, 6) | City Hall (SW) |
 
 Spacing rule: no single defense placement with any v1 range can cover two structures. Forces distributed spending.
 
@@ -47,9 +47,9 @@ Four possible spawn edges. Each wave activates a subset matching the drone types
 
 | Edge | Drone type | Waves active | Ingress profile |
 |---|---|---|---|
-| N (overland, rest-of-Manhattan) | ISR | 1, 2, 3, 4, 5 | Urban weave — operator-flown feel |
-| S (NY Harbor) | OWA | 3, 4, 5 | Long over-water run + terminal commit |
-| W (Hudson River) | Payload | 4, 5 | Slow horizontal crossing, low altitude |
+| N (overland, inland) | ISR | 1, 2, 3, 4, 5 | Urban weave — operator-flown feel |
+| S (South Harbor) | OWA | 3, 4, 5 | Long over-water run + terminal commit |
+| W (West River) | Payload | 4, 5 | Slow horizontal crossing, low altitude |
 | E (East River) | Payload | 4, 5 | Slow horizontal crossing, low altitude |
 
 The wave-by-wave edge progression ties DESIGN.md's wave escalation to physical geometry. Each new wave introduces both a new drone type *and* a new direction to watch.
@@ -119,15 +119,15 @@ Single static module `src/game/map.js`:
 
 ```js
 export const MAP = {
-  shape: 'lowerManhattan',
+  shape: 'coastalPeninsula',
   gridW: 20,
   gridH: 8,
   tileSize: 24,
   tiles: [/* 20×8 array of 'land' | 'water' */],
   structures: [
-    { id: 'power',    type: 'power',    tile: {x:16, y:2}, displayName: 'Con Ed Substation' },
-    { id: 'comms',    type: 'comms',    tile: {x:9,  y:4}, displayName: '33 Thomas St' },
-    { id: 'cityHall', type: 'cityHall', tile: {x:4,  y:6}, displayName: 'NYC City Hall' },
+    { id: 'power',    type: 'power',    tile: {x:16, y:2}, displayName: 'Power Substation' },
+    { id: 'comms',    type: 'comms',    tile: {x:9,  y:4}, displayName: 'Comms Tower' },
+    { id: 'cityHall', type: 'cityHall', tile: {x:4,  y:6}, displayName: 'City Hall' },
   ],
   placementZones: [ /* 14 {x,y} cells */ ],
   spawnEdges: {

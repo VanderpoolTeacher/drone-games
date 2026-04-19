@@ -1,6 +1,6 @@
-# Drone Defense: NYC
+# Drone Defense
 
-Tower defense prototype. Top-down NYC map, real-world-inspired counter-UAS (C-UAS) technology.
+Tower defense prototype. Top-down city map, real-world-inspired counter-UAS (C-UAS) technology.
 
 Built for applied AI design thinking class. Solo project, prototype + playtesting phase.
 
@@ -38,7 +38,7 @@ Supporting:
 - 3 drone types: **ISR, OWA, Payload-Delivery** (real DoD doctrinal names)
 - 4 defenses: **RF Jammer, Interceptor, Laser (HEL), HPM**
 - 3 critical structures, 5 waves, 5–10 min session
-- Single NYC map, retro pixel-art aesthetic
+- Single city map, retro pixel-art aesthetic
 
 ## Current state
 

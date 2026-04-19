@@ -1,4 +1,4 @@
-# Drone Defense: NYC — Terminology Reference
+# Drone Defense — Terminology Reference
 
 Real-world DoD and C-UAS doctrine that informs the game's vocabulary. Use this when writing any player-facing text: UI labels, tooltips, briefings, codex entries. When in doubt, use the real term.
 
@@ -41,7 +41,7 @@ DoD categorizes UAS into five groups by max gross takeoff weight, operating alti
 | **Group 4** | > 1,320 lbs | < 18,000 ft MSL | any | MQ-1 Predator, MQ-9 Reaper |
 | **Group 5** | > 1,320 lbs | > 18,000 ft MSL | any | RQ-4 Global Hawk, MQ-4C Triton |
 
-Groups 1–3 are classified as **sUAS** and are the realistic threat surface for a city-defense scenario.
+Groups 1–3 are classified as **sUAS** and are the realistic threat surface for a city defense scenario.
 
 ### Mapping to v1 drone types
 

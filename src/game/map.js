@@ -10,7 +10,7 @@ WWWWLLLLLLLLLLLWWWWW
 `.trim().split('\n').map(row => row.split('').map(ch => ch === 'L' ? 'land' : 'water'));
 
 export const MAP = {
-  shape: 'lowerManhattan',
+  shape: 'coastalPeninsula',
   gridW: 20,
   gridH: 8,
   tileSize: 24,
@@ -18,9 +18,9 @@ export const MAP = {
   padBottom: 11,
   tiles: TILE_STRING,
   structures: [
-    { id: 'power',    type: 'power',    tile: { x: 16, y: 2 }, displayName: 'Con Ed Substation' },
-    { id: 'comms',    type: 'comms',    tile: { x: 9,  y: 4 }, displayName: '33 Thomas St' },
-    { id: 'cityHall', type: 'cityHall', tile: { x: 4,  y: 6 }, displayName: 'NYC City Hall' },
+    { id: 'power',    type: 'power',    tile: { x: 16, y: 2 }, displayName: 'Power Substation' },
+    { id: 'comms',    type: 'comms',    tile: { x: 9,  y: 4 }, displayName: 'Comms Tower' },
+    { id: 'cityHall', type: 'cityHall', tile: { x: 4,  y: 6 }, displayName: 'City Hall' },
   ],
   placementZones: [
     { x: 1,  y: 1 }, { x: 6,  y: 1 }, { x: 11, y: 1 }, { x: 16, y: 1 },

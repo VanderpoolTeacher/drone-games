@@ -1,4 +1,4 @@
-# Drone Defense: NYC — Visual Style Guide
+# Drone Defense — Visual Style Guide
 
 Retro arcade aesthetic. Pixel art, bold colors, CRT vibes. Think early-90s arcade cabinet meets modern command console.
 
@@ -110,7 +110,7 @@ The cone shape for HPM's area-of-effect is essential — it visually distinguish
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │                    GAME MAP                             │
-│                 (top-down NYC)                          │
+│                (top-down city map)                      │
 │                                                         │
 ├─────────────────────────────────────────────────────────┤
 │ [RF JAM][INTRCPT][LASER][HPM]              [START]      │  ← bottom palette, 32px tall
