@@ -9,10 +9,10 @@ export function renderMap(ctx, tMs) {
 }
 
 function drawTiles(ctx) {
-  const { tileSize, gridW, gridH, tiles, padTop } = MAP;
+  const { tileSize, gridW, gridH, tiles, padTop, padBottom } = MAP;
 
   ctx.fillStyle = CONFIG.colors.bgMid;
-  ctx.fillRect(0, CONFIG.topBarHeight, CONFIG.virtualWidth, gridH * tileSize + MAP.padTop + MAP.padBottom);
+  ctx.fillRect(0, CONFIG.topBarHeight, CONFIG.virtualWidth, gridH * tileSize + padTop + padBottom);
 
   for (let y = 0; y < gridH; y++) {
     for (let x = 0; x < gridW; x++) {
@@ -61,7 +61,7 @@ function drawCoastline(ctx) {
       if (x === gridW - 1 || tiles[y][x + 1] !== 'land') {
         ctx.beginPath(); ctx.moveTo(px + tileSize - 0.5, py); ctx.lineTo(px + tileSize - 0.5, py + tileSize); ctx.stroke();
       }
-      if (y === 0 || tiles[y - 1][x] !== 'land') {
+      if (y > 0 && tiles[y - 1][x] !== 'land') {
         ctx.beginPath(); ctx.moveTo(px, py + 0.5); ctx.lineTo(px + tileSize, py + 0.5); ctx.stroke();
       }
       if (y === gridH - 1 || tiles[y + 1][x] !== 'land') {

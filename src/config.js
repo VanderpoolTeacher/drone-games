@@ -10,7 +10,6 @@ export const CONFIG = {
   virtualWidth: 480,
   virtualHeight: 270,
   scale: 4,
-  tileSize: 24,
   targetFPS: 60,
   topBarHeight: 24,
   bottomPaletteHeight: 32,
