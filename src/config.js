@@ -12,6 +12,8 @@ export const CONFIG = {
   scale: 4,
   tileSize: 24,
   targetFPS: 60,
+  topBarHeight: 24,
+  bottomPaletteHeight: 32,
 
   // Economy
   startingResources: 400,
