@@ -37,8 +37,19 @@ export const MAP = {
     E: { active: false, waves: [4, 5],           droneTypes: ['payloadDelivery'] },
   },
   corridors: {
-    isr: [],
-    owa: [],
-    payloadDelivery: [],
+    isr: [
+      { waypoints: [{ x: 2,  y: 0 }, { x: 3,  y: 2 }, { x: 5,  y: 4 }, { x: 4,  y: 6 }, { x: 5,  y: 8 }], exitEdge: 'S' },
+      { waypoints: [{ x: 10, y: 0 }, { x: 10, y: 2 }, { x: 9,  y: 4 }, { x: 10, y: 6 }, { x: 10, y: 8 }], exitEdge: 'S' },
+      { waypoints: [{ x: 16, y: 0 }, { x: 15, y: 2 }, { x: 16, y: 4 }, { x: 15, y: 6 }, { x: 15, y: 8 }], exitEdge: 'S' },
+    ],
+    owa: [
+      { waypoints: [{ x: 5,  y: 8 }, { x: 5,  y: 6 }], targetStructureId: 'cityHall' },
+      { waypoints: [{ x: 9,  y: 8 }, { x: 9,  y: 5 }], targetStructureId: 'comms' },
+      { waypoints: [{ x: 15, y: 8 }, { x: 15, y: 3 }], targetStructureId: 'power' },
+    ],
+    payloadDelivery: [
+      { waypoints: [{ x: -1, y: 4 }, { x: 19, y: 4 }], dropPoint: { x: 9, y: 4 } },
+      { waypoints: [{ x: 20, y: 5 }, { x: 0,  y: 5 }], dropPoint: { x: 4, y: 5 } },
+    ],
   },
 };

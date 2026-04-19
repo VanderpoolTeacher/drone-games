@@ -172,4 +172,9 @@ export const CONFIG = {
     successGreen: '#66bb6a',
     accentWhite: '#f5f5f5',
   },
+
+  devSpawner: {
+    enabled: true,
+    intervalMs: { isr: 3000, owa: 5000, payloadDelivery: 7000 },
+  },
 };
