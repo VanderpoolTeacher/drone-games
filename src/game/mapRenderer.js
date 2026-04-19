@@ -4,6 +4,7 @@ import { MAP } from './map.js';
 export function renderMap(ctx) {
   drawTiles(ctx);
   drawCoastline(ctx);
+  drawStructures(ctx);
 }
 
 function drawTiles(ctx) {
@@ -66,5 +67,21 @@ function drawCoastline(ctx) {
         ctx.beginPath(); ctx.moveTo(px, py + tileSize - 0.5); ctx.lineTo(px + tileSize, py + tileSize - 0.5); ctx.stroke();
       }
     }
+  }
+}
+
+function drawStructures(ctx) {
+  const { tileSize, structures, padTop } = MAP;
+  const size = 32;
+
+  for (const s of structures) {
+    const cx = s.tile.x * tileSize + tileSize / 2;
+    const cy = CONFIG.topBarHeight + padTop + s.tile.y * tileSize + tileSize / 2;
+
+    ctx.fillStyle = CONFIG.colors.accentWhite;
+    ctx.fillRect(Math.floor(cx - size / 2), Math.floor(cy - size / 2), size, size);
+
+    ctx.fillStyle = CONFIG.colors.friendlyCyan;
+    ctx.fillRect(Math.floor(cx) - 1, Math.floor(cy) - 1, 2, 2);
   }
 }
