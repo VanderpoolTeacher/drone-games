@@ -1,0 +1,81 @@
+import { CONFIG } from '../config.js';
+import { MAP } from './map.js';
+import { tileToPixel } from './drones.js';
+
+export function placeDefense(state, type, tile) {
+  const cfg = CONFIG.defenses[type];
+  if (!cfg) return null;
+  const { x, y } = tileToPixel(tile);
+  const defense = {
+    id: ++state.defenseIdCounter,
+    type,
+    tile: { x: tile.x, y: tile.y },
+    x,
+    y,
+    cooldownMs: 0,
+    targetId: null,
+  };
+  state.defenses.push(defense);
+  state.resources -= cfg.cost;
+  return defense;
+}
+
+export function updateDefenses(state, dt) {
+  for (const d of state.defenses) {
+    d.cooldownMs = Math.max(0, d.cooldownMs - dt * 1000);
+    if (d.type !== 'interceptor' || d.cooldownMs > 0) continue;
+
+    const target = pickInterceptorTarget(state, d);
+    if (!target) { d.targetId = null; continue; }
+
+    fireInterceptor(state, d, target);
+    d.cooldownMs = CONFIG.defenses.interceptor.cooldown;
+    d.targetId = target.id;
+  }
+}
+
+function pickInterceptorTarget(state, d) {
+  const R = CONFIG.defenses.interceptor.range;
+  let best = null;
+  let bestDist = Infinity;
+  let bestId = Infinity;
+  for (const dr of state.drones) {
+    if (dr.hp <= 0 || dr.phase === 'done') continue;
+    const dx = dr.x - d.x;
+    const dy = dr.y - d.y;
+    if (Math.hypot(dx, dy) > R) continue;
+    const minStructDist = minDistanceToAnyStructure(dr);
+    if (minStructDist < bestDist || (minStructDist === bestDist && dr.id < bestId)) {
+      best = dr;
+      bestDist = minStructDist;
+      bestId = dr.id;
+    }
+  }
+  return best;
+}
+
+function minDistanceToAnyStructure(drone) {
+  let min = Infinity;
+  for (const s of MAP.structures) {
+    const p = tileToPixel(s.tile);
+    const d = Math.hypot(drone.x - p.x, drone.y - p.y);
+    if (d < min) min = d;
+  }
+  return min;
+}
+
+function fireInterceptor(state, defense, target) {
+  const cfg = CONFIG.defenses.interceptor;
+  const dx = target.x - defense.x;
+  const dy = target.y - defense.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  state.projectiles.push({
+    id: ++state.projectileIdCounter,
+    x: defense.x,
+    y: defense.y,
+    vx: (dx / dist) * cfg.projectileSpeed,
+    vy: (dy / dist) * cfg.projectileSpeed,
+    targetDroneId: target.id,
+    damage: cfg.damage,
+  });
+}

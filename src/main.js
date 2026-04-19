@@ -5,6 +5,8 @@ import { renderChrome } from './ui/uiChrome.js';
 import { renderLegend } from './ui/legend.js';
 import { updateExplosions, renderExplosions } from './game/explosions.js';
 import { renderDrones, updateDrones } from './game/drones.js';
+import { updateDefenses } from './game/defenses.js';
+import { updateProjectiles } from './game/projectiles.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -23,6 +25,8 @@ function frame(tMs) {
   prevMs = tMs;
 
   updateDrones(gameState, dt);
+  updateDefenses(gameState, dt);
+  updateProjectiles(gameState, dt);
   updateExplosions(gameState, dt);
 
   ctx.fillStyle = CONFIG.colors.bgDark;
