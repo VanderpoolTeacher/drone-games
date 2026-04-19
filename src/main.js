@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { renderMap } from './game/mapRenderer.js';
+import { renderChrome } from './ui/uiChrome.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -15,6 +16,7 @@ function frame(tMs) {
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 
   renderMap(ctx, tMs);
+  renderChrome(ctx);
 
   requestAnimationFrame(frame);
 }
