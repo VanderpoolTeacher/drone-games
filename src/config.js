@@ -162,6 +162,7 @@ export const CONFIG = {
   prepTimeBetweenWaves: 15000,       // ms — player gets 15s between waves
 
   // Colors (mirrors STYLE.md palette — keep in sync)
+  // threatRedMid/Dim are derived quantization steps for trail fading, not part of the 8-color palette
   colors: {
     bgDark: '#0d1b2a',
     bgMid: '#1b2a3f',
@@ -169,6 +170,8 @@ export const CONFIG = {
     friendlyCyan: '#4fc3f7',
     alertAmber: '#ffb74d',
     threatRed: '#ef5350',
+    threatRedMid: '#a0302c',
+    threatRedDim: '#5a1b19',
     successGreen: '#66bb6a',
     accentWhite: '#f5f5f5',
   },

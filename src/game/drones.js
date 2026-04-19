@@ -160,7 +160,6 @@ function updateIsr(d, dt) {
   if (d.phase === 'exiting') {
     d.vx = 0;
     d.vy = CONFIG.drones.isr.speed;
-    d.x += d.vx * dt;
     d.y += d.vy * dt;
     return;
   }
@@ -233,8 +232,8 @@ function renderIsrTrail(ctx, trail) {
 
 function quantizeTrailColor(alphaStep) {
   if (alphaStep > 0.66) return CONFIG.colors.threatRed;
-  if (alphaStep > 0.33) return '#a0302c';
-  return '#5a1b19';
+  if (alphaStep > 0.33) return CONFIG.colors.threatRedMid;
+  return CONFIG.colors.threatRedDim;
 }
 
 const OWA_ARRIVAL_PX = 8;
@@ -261,13 +260,15 @@ function updateOwa(d, dt, state) {
     const dy = target.y - d.y;
     const dist = Math.hypot(dx, dy);
 
-    if (dist <= OWA_ARRIVAL_PX) {
+    const speed = CONFIG.drones.owa.speed;
+    const step = speed * dt;
+
+    if (dist <= OWA_ARRIVAL_PX || step >= dist) {
       state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
       d.phase = 'done';
       return;
     }
 
-    const speed = CONFIG.drones.owa.speed;
     d.vx = (dx / dist) * speed;
     d.vy = (dy / dist) * speed;
     d.x += d.vx * dt;
