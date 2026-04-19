@@ -2,6 +2,7 @@ import { CONFIG } from './config.js';
 import { gameState } from './game/state.js';
 import { renderMap } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
+import { renderLegend } from './ui/legend.js';
 import { updateExplosions, renderExplosions } from './game/explosions.js';
 import { renderDrones, updateDrones } from './game/drones.js';
 
@@ -31,6 +32,7 @@ function frame(tMs) {
   renderDrones(ctx, gameState);
   renderExplosions(ctx, gameState);
   renderChrome(ctx);
+  renderLegend(ctx);
 
   requestAnimationFrame(frame);
 }

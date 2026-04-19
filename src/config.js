@@ -162,7 +162,8 @@ export const CONFIG = {
   prepTimeBetweenWaves: 15000,       // ms — player gets 15s between waves
 
   // Colors (mirrors STYLE.md palette — keep in sync)
-  // threatRedMid/Dim are derived quantization steps for trail fading, not part of the 8-color palette
+  // threatRedMid/Dim are derived quantization steps for trail fading.
+  // droneIsr/Owa/Payload are semantic aliases for per-type drone body colors (legend + renderer use these).
   colors: {
     bgDark: '#0d1b2a',
     bgMid: '#1b2a3f',
@@ -172,8 +173,12 @@ export const CONFIG = {
     threatRed: '#ef5350',
     threatRedMid: '#a0302c',
     threatRedDim: '#5a1b19',
+    threatViolet: '#c770c0',
     successGreen: '#66bb6a',
     accentWhite: '#f5f5f5',
+    droneIsr: '#ef5350',
+    droneOwa: '#ffb74d',
+    dronePayload: '#c770c0',
   },
 
   devSpawner: {

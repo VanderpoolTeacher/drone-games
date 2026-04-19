@@ -22,7 +22,7 @@ Retro arcade aesthetic. Pixel art, bold colors, CRT vibes. Think early-90s arcad
 
 ## Color palette
 
-Exactly these eight. Constraint drives coherence.
+Nine colors. Constraint drives coherence. The palette expanded from eight to nine when per-drone-type coloring landed (threat violet for Payload).
 
 ```
 Background dark    #0d1b2a   deep navy — base canvas, map negative space
@@ -30,14 +30,15 @@ Background mid     #1b2a3f   panels, UI chrome backgrounds
 Grid line          #2a3f5f   subtle tile grid, barely visible
 
 Friendly cyan      #4fc3f7   defenses, player-owned elements, highlights
-Alert amber        #ffb74d   warnings, wave incoming, resource text
-Threat red         #ef5350   enemy drones, damage, lose state
+Alert amber        #ffb74d   warnings, wave incoming, OWA drone body
+Threat red         #ef5350   ISR drone body, damage, lose state
+Threat violet      #c770c0   Payload-Delivery drone body
 Success green      #66bb6a   drone destroyed, win state, healthy structures
 
 Accent white       #f5f5f5   text, UI borders, critical emphasis
 ```
 
-Use **threat red** sparingly — only for actual enemies and danger. Overusing it kills its signal value.
+Drone body colors are also exposed as `droneIsr`, `droneOwa`, `dronePayload` aliases for the renderer + legend. The legend (top bar, right-aligned) shows the three drone body colors with 3-letter labels so the player learns which hue means which mission type.
 
 ## Typography
 
@@ -48,24 +49,24 @@ Use **threat red** sparingly — only for actual enemies and danger. Overusing i
 
 ## Drone visual language
 
-Each drone has a distinct silhouette. Color communicates "enemy" (threat red dominant); silhouette communicates type. Labels in UI/codex use doctrinal names from `TERMINOLOGY.md`.
+Each drone has a distinct body color AND silhouette. Color communicates type at a glance; silhouette reinforces it. The top-bar legend explains the color → type mapping. Labels in UI/codex use doctrinal names from `TERMINOLOGY.md`.
 
 ### ISR Drone
 - **Silhouette:** small quadcopter, wide horizontal shape, visible "camera eye" pixel
-- **Color:** threat red, cyan eye pixel (suggests sensor)
+- **Color:** threat red body, friendly-cyan eye pixel (suggests sensor)
 - **Animation:** 2-frame rotor blur, subtle bob
 
 ### OWA Drone (One-Way Attack)
 - **Silhouette:** narrow, arrow-like, pointed forward
-- **Color:** threat red, brighter/saturated, amber warhead tip pixel
+- **Color:** alert-amber body (urgent/incoming strike), threat-red warhead tip pixel
 - **Animation:** 2-frame propulsion flicker at rear
 
 ### Payload-Delivery Drone
 - **Silhouette:** large, boxy, visibly carrying something underneath
-- **Color:** threat red with darker red armor plating, amber payload indicator
+- **Color:** threat-violet body (heavy/different), alert-amber payload indicator pixel
 - **Animation:** slow 2-frame rotor, heavy bob
 
-All enemy drones share threat red as dominant color — player parses "enemy" before parsing type.
+Earlier versions kept all drones in threat-red and relied on silhouette alone. That read ambiguously at 16×16 during fast waves, so v1 switched to distinct per-type body colors plus a persistent legend. Threat red still signals "enemy" at the class level because every drone body color is in the warm/threat family (red / amber / violet).
 
 ## Defense visual language
 

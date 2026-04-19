@@ -64,7 +64,7 @@ export function renderDrones(ctx, state) {
   }
 
   for (const d of state.drones) {
-    ctx.fillStyle = CONFIG.colors.threatRed;
+    ctx.fillStyle = bodyColorFor(d.type);
     ctx.fillRect(Math.floor(d.x - DRONE_SIZE / 2), Math.floor(d.y - DRONE_SIZE / 2), DRONE_SIZE, DRONE_SIZE);
 
     const accent = accentFor(d.type);
@@ -76,9 +76,16 @@ export function renderDrones(ctx, state) {
   }
 }
 
+export function bodyColorFor(type) {
+  if (type === 'isr') return CONFIG.colors.droneIsr;
+  if (type === 'owa') return CONFIG.colors.droneOwa;
+  if (type === 'payloadDelivery') return CONFIG.colors.dronePayload;
+  return CONFIG.colors.threatRed;
+}
+
 function accentFor(type) {
   if (type === 'isr') return { color: CONFIG.colors.friendlyCyan, dx: -1, dy: -DRONE_SIZE / 2 + 1 };
-  if (type === 'owa') return { color: CONFIG.colors.alertAmber, dx: -1, dy: -DRONE_SIZE / 2 + 1 };
+  if (type === 'owa') return { color: CONFIG.colors.threatRed, dx: -1, dy: -DRONE_SIZE / 2 + 1 };
   if (type === 'payloadDelivery') return { color: CONFIG.colors.alertAmber, dx: -1, dy: -1 };
   return null;
 }
