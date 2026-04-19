@@ -11,7 +11,7 @@ Retro arcade aesthetic. Pixel art, bold colors, CRT vibes. Think early-90s arcad
 
 ## Technical setup
 
-- **Virtual resolution:** 480 × 270 pixels, scaled up (typically 3×) to fill the canvas
+- **Virtual resolution:** 480 × 270 pixels, scaled 4× to fill a 1920 × 1080 display
 - **Rendering:** `ctx.imageSmoothingEnabled = false` — always
 - **Sprite sizes:**
   - Drones: 16 × 16 px
