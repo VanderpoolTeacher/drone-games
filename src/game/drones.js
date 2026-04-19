@@ -50,6 +50,20 @@ export function renderDrones(ctx, state) {
   }
 
   for (const d of state.drones) {
+    if (d.type === 'owa' && d.commitLineFrame > 0) {
+      const target = structurePixelPos(d.targetId);
+      if (target) {
+        ctx.strokeStyle = CONFIG.colors.alertAmber;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(d.x + 0.5, d.y + 0.5);
+        ctx.lineTo(target.x + 0.5, target.y + 0.5);
+        ctx.stroke();
+      }
+    }
+  }
+
+  for (const d of state.drones) {
     ctx.fillStyle = CONFIG.colors.threatRed;
     ctx.fillRect(Math.floor(d.x - DRONE_SIZE / 2), Math.floor(d.y - DRONE_SIZE / 2), DRONE_SIZE, DRONE_SIZE);
 
@@ -82,11 +96,11 @@ export function updateDrones(state, dt) {
 
   for (const d of state.drones) {
     if (d.type === 'isr') updateIsr(d, dt);
-    else if (d.type === 'owa') advanceCruise(d, dt);
+    else if (d.type === 'owa') updateOwa(d, dt, state);
     else if (d.type === 'payloadDelivery') advanceCruise(d, dt);
   }
 
-  state.drones = state.drones.filter(d => !isOffGrid(d));
+  state.drones = state.drones.filter(d => d.phase !== 'done' && !isOffGrid(d));
 }
 
 function advanceCruise(d, dt) {
@@ -221,4 +235,48 @@ function quantizeTrailColor(alphaStep) {
   if (alphaStep > 0.66) return CONFIG.colors.threatRed;
   if (alphaStep > 0.33) return '#a0302c';
   return '#5a1b19';
+}
+
+const OWA_ARRIVAL_PX = 8;
+
+function updateOwa(d, dt, state) {
+  if (d.commitLineFrame > 0) d.commitLineFrame -= 1;
+
+  if (d.phase === 'cruise') {
+    const corridor = MAP.corridors.owa[d.corridorIdx];
+    if (d.wpIdx >= corridor.waypoints.length) {
+      d.phase = 'terminal';
+      d.commitLineFrame = 1;
+      return;
+    }
+    advanceCruise(d, dt);
+    return;
+  }
+
+  if (d.phase === 'terminal') {
+    const target = structurePixelPos(d.targetId);
+    if (!target) { d.phase = 'exiting'; return; }
+
+    const dx = target.x - d.x;
+    const dy = target.y - d.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist <= OWA_ARRIVAL_PX) {
+      state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
+      d.phase = 'done';
+      return;
+    }
+
+    const speed = CONFIG.drones.owa.speed;
+    d.vx = (dx / dist) * speed;
+    d.vy = (dy / dist) * speed;
+    d.x += d.vx * dt;
+    d.y += d.vy * dt;
+  }
+}
+
+function structurePixelPos(id) {
+  const s = MAP.structures.find(x => x.id === id);
+  if (!s) return null;
+  return tileToPixel(s.tile);
 }
