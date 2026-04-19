@@ -107,6 +107,14 @@ export function updateDrones(state, dt) {
     else if (d.type === 'payloadDelivery') updatePayload(d, dt, state);
   }
 
+  for (const d of state.drones) {
+    if (d.hp <= 0 && d.phase !== 'done') {
+      state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
+      state.resources += CONFIG.resourcesPerDroneKill[d.type] ?? 0;
+      d.phase = 'done';
+    }
+  }
+
   state.drones = state.drones.filter(d => d.phase !== 'done' && !isOffGrid(d));
 }
 
