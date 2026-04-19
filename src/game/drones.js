@@ -68,8 +68,12 @@ export function tileToPixel(tile) {
 }
 
 export function updateDrones(state, dt) {
+  runDevSpawner(state, dt);
+
   for (const d of state.drones) {
-    advanceCruise(d, dt);
+    if (d.type === 'isr') updateIsr(d, dt);
+    else if (d.type === 'owa') advanceCruise(d, dt);
+    else if (d.type === 'payloadDelivery') advanceCruise(d, dt);
   }
 
   state.drones = state.drones.filter(d => !isOffGrid(d));
@@ -111,4 +115,35 @@ function isOffGrid(d) {
   const w = CONFIG.virtualWidth;
   const h = CONFIG.virtualHeight;
   return d.x < -24 || d.x > w + 24 || d.y < -24 || d.y > h + 24;
+}
+
+function runDevSpawner(state, dt) {
+  if (!CONFIG.devSpawner || !CONFIG.devSpawner.enabled) return;
+  const dtMs = dt * 1000;
+  for (const type of ['isr', 'owa', 'payloadDelivery']) {
+    state.devSpawnTimer[type] += dtMs;
+    const interval = CONFIG.devSpawner.intervalMs[type];
+    while (state.devSpawnTimer[type] >= interval) {
+      state.devSpawnTimer[type] -= interval;
+      spawnDrone(state, type);
+    }
+  }
+}
+
+function updateIsr(d, dt) {
+  if (d.phase === 'exiting') {
+    d.vx = 0;
+    d.vy = CONFIG.drones.isr.speed;
+    d.x += d.vx * dt;
+    d.y += d.vy * dt;
+    return;
+  }
+
+  const corridor = MAP.corridors.isr[d.corridorIdx];
+  if (d.wpIdx >= corridor.waypoints.length) {
+    d.phase = 'exiting';
+    return;
+  }
+
+  advanceCruise(d, dt);
 }
