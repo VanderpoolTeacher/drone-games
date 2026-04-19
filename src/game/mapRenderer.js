@@ -1,9 +1,10 @@
 import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 
-export function renderMap(ctx) {
+export function renderMap(ctx, tMs) {
   drawTiles(ctx);
   drawCoastline(ctx);
+  drawZones(ctx, tMs);
   drawStructures(ctx);
 }
 
@@ -83,5 +84,25 @@ function drawStructures(ctx) {
 
     ctx.fillStyle = CONFIG.colors.friendlyCyan;
     ctx.fillRect(Math.floor(cx) - 1, Math.floor(cy) - 1, 2, 2);
+  }
+}
+
+function drawZones(ctx, tMs) {
+  const { tileSize, placementZones, padTop } = MAP;
+  const brightPhase = Math.floor(tMs / 1000) % 2 === 0;
+  const color = brightPhase ? CONFIG.colors.friendlyCyan : CONFIG.colors.gridLine;
+
+  ctx.fillStyle = color;
+  for (const z of placementZones) {
+    const cx = z.x * tileSize + tileSize / 2;
+    const cy = CONFIG.topBarHeight + padTop + z.y * tileSize + tileSize / 2;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - 2);
+    ctx.lineTo(cx + 2, cy);
+    ctx.lineTo(cx, cy + 2);
+    ctx.lineTo(cx - 2, cy);
+    ctx.closePath();
+    ctx.fill();
   }
 }

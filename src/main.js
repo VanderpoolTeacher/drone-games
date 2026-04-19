@@ -10,11 +10,11 @@ canvas.height = CONFIG.virtualHeight * CONFIG.scale;
 ctx.imageSmoothingEnabled = false;
 ctx.scale(CONFIG.scale, CONFIG.scale);
 
-function frame() {
+function frame(tMs) {
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 
-  renderMap(ctx);
+  renderMap(ctx, tMs);
 
   requestAnimationFrame(frame);
 }
