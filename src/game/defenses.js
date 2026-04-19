@@ -79,3 +79,15 @@ function fireInterceptor(state, defense, target) {
     damage: cfg.damage,
   });
 }
+
+const DEFENSE_SIZE = 24;
+
+export function renderDefenses(ctx, state) {
+  for (const d of state.defenses) {
+    ctx.fillStyle = CONFIG.colors.friendlyCyan;
+    ctx.fillRect(Math.floor(d.x - DEFENSE_SIZE / 2), Math.floor(d.y - DEFENSE_SIZE / 2), DEFENSE_SIZE, DEFENSE_SIZE);
+
+    ctx.fillStyle = CONFIG.colors.alertAmber;
+    ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y - DEFENSE_SIZE / 2) + 1, 2, 2);
+  }
+}

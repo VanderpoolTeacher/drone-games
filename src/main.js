@@ -5,8 +5,8 @@ import { renderChrome } from './ui/uiChrome.js';
 import { renderLegend } from './ui/legend.js';
 import { updateExplosions, renderExplosions } from './game/explosions.js';
 import { renderDrones, updateDrones } from './game/drones.js';
-import { updateDefenses } from './game/defenses.js';
-import { updateProjectiles } from './game/projectiles.js';
+import { updateDefenses, renderDefenses } from './game/defenses.js';
+import { updateProjectiles, renderProjectiles } from './game/projectiles.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -33,7 +33,9 @@ function frame(tMs) {
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 
   renderMap(ctx, tMs);
+  renderDefenses(ctx, gameState);
   renderDrones(ctx, gameState);
+  renderProjectiles(ctx, gameState);
   renderExplosions(ctx, gameState);
   renderChrome(ctx);
   renderLegend(ctx);

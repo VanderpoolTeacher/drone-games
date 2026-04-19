@@ -30,3 +30,12 @@ export function updateProjectiles(state, dt) {
   }
   state.projectiles = survivors;
 }
+
+const PROJECTILE_SIZE = 2;
+
+export function renderProjectiles(ctx, state) {
+  ctx.fillStyle = CONFIG.colors.friendlyCyan;
+  for (const p of state.projectiles) {
+    ctx.fillRect(Math.floor(p.x) - 1, Math.floor(p.y) - 1, PROJECTILE_SIZE, PROJECTILE_SIZE);
+  }
+}
