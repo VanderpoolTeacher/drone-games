@@ -37,6 +37,7 @@ export function spawnDrone(state, type) {
     trail: type === 'isr' ? [] : null,
     trailSampleTimer: 0,
     commitLineFrame: 0,
+    speedMultiplier: 1,
   };
   state.drones.push(drone);
   return drone;
@@ -135,7 +136,7 @@ function advanceCruise(d, dt) {
     return;
   }
 
-  const speed = CONFIG.drones[d.type].speed;
+  const speed = CONFIG.drones[d.type].speed * (d.speedMultiplier ?? 1);
   const step = speed * dt;
   if (step >= dist) {
     d.x = target.x;
@@ -174,7 +175,7 @@ function updateIsr(d, dt) {
 
   if (d.phase === 'exiting') {
     d.vx = 0;
-    d.vy = CONFIG.drones.isr.speed;
+    d.vy = CONFIG.drones.isr.speed * (d.speedMultiplier ?? 1);
     d.y += d.vy * dt;
     return;
   }
@@ -195,7 +196,7 @@ function updateIsr(d, dt) {
   const dy = target.y - d.y;
   const dist = Math.hypot(dx, dy);
 
-  const speed = CONFIG.drones.isr.speed;
+  const speed = CONFIG.drones.isr.speed * (d.speedMultiplier ?? 1);
 
   if (dist <= WAYPOINT_REACH_PX) {
     d.wpIdx += 1;
@@ -275,7 +276,7 @@ function updateOwa(d, dt, state) {
     const dy = target.y - d.y;
     const dist = Math.hypot(dx, dy);
 
-    const speed = CONFIG.drones.owa.speed;
+    const speed = CONFIG.drones.owa.speed * (d.speedMultiplier ?? 1);
     const step = speed * dt;
 
     if (dist <= OWA_ARRIVAL_PX || step >= dist) {
