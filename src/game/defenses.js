@@ -14,6 +14,8 @@ export function placeDefense(state, type, tile) {
     y,
     cooldownMs: 0,
     targetId: null,
+    heatMs: 0,
+    overheated: false,
   };
   state.defenses.push(defense);
   state.resources -= cfg.cost;
@@ -26,7 +28,7 @@ export function updateDefenses(state, dt) {
 
     if (d.type === 'interceptor') {
       if (d.cooldownMs > 0) continue;
-      const target = pickInterceptorTarget(state, d);
+      const target = pickClosestToStructureTarget(state, d, CONFIG.defenses.interceptor.range);
       if (!target) { d.targetId = null; continue; }
       fireInterceptor(state, d, target);
       d.cooldownMs = CONFIG.defenses.interceptor.cooldown;
@@ -37,8 +39,7 @@ export function updateDefenses(state, dt) {
   }
 }
 
-function pickInterceptorTarget(state, d) {
-  const R = CONFIG.defenses.interceptor.range;
+function pickClosestToStructureTarget(state, d, range) {
   let best = null;
   let bestDist = Infinity;
   let bestId = Infinity;
@@ -46,7 +47,7 @@ function pickInterceptorTarget(state, d) {
     if (dr.hp <= 0 || dr.phase === 'done') continue;
     const dx = dr.x - d.x;
     const dy = dr.y - d.y;
-    if (Math.hypot(dx, dy) > R) continue;
+    if (Math.hypot(dx, dy) > range) continue;
     const minStructDist = minDistanceToAnyStructure(dr);
     if (minStructDist < bestDist || (minStructDist === bestDist && dr.id < bestId)) {
       best = dr;
