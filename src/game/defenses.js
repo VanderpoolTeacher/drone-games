@@ -35,6 +35,29 @@ export function updateDefenses(state, dt) {
       d.targetId = target.id;
     } else if (d.type === 'rfJammer') {
       // area effect handled by applyJamEffects; nothing per-defense
+    } else if (d.type === 'laser') {
+      if (d.overheated) {
+        if (d.cooldownMs <= 0) {
+          d.overheated = false;
+          d.heatMs = 0;
+        }
+        d.targetId = null;
+        continue;
+      }
+      const target = pickClosestToStructureTarget(state, d, CONFIG.defenses.laser.range);
+      if (target) {
+        const eff = CONFIG.defenses.laser.effectivenessVs[target.type] ?? 1;
+        target.hp -= CONFIG.defenses.laser.dps * dt * eff;
+        d.heatMs += dt * 1000;
+        if (d.heatMs >= CONFIG.defenses.laser.overheatTime) {
+          d.overheated = true;
+          d.cooldownMs = CONFIG.defenses.laser.cooldownTime;
+        }
+        d.targetId = target.id;
+      } else {
+        d.heatMs = Math.max(0, d.heatMs - dt * 1000);
+        d.targetId = null;
+      }
     }
   }
 }
@@ -98,6 +121,9 @@ export function renderDefenses(ctx, state) {
     } else if (d.type === 'rfJammer') {
       ctx.fillStyle = CONFIG.colors.accentWhite;
       ctx.fillRect(Math.floor(d.x) - 2, Math.floor(d.y - DEFENSE_SIZE / 2) - 1, 4, 2);
+    } else if (d.type === 'laser') {
+      ctx.fillStyle = d.overheated ? CONFIG.colors.alertAmber : CONFIG.colors.accentWhite;
+      ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y - DEFENSE_SIZE / 2) + 1, 2, 2);
     }
   }
 }
@@ -118,5 +144,22 @@ export function applyJamEffects(state) {
       if (mult < minMult) minMult = mult;
     }
     d.speedMultiplier = minMult;
+  }
+}
+
+export function renderBeams(ctx, state) {
+  ctx.strokeStyle = CONFIG.colors.accentWhite;
+  ctx.lineWidth = 1;
+  for (const d of state.defenses) {
+    if (d.type !== 'laser') continue;
+    if (d.overheated) continue;
+    if (!d.targetId) continue;
+    const target = state.drones.find(dr => dr.id === d.targetId);
+    if (!target || target.hp <= 0 || target.phase === 'done') continue;
+
+    ctx.beginPath();
+    ctx.moveTo(d.x + 0.5, d.y + 0.5);
+    ctx.lineTo(target.x + 0.5, target.y + 0.5);
+    ctx.stroke();
   }
 }
