@@ -4,6 +4,7 @@ import { renderMap } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
 import { renderLegend } from './ui/legend.js';
 import { renderPlacement, pixelToTile, mapHitTest, isValidZone } from './ui/placement.js';
+import { renderPalette, paletteHitTest } from './ui/palette.js';
 import { updateExplosions, renderExplosions } from './game/explosions.js';
 import { renderDrones, updateDrones } from './game/drones.js';
 import { updateDefenses, renderDefenses, placeDefense } from './game/defenses.js';
@@ -39,6 +40,7 @@ function frame(tMs) {
   renderProjectiles(ctx, gameState);
   renderExplosions(ctx, gameState);
   renderChrome(ctx);
+  renderPalette(ctx, gameState);
   renderLegend(ctx);
   renderPlacement(ctx, gameState);
 
@@ -59,6 +61,14 @@ canvas.addEventListener('mousemove', e => {
 
 canvas.addEventListener('click', e => {
   const [vx, vy] = toVirtual(e);
+
+  const paletteHit = paletteHitTest(vx, vy);
+  if (paletteHit) {
+    gameState.placementMode =
+      gameState.placementMode?.type === paletteHit.type ? null : { type: paletteHit.type };
+    return;
+  }
+
   if (!gameState.placementMode) return;
   const tile = mapHitTest(vx, vy);
   if (!tile || !isValidZone(gameState, tile)) return;
