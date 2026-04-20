@@ -91,8 +91,13 @@ export function renderDefenses(ctx, state) {
     ctx.fillStyle = CONFIG.colors.friendlyCyan;
     ctx.fillRect(Math.floor(d.x - DEFENSE_SIZE / 2), Math.floor(d.y - DEFENSE_SIZE / 2), DEFENSE_SIZE, DEFENSE_SIZE);
 
-    ctx.fillStyle = CONFIG.colors.alertAmber;
-    ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y - DEFENSE_SIZE / 2) + 1, 2, 2);
+    if (d.type === 'interceptor') {
+      ctx.fillStyle = CONFIG.colors.alertAmber;
+      ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y - DEFENSE_SIZE / 2) + 1, 2, 2);
+    } else if (d.type === 'rfJammer') {
+      ctx.fillStyle = CONFIG.colors.accentWhite;
+      ctx.fillRect(Math.floor(d.x) - 2, Math.floor(d.y - DEFENSE_SIZE / 2) - 1, 4, 2);
+    }
   }
 }
 

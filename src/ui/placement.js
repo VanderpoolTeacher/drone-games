@@ -64,9 +64,13 @@ function drawGhostAndRange(ctx, state) {
   if (range > 0) {
     ctx.strokeStyle = CONFIG.colors.friendlyCyan;
     ctx.lineWidth = 1;
+    if (type === 'rfJammer') {
+      ctx.setLineDash([3, 3]);
+    }
     ctx.beginPath();
     ctx.arc(cx + 0.5, cy + 0.5, range, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   if (!isValidZone(state, tile)) {
