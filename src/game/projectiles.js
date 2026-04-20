@@ -19,7 +19,7 @@ export function updateProjectiles(state, dt) {
     }
 
     if (hit) {
-      const eff = CONFIG.defenses.interceptor.effectivenessVs[hit.type] ?? 1;
+      const eff = p.effectivenessVs?.[hit.type] ?? 1;
       hit.hp -= p.damage * eff;
       continue;
     }

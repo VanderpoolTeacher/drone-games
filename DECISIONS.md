@@ -50,3 +50,13 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-19 — Placement zones: 14 hand-picked cells marked visually, not free placement. Keeps balance tractable for v1 and preserves the "rooftop/plaza" city read.
 
 2026-04-19 — Removed all references to Manhattan / New York / NYC from documentation, spec, plan, and code. Map shape, structure positions, and ingress corridors unchanged — only labels and flavor text generalized. Rationale: keep the game setting a generic coastal city rather than a specific real-world target.
+
+2026-04-19 — First defense plan ships Interceptor only; RF Jammer / Laser / HPM shown as disabled palette buttons. Validates the full click→place→fire→kill→bonus loop with the simplest defense before scaling.
+
+2026-04-19 — Interceptor targeting: picks the drone in range whose minimum distance to any structure is smallest (ties broken by lower drone.id). Prioritizes threat-to-structure over proximity-to-defense; feels strategic and teaches coverage-adjacent-to-structures placement.
+
+2026-04-19 — Placement UX: two-click (click palette → click zone). Cancel via any of ESC, right-click, or click the same palette button again. Redundant cancels prevent "stuck in placement mode" feel.
+
+2026-04-19 — Palette shows all four defenses always; RF Jammer / Laser / HPM render as dim (disabled) placeholders even in the Interceptor-only branch. Telegraphs "more defenses coming" without needing copy.
+
+2026-04-19 — Palette layout C: resources left, 4 centered buttons, wave/next placeholder right. Consolidates the HUD in the 32px bottom bar. Top bar keeps the drone-type legend.

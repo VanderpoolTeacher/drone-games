@@ -4,18 +4,21 @@ Running task list. Check things off, add as they come up. Scratchpad, not a proj
 
 ## Now
 
-- [ ] Step 1: index.html + canvas at 480×270, scaled 3×; one ISR Drone walks a fixed path
-- [ ] Confirm `npx serve` setup works end-to-end
-- [ ] First git commit after step 1
+- [x] Step 1: canvas boots at 480×270 with map, structures, zones, chrome
+- [x] Step 1b: drones spawn from corridors and traverse (ISR weave, OWA commit, Payload drop)
+- [x] Step 1c: per-drone colors + top-bar legend
+- [x] Step 2a: Interceptor placed, auto-fires, drones killable, economy loop live
+- [ ] Step 2b: RF Jammer placed, area-slow effect (soft-kill)
+- [ ] Step 2c: Laser placed, continuous DPS + overheat
+- [ ] Step 2d: HPM placed, cone AoE (stretch)
 
 ## Next (build order from CLAUDE.md)
 
-- [ ] Step 2: RF Jammer placed manually, auto-fires on drone in range
-- [ ] Step 3: resource system + click-to-place UI
-- [ ] Step 4: wave system with prep phase between waves
-- [ ] Step 5: add remaining drone types (OWA, Payload-Delivery) and defenses (Interceptor, Laser, HPM)
+- [x] Step 3: resource system + click-to-place UI (done with Interceptor plan)
+- [ ] Step 4: wave system with prep phase between waves (replaces the dev auto-spawner)
+- [ ] Step 5: all drone types + all defenses landed (see Steps 2b-2d above)
 - [ ] Step 6: critical structures with HP, damage, win/lose conditions
-- [ ] Step 7: HUD — resources, wave counter, structure HP
+- [ ] Step 7: HUD — resources (done), wave counter (placeholder only), structure HP
 - [ ] Step 8: tuning pass — balance via playtesting
 - [ ] Step 9: visual polish — real pixel sprites, CRT post-processing
 

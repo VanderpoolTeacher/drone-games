@@ -77,6 +77,7 @@ function fireInterceptor(state, defense, target) {
     vy: (dy / dist) * cfg.projectileSpeed,
     targetDroneId: target.id,
     damage: cfg.damage,
+    effectivenessVs: cfg.effectivenessVs,
   });
 }
 
