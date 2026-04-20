@@ -28,6 +28,32 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-19 — solo (RF Jammer)
+
+**Build:** RF Jammer plan complete (second defense live)
+**Session length:** ~90 s soak
+**Result:** First visible "layered defense" moment
+
+### What happened
+- Placed two RF Jammers in the N corridor + one Interceptor near City Hall
+- ISR drones slowed to ~half speed through the jam band; Interceptor killed them easily as they crept by
+- OWAs barely noticed the jammers, continued to terminal commit at full-ish speed
+- Payload crossings took a beat longer but not dramatically
+
+### What worked
+- Dashed vs solid range circles read instantly in placement mode
+- White dish / amber tip accents differentiate jammer and interceptor placeholders
+- Scaled slow formula makes the matchup table "real" — the difference between ISR (0.5x) and OWA (0.85x) is visible without numbers
+- Stacking by min prevents jammer-spam exploits; two jammers is for coverage, not cumulative slow
+
+### What felt off
+- No active visual telegraph on the jammer itself (no pulsing ring yet). Easy to forget which defense is doing what when both are placed nearby.
+- ISR passing through a jam zone and then leaving snaps back to full speed instantly (no recovery delay). Feels slightly arcade-y; doesn't match realistic C2 reacquisition timing. Deferring to tuning.
+
+### Questions raised
+- RF Jammer range (80 px) is tight for N corridor coverage at the corners. One jammer at (6,1) handles middle ISR corridor nicely but misses corridor 2. Do we widen range, or expect player to place two? Defer to tuning pass.
+- Should defense accent colors become palette-aligned? White dish pops, but an amber or successGreen dish might fit the palette better. Visual polish concern.
+
 ## 2026-04-19 — solo (defenses + placement + Interceptor)
 
 **Build:** defenses-placement-interceptor plan complete (Interceptor only, no waves)
