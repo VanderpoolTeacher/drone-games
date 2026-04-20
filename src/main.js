@@ -7,7 +7,7 @@ import { renderPlacement, pixelToTile, mapHitTest, isValidZone } from './ui/plac
 import { renderPalette, paletteHitTest } from './ui/palette.js';
 import { updateExplosions, renderExplosions } from './game/explosions.js';
 import { renderDrones, updateDrones } from './game/drones.js';
-import { updateDefenses, renderDefenses, placeDefense } from './game/defenses.js';
+import { updateDefenses, renderDefenses, placeDefense, applyJamEffects } from './game/defenses.js';
 import { updateProjectiles, renderProjectiles } from './game/projectiles.js';
 
 const canvas = document.getElementById('game');
@@ -26,6 +26,7 @@ function frame(tMs) {
   const dt = Math.min(dtRaw, 0.1);
   prevMs = tMs;
 
+  applyJamEffects(gameState);
   updateDrones(gameState, dt);
   updateDefenses(gameState, dt);
   updateProjectiles(gameState, dt);

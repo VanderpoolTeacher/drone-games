@@ -23,14 +23,17 @@ export function placeDefense(state, type, tile) {
 export function updateDefenses(state, dt) {
   for (const d of state.defenses) {
     d.cooldownMs = Math.max(0, d.cooldownMs - dt * 1000);
-    if (d.type !== 'interceptor' || d.cooldownMs > 0) continue;
 
-    const target = pickInterceptorTarget(state, d);
-    if (!target) { d.targetId = null; continue; }
-
-    fireInterceptor(state, d, target);
-    d.cooldownMs = CONFIG.defenses.interceptor.cooldown;
-    d.targetId = target.id;
+    if (d.type === 'interceptor') {
+      if (d.cooldownMs > 0) continue;
+      const target = pickInterceptorTarget(state, d);
+      if (!target) { d.targetId = null; continue; }
+      fireInterceptor(state, d, target);
+      d.cooldownMs = CONFIG.defenses.interceptor.cooldown;
+      d.targetId = target.id;
+    } else if (d.type === 'rfJammer') {
+      // area effect handled by applyJamEffects; nothing per-defense
+    }
   }
 }
 
@@ -90,5 +93,24 @@ export function renderDefenses(ctx, state) {
 
     ctx.fillStyle = CONFIG.colors.alertAmber;
     ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y - DEFENSE_SIZE / 2) + 1, 2, 2);
+  }
+}
+
+export function applyJamEffects(state) {
+  const cfg = CONFIG.defenses.rfJammer;
+  for (const d of state.drones) {
+    if (d.hp <= 0 || d.phase === 'done') { d.speedMultiplier = 1; continue; }
+
+    let minMult = 1;
+    for (const def of state.defenses) {
+      if (def.type !== 'rfJammer') continue;
+      const dx = d.x - def.x;
+      const dy = d.y - def.y;
+      if (Math.hypot(dx, dy) > cfg.range) continue;
+      const eff = cfg.effectivenessVs[d.type] ?? 0;
+      const mult = 1 - (1 - cfg.slowFactor) * eff;
+      if (mult < minMult) minMult = mult;
+    }
+    d.speedMultiplier = minMult;
   }
 }
