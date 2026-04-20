@@ -28,6 +28,32 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-19 — solo (defenses + placement + Interceptor)
+
+**Build:** defenses-placement-interceptor plan complete (Interceptor only, no waves)
+**Session length:** ~90 s soak
+**Result:** Playable core loop (drones in, defenses fire, bonuses pay)
+
+### What happened
+- Click INTRCPT button → armed; click valid zone → placed for $100
+- Interceptors fired on drones in range with 1.5 s cooldown
+- Drones took damage per effectivenessVs (ISR ×0.5, OWA/Payload ×1.0); dying drones triggered explosions and credited bonuses
+- Economy stable: starting $400, kept affording placements as kill bonuses rolled in
+
+### What worked
+- Two-click placement (palette → zone) reads fast; ESC / right-click / re-click cancel all work
+- Range circle at ghost position telegraphs coverage before commit
+- Red 2×2 overlays on non-zone tiles kept placement decisions readable
+- Targeting "closest to any structure" felt right — Interceptors engaged OWAs committing before distant ISRs
+
+### What felt off
+- Interceptor cooldown (1.5 s) against ISR spawning every 3 s from three corridors means one Interceptor can't cover much; designed for later to reward multi-placement + defense mix
+- Payload takes 4 hits and its movement is slow, so a single Interceptor can chew through one solo. Once Laser/HPM land the matchup variance will sharpen
+
+### Questions raised
+- Should projectiles be removed on target death mid-flight? Currently they continue and may hit nearby drones. Feels realistic for a kinetic shot; revisit if it causes confusion
+- Are 100 px range + corridor positions well-aligned? Some zones cover only one corridor by design; confirm during tuning pass
+
 ## 2026-04-19 — solo (drones + corridor traversal)
 
 **Build:** drones-traversal plan complete (no wave system / defenses yet)
