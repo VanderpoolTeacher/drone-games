@@ -60,3 +60,9 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-19 — Palette shows all four defenses always; RF Jammer / Laser / HPM render as dim (disabled) placeholders even in the Interceptor-only branch. Telegraphs "more defenses coming" without needing copy.
 
 2026-04-19 — Palette layout C: resources left, 4 centered buttons, wave/next placeholder right. Consolidates the HUD in the 32px bottom bar. Top bar keeps the drone-type legend.
+
+2026-04-19 — RF Jammer slow formula: `effectiveSlow = 1 - (1 - slowFactor) × effectivenessVs[droneType]`. Produces ISR→0.5×, OWA→0.85×, Payload→0.9×. Continuous multiplier (not gated), so the matchup table reads as real in motion.
+
+2026-04-19 — Multi-jammer stacking: take the minimum multiplier across all in-range jammers (strongest slow wins; no multiplicative stacking). Prevents jammer-spam exploits and keeps "two jammers for coverage, not cumulative slow" intuition.
+
+2026-04-19 — Defense placeholder accents: Interceptor = 2×2 amber tip at top; RF Jammer = 4×2 accent-white "dish" protruding above the cyan square. Keeps the two types instantly distinguishable pre-real-sprites.
