@@ -16,6 +16,7 @@ import { renderLoseOverlay } from './ui/loseOverlay.js';
 import { renderWaveTelegraph } from './ui/waveTelegraph.js';
 import { renderWinOverlay } from './ui/winOverlay.js';
 import { renderCRT } from './ui/crt.js';
+import { updateBriefing, renderBriefing, briefingClickHit } from './ui/briefing.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -38,6 +39,7 @@ function frame(tMs) {
     updateDefenses(gameState, dt);
     updateProjectiles(gameState, dt);
     updateWave(gameState, dt);
+    updateBriefing(gameState, dt);
   }
   updateStructures(gameState);
   updateExplosions(gameState, dt);
@@ -54,6 +56,7 @@ function frame(tMs) {
   renderChrome(ctx);
   renderPalette(ctx, gameState);
   renderLegend(ctx);
+  renderBriefing(ctx, gameState, tMs);
   renderPlacement(ctx, gameState);
   renderWaveTelegraph(ctx, gameState, tMs);
   renderLoseOverlay(ctx, gameState);
@@ -89,6 +92,8 @@ canvas.addEventListener('click', e => {
     return;
   }
   const [vx, vy] = toVirtual(e);
+
+  if (briefingClickHit(gameState, vx, vy)) return;
 
   const paletteHit = paletteHitTest(vx, vy);
   if (paletteHit) {
