@@ -28,6 +28,32 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (Commander Warden briefings)
+
+**Build:** feat/commander-briefing — src/ui/briefing.js + win/lose subtitles
+**Session length:** ~10 min render/flow check
+**Result:** N/A (feature pass)
+
+### What happened
+- Wave 1 prep loaded the onboarding briefing with neutral portrait.
+- Auto-collapse fired at 8 s; tab stayed visible through active phase.
+- Re-expand on tab click worked; second collapse was manual.
+- Wave 3 stern / wave 5 angry portraits loaded correctly.
+- Lose state showed Warden's bloody subtitle; win state showed neutral subtitle.
+
+### What worked
+- Bubble reads cleanly over the palette footprint; palette reveals cleanly after collapse.
+- 64×64 pixelated portraits read as stylized in the retro aesthetic.
+- Click-consume order (briefing → palette → map) prevents accidental defense placement under the bubble.
+
+### What felt off
+- Warden's advice can feel condescending if you already know the matchups. Candidate for tone tuning in a later playtest pass.
+- Briefing eats ~320×80 during visible state — confirm it doesn't hide prep-phase threat chevrons once #4 (zoom-out) lands.
+
+### Questions raised
+- Should mid-wave reactive lines exist? (Deferred — scope creep for v1.)
+- Confidence tags on Intel lines (issue #11) would pair well here.
+
 ## 2026-04-21 — solo (CRT post-process)
 
 **Build:** feat/crt-postprocess — src/ui/crt.js wired last in frame()

@@ -28,6 +28,7 @@ Running task list. Check things off, add as they come up. Scratchpad, not a proj
 - [ ] Sound effects: drone buzz, laser zap, interceptor launch, HPM pulse, explosion, wave-start alert
 - [ ] Class writeup draft
 - [ ] Record gameplay video for class submission
+- [x] Commander Warden briefings — pre-wave speech bubble + portraits, win/lose subtitles (issue #5)
 
 ## HPM-specific watchpoints
 

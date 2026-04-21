@@ -116,3 +116,9 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — CRT renders AFTER win/lose overlays. STYLE.md calls for a "final overlay"; taking that literally means scanlines cover overlay text too, for a unified look. At these alphas the 16 px Press Start 2P text stays readable. One-line reorder in main.js if playtest flips this.
 
 2026-04-21 — CRT v1 out of scope: chromatic aberration, screen curvature, bloom, per-frame noise, CSS-filter alternative, enable/disable toggle.
+
+2026-04-21 — Commander "Warden" introduced. Speech-bubble briefing bottom-left, 64×64 portrait (PNG, pixelated upscale), 320×80 bubble, auto-collapse to 16×16 tab after 8 s, tab persists across active phase and is click-to-re-expand. Briefing text co-located with drone defs in CONFIG.waves[i] to keep the Intel honest; boot-time keyword validator warns on drift.
+
+2026-04-21 — Four Warden portrait keys (neutral / stern / angry / bloody) authored per-wave and for win/lose. Progression: neutral (wave 1-2) → stern (3-4) → angry (5). Lose = bloody. Win = neutral. One-liner Warden subtitle on both overlays; portrait deferred on overlays for v1.
+
+2026-04-21 — Briefing state transitions live entirely in updateBriefing (compares wave.number-1 to stored activeBriefingIndex during prep). No coupling to wave.js — boot, wave transitions, and reset all flow through the same reconciliation.
