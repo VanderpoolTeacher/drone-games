@@ -13,10 +13,13 @@ export function renderLoseOverlay(ctx, state) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = CONFIG.colors.threatRed;
-  ctx.fillText('DEFENSE FAILED', CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 - 8);
+  ctx.fillText('DEFENSE FAILED', CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 - 20);
 
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.fillStyle = CONFIG.colors.accentWhite;
-  ctx.fillText('CLICK TO RESTART', CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 16);
+  ctx.fillText(CONFIG.warden.lose, CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 4);
+
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillText('CLICK TO RESTART', CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 28);
   ctx.restore();
 }
