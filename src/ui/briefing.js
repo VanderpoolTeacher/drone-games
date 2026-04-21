@@ -176,9 +176,10 @@ export function briefingClickHit(state, vx, vy) {
     const inBubble = pointInRect(vx, vy, BUBBLE_X, BUBBLE_Y, BUBBLE_W, BUBBLE_H);
     const inPortrait = pointInRect(vx, vy, PORTRAIT_X, PORTRAIT_Y, PORTRAIT_SIZE, PORTRAIT_SIZE);
     if (inBubble || inPortrait) {
+      // Collapse the bubble but let the click flow through to palette/map so
+      // the player doesn't lose an intended action just to dismiss the briefing.
       state.briefing.phase = 'tab';
       state.briefing.expandedOnce = true;
-      return true;
     }
     return false;
   }
