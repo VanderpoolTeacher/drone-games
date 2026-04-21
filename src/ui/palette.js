@@ -15,7 +15,7 @@ export function renderPalette(ctx, state) {
 
   renderResources(ctx, state, paletteY);
   renderButtons(ctx, state, paletteY);
-  renderWavePlaceholder(ctx, paletteY);
+  renderWaveHud(ctx, state, paletteY);
 }
 
 function renderResources(ctx, state, paletteY) {
@@ -78,16 +78,30 @@ function drawButton(ctx, state, btn, x, y) {
   ctx.fillText(`$${cost}`, x + BUTTON_W / 2, y + 24);
 }
 
-function renderWavePlaceholder(ctx, paletteY) {
+function renderWaveHud(ctx, state, paletteY) {
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'right';
 
   ctx.fillStyle = CONFIG.colors.successGreen;
-  ctx.fillText('WAVE 1/5', CONFIG.virtualWidth - 8, paletteY + 13);
+  ctx.fillText(`WAVE ${state.wave.number}/5`, CONFIG.virtualWidth - 8, paletteY + 13);
 
-  ctx.fillStyle = CONFIG.colors.accentWhite;
-  ctx.fillText('NEXT 0:12', CONFIG.virtualWidth - 8, paletteY + 25);
+  let line2Text;
+  let line2Color;
+  if (state.wave.phase === 'prep') {
+    const secs = Math.ceil(state.wave.prepMs / 1000);
+    line2Text = `NEXT 0:${String(Math.max(0, secs)).padStart(2, '0')}`;
+    line2Color = CONFIG.colors.alertAmber;
+  } else if (state.wave.phase === 'active') {
+    line2Text = 'INCOMING';
+    line2Color = CONFIG.colors.alertAmber;
+  } else {
+    line2Text = 'COMPLETE';
+    line2Color = CONFIG.colors.successGreen;
+  }
+
+  ctx.fillStyle = line2Color;
+  ctx.fillText(line2Text, CONFIG.virtualWidth - 8, paletteY + 25);
 }
 
 export function paletteHitTest(vx, vy) {
