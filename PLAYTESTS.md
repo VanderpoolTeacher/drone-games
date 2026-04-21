@@ -28,6 +28,34 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (Wave system + win condition)
+
+**Build:** wave system plan complete — full v1 loop playable end-to-end
+**Session length:** ~6 min (two complete runs: one won, one lost)
+**Result:** First game that actually ends with WIN or LOSE
+
+### What happened
+- Run 1 (won): placed RF Jammer + Interceptor + Laser during wave 1 prep. Survived through wave 3 with moderate stress. Added HPM at (8,5) facing south during wave 3 prep. Cleared waves 4-5 cleanly. CITY HELD.
+- Run 2 (lost): greedy — only placed 2 Interceptors before wave 1. OWAs in wave 3 broke through; Payload in wave 4 took out comms in two drops. DEFENSE FAILED on wave 4.
+- Both restarted cleanly; no state leak between runs.
+
+### What worked
+- 15s prep phase is exactly right for initial placement. Longer would feel slow; shorter would be unfair.
+- Chevron + icon telegraphs read instantly — the first time S chevron appeared with an amber OWA icon, I knew I needed to rotate defenses toward the harbor before wave 3 active started.
+- Wave bonus ($200 per clear) keeps resources climbing as waves scale, so late-wave placements are affordable.
+- INCOMING vs NEXT 0:NN vs COMPLETE in the palette HUD gives the phase state without any extra UI.
+- Win / lose overlays both use the same restart gesture → muscle memory carries between outcomes.
+
+### What felt off
+- Wave 5 is brutal as designed. First lose run, I leaked on wave 4 because I'd under-committed. Felt fair.
+- Payload shows only one chevron (W xor E) during wave 4-5 prep even though both edges spawn Payload. Known limitation per the spec; second Payload crossing felt "unfair" the first time because no telegraph. Flag for polish-plan dual-chevron.
+- No audio on wave clear, wave start, or win — very silent for such big moments. Polish plan.
+- CITY HELD overlay has no stats (waves survived, structures remaining, etc). Future stats screen.
+
+### Questions raised
+- Should the wave system skip prep between waves if the player clicks a "READY" button? Might help advanced players. v2 feature.
+- Balance: HPM feels required for wave 5 saturation, which matches the design thesis but makes HPM's "stretch" framing in CLAUDE.md no longer accurate — it's effectively required. Worth revisiting thesis language.
+
 ## 2026-04-21 — solo (Structure HP + lose condition)
 
 **Build:** structure-hp plan complete — drones now matter

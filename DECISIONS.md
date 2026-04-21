@@ -96,3 +96,15 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Win condition deferred to wave system plan. Lose alone doesn't depend on waves and is the cleanest first half of the win/lose pair.
 
 2026-04-19 — v1 defense roster complete: RF Jammer (soft-kill area slow), Interceptor (hard-kill projectile), Laser (hard-kill continuous beam with overheat), HPM (directed-energy cone AoE pulse). All four palette buttons live.
+
+2026-04-21 — Wave state machine: prep → active → (next prep OR won). Game starts in prep for wave 1 (15 s initial placement window). Wave clears when all drones of that wave have spawned AND state.drones is empty. $200 bonus paid per wave cleared (not on wave 5 — winFlag fires instead).
+
+2026-04-21 — Dev auto-spawner retired via CONFIG.devSpawner.enabled = false. Code path preserved in drones.js (runDevSpawner early-returns on disabled) for debug / rollback.
+
+2026-04-21 — Pre-wave chevrons render only during prep; amber alternating with gridLine at 2 Hz. Positioned 6 px off each active spawn edge. Drone-type icon (8x8 square using bodyColorFor) placed 4 px further outside. One chevron per drone TYPE (not per corridor) — simpler visual telegraph.
+
+2026-04-21 — Payload dual-edge chevron: CONFIG authors Payload on BOTH W and E; chevron renderer picks the first edge that claims the type (Object.entries order). Acknowledged as a visual simplification; the real chevrons would show both. Tuning candidate.
+
+2026-04-21 — Win condition: surviving all 5 waves with ≥1 structure intact. CITY HELD overlay mirrors DEFENSE FAILED pattern (75% bgDark scrim, 16 px Press Start 2P, CLICK TO RESTART hint, click/Space/Enter to reset).
+
+2026-04-21 — main.js update block now guards on !loseFlag && !winFlag. Restart handlers fire on either flag. resetGameState extended to reset wave state + winFlag.
