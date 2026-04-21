@@ -15,6 +15,7 @@ import { updateWave } from './game/wave.js';
 import { renderLoseOverlay } from './ui/loseOverlay.js';
 import { renderWaveTelegraph } from './ui/waveTelegraph.js';
 import { renderWinOverlay } from './ui/winOverlay.js';
+import { renderCRT } from './ui/crt.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -58,6 +59,7 @@ function frame(tMs) {
   renderWaveTelegraph(ctx, gameState, tMs);
   renderLoseOverlay(ctx, gameState);
   renderWinOverlay(ctx, gameState);
+  renderCRT(ctx);
 
   requestAnimationFrame(frame);
 }
