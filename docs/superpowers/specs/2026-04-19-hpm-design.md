@@ -24,7 +24,7 @@ Per DESIGN.md and CONCEPTS.md, HPM is the **swarm answer**. Its $300 cost and 4s
 |---|---|---|---|---|
 | ISR | 20 | 1.0 | 40 | 1 (one-shot) |
 | OWA | 15 | 1.0 | 40 | 1 (one-shot) |
-| Payload | 120 | 0.8 | 32 | 4 (16 s of pulses) |
+| Payload | 120 | 0.8 | 32 | 4 (~12 s — first pulse fires immediately, then 3 cooldowns × 4 s) |
 
 One HPM pulse wipes an ISR scout cluster. Four pulses drag a lone Payload down. In saturation (wave 5-ish), an HPM on the S corridor facing north nukes OWA drones the moment they cluster, in ways Interceptor's single-shot cooldown can't match. That's the "HPM shines against swarms" gameplay pillar.
 

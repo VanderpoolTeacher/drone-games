@@ -75,7 +75,9 @@ canvas.addEventListener('click', e => {
     gameState.placementMode =
       gameState.placementMode?.type === paletteHit.type
         ? null
-        : { type: paletteHit.type, facingRad: -Math.PI / 2 };
+        : paletteHit.type === 'hpm'
+          ? { type: 'hpm', facingRad: -Math.PI / 2 }
+          : { type: paletteHit.type };
     return;
   }
 
