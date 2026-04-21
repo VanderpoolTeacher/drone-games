@@ -182,7 +182,7 @@ export const CONFIG = {
   },
 
   devSpawner: {
-    enabled: true,
+    enabled: false,  // retired by wave system — left here for debug / rollback
     intervalMs: { isr: 3000, owa: 5000, payloadDelivery: 7000 },
   },
 };
