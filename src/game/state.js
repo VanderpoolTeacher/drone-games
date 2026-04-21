@@ -23,6 +23,13 @@ export const gameState = {
   structureHp: makeStructureMap(CONFIG.structures.maxHP),
   structureFlash: makeStructureMap(0),
   loseFlag: false,
+  wave: {
+    number: 1,
+    phase: 'prep',
+    prepMs: CONFIG.prepTimeBetweenWaves,
+    spawnProgress: [],
+  },
+  winFlag: false,
 };
 
 export function resetGameState() {
@@ -47,4 +54,9 @@ export function resetGameState() {
     gameState.structureFlash[id] = 0;
   }
   gameState.loseFlag = false;
+  gameState.wave.number = 1;
+  gameState.wave.phase = 'prep';
+  gameState.wave.prepMs = CONFIG.prepTimeBetweenWaves;
+  gameState.wave.spawnProgress.length = 0;
+  gameState.winFlag = false;
 }
