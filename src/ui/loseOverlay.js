@@ -7,7 +7,7 @@ export function renderLoseOverlay(ctx, state) {
   ctx.globalAlpha = 0.75;
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
-  ctx.restore();
+  ctx.globalAlpha = 1.0;
 
   ctx.font = '16px "Press Start 2P", monospace';
   ctx.textAlign = 'center';
@@ -18,4 +18,5 @@ export function renderLoseOverlay(ctx, state) {
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.fillStyle = CONFIG.colors.accentWhite;
   ctx.fillText('CLICK TO RESTART', CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 16);
+  ctx.restore();
 }

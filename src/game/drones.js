@@ -8,7 +8,7 @@ const ISR_JITTER_PX = 12;
 const TRAIL_SAMPLE_MS = 50;
 const TRAIL_MAX_SAMPLES = 8;
 const TRAIL_MAX_AGE_S = 1.2;
-const PAYLOAD_AOE_RADIUS = 48;
+const PAYLOAD_AOE_RADIUS = 48;  // TODO(tuning): promote to CONFIG.structures.payloadAoeRadius
 
 export function spawnDrone(state, type) {
   const corridors = MAP.corridors[type];
