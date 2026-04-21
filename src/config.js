@@ -9,7 +9,6 @@ export const CONFIG = {
   // Rendering
   virtualWidth: 480,
   virtualHeight: 270,
-  scale: 4,
   targetFPS: 60,
   topBarHeight: 24,
   bottomPaletteHeight: 32,

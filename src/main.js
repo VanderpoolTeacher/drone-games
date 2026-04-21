@@ -20,11 +20,10 @@ import { renderCRT } from './ui/crt.js';
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-canvas.width = CONFIG.virtualWidth * CONFIG.scale;
-canvas.height = CONFIG.virtualHeight * CONFIG.scale;
+canvas.width = CONFIG.virtualWidth;
+canvas.height = CONFIG.virtualHeight;
 
 ctx.imageSmoothingEnabled = false;
-ctx.scale(CONFIG.scale, CONFIG.scale);
 
 let prevMs = 0;
 
@@ -68,7 +67,10 @@ requestAnimationFrame(frame);
 
 function toVirtual(e) {
   const rect = canvas.getBoundingClientRect();
-  return [(e.clientX - rect.left) / CONFIG.scale, (e.clientY - rect.top) / CONFIG.scale];
+  return [
+    (e.clientX - rect.left) * (CONFIG.virtualWidth / rect.width),
+    (e.clientY - rect.top) * (CONFIG.virtualHeight / rect.height),
+  ];
 }
 
 canvas.addEventListener('mousemove', e => {
