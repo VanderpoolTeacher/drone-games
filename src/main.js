@@ -16,7 +16,7 @@ import { renderLoseOverlay } from './ui/loseOverlay.js';
 import { renderWaveTelegraph } from './ui/waveTelegraph.js';
 import { renderWinOverlay } from './ui/winOverlay.js';
 import { renderCRT } from './ui/crt.js';
-import { updateBriefing, renderBriefing, briefingClickHit } from './ui/briefing.js';
+import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } from './ui/briefing.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -103,6 +103,7 @@ canvas.addEventListener('click', e => {
         : paletteHit.type === 'hpm'
           ? { type: 'hpm', facingRad: -Math.PI / 2 }
           : { type: paletteHit.type };
+    collapseBriefing(gameState);
     return;
   }
 

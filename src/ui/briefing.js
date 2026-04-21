@@ -75,7 +75,7 @@ function drawPortrait(ctx, key, x, y, size) {
 }
 
 function drawBubble(ctx, state) {
-  ctx.globalAlpha = 0.9;
+  ctx.globalAlpha = 0.55;
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(BUBBLE_X, BUBBLE_Y, BUBBLE_W, BUBBLE_H);
   ctx.globalAlpha = 1.0;
@@ -193,4 +193,14 @@ export function briefingClickHit(state, vx, vy) {
     return false;
   }
   return false;
+}
+
+// Dismiss the open bubble (if any) without consuming the click. Called from
+// the palette click path so picking a defense type gets the briefing out of
+// the way immediately.
+export function collapseBriefing(state) {
+  if (state.briefing.phase === 'visible') {
+    state.briefing.phase = 'tab';
+    state.briefing.expandedOnce = true;
+  }
 }
