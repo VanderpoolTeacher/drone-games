@@ -122,3 +122,13 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Four Warden portrait keys (neutral / stern / angry / bloody) authored per-wave and for win/lose. Progression: neutral (wave 1-2) → stern (3-4) → angry (5). Lose = bloody. Win = neutral. One-liner Warden subtitle on both overlays; portrait deferred on overlays for v1.
 
 2026-04-21 — Briefing state transitions live entirely in updateBriefing (compares wave.number-1 to stored activeBriefingIndex during prep). No coupling to wave.js — boot, wave transitions, and reset all flow through the same reconciliation.
+
+2026-04-21 — SFX synthesized via Web Audio (no samples). Matches retro-arcade aesthetic, zero asset licensing, no repo bloat. 11 sounds total: 9 one-shots + 2 continuous (laser hum, RF jammer hiss).
+
+2026-04-21 — Binary mute only (on/off), no volume slider. Toggle via `M` key or 8×8 speaker icon in top-right chrome. State persisted to localStorage.
+
+2026-04-21 — AudioContext lazy-initialized on first sound; satisfies browser autoplay policy. First sound is always uiClick from a click handler — no resume() dance needed.
+
+2026-04-21 — Continuous SFX (laser, RF) tracked per-defense via boolean flags on the defense object (`laserFiring`, `rfJamming`). Start/stop transitions detected by comparing previous-frame flag to this-frame condition. Fade-out over 30 ms on stopSfx avoids click artifacts.
+
+2026-04-21 — SFX v1 out of scope: drone buzz (looped per drone — noise risk at swarm density), structure-hit per-contact (cluttered), wave-cleared chime (redundant with next waveStart), spatial panning, volume slider, music (issue #14).

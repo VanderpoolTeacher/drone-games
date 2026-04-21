@@ -28,6 +28,30 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (SFX pass)
+
+**Build:** feat/sfx — Web Audio synth; 11 sounds + mute
+**Session length:** ~10 min audio check + full run
+**Result:** N/A (feature pass)
+
+### What happened
+- Synth SFX fire at all 11 event types. Mute icon + M hotkey both work; state persists across reload.
+- Full run-through: waveStart kicks in on prep→active; interceptor, laser (with overheat transition), HPM pulse, RF jam hiss all audible.
+- Structure destroyed + lose stingers play in order.
+
+### What worked
+- Binary mute is enough; no one needs a slider in v1.
+- Synth feels arcade-authentic; no asset licensing headaches.
+- Laser hum stopping cleanly on overheat (no click artifact) confirms the 30 ms stopSfx fade.
+
+### What felt off
+- droneKill is a little samey across drone types — could tune per-type later (small/OWA/big Payload all want different impact weights).
+- RF jam hiss may need volume trim if multiple jammers are active (compound loudness).
+- waveStart three-note alert reads "retro" but maybe too cute for "incoming threat" — candidate for tone tuning.
+
+### Questions raised
+- Should mute also silence music (#14) via a shared master gain? Yes — bake it into the shared audio module when music lands.
+
 ## 2026-04-21 — solo (Commander Warden briefings)
 
 **Build:** feat/commander-briefing — src/ui/briefing.js + win/lose subtitles
