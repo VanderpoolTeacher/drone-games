@@ -37,6 +37,7 @@ export function updateWave(state, dt) {
         state.wave.prepMs = CONFIG.prepTimeBetweenWaves;
         state.wave.spawnProgress = [];
       } else {
+        // Final wave cleared — no bonus paid; winFlag fires instead.
         state.wave.phase = 'won';
         state.winFlag = true;
       }

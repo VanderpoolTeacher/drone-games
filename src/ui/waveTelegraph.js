@@ -50,12 +50,12 @@ function drawChevronAndIcon(ctx, edge, type, chevronColor) {
   } else if (edge === 'W') {
     cx = 8; cy = centerY;
     chevron = [[cx - CHEVRON_SIZE, cy - CHEVRON_SIZE], [cx - CHEVRON_SIZE, cy + CHEVRON_SIZE], [cx, cy]];
-    iconX = cx - CHEVRON_SIZE * 2 - ICON_GAP - ICON_SIZE;
+    iconX = cx + CHEVRON_SIZE + ICON_GAP;
     iconY = cy - ICON_SIZE / 2;
   } else if (edge === 'E') {
     cx = CONFIG.virtualWidth - 8; cy = centerY;
     chevron = [[cx + CHEVRON_SIZE, cy - CHEVRON_SIZE], [cx + CHEVRON_SIZE, cy + CHEVRON_SIZE], [cx, cy]];
-    iconX = cx + CHEVRON_SIZE * 2 + ICON_GAP;
+    iconX = cx - CHEVRON_SIZE - ICON_GAP - ICON_SIZE;
     iconY = cy - ICON_SIZE / 2;
   } else {
     return;
