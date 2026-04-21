@@ -108,3 +108,11 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Win condition: surviving all 5 waves with ≥1 structure intact. CITY HELD overlay mirrors DEFENSE FAILED pattern (75% bgDark scrim, 16 px Press Start 2P, CLICK TO RESTART hint, click/Space/Enter to reset).
 
 2026-04-21 — main.js update block now guards on !loseFlag && !winFlag. Restart handlers fire on either flag. resetGameState extended to reset wave state + winFlag.
+
+2026-04-21 — CRT post-process is a canvas pass, not a CSS filter. CSS filters don't align to the pixel grid and would blur the retro look. The canvas pass keeps 1-px scanline rows aligned with virtual pixels at any display scale.
+
+2026-04-21 — CRT parameters: 1-px horizontal scanlines every 2 px at 15% alpha; radial vignette transparent center → bgDark at 20% alpha at corners. Both passes use bgDark (derived RGB for the gradient stops since canvas gradients can't reference named palette tokens).
+
+2026-04-21 — CRT renders AFTER win/lose overlays. STYLE.md calls for a "final overlay"; taking that literally means scanlines cover overlay text too, for a unified look. At these alphas the 16 px Press Start 2P text stays readable. One-line reorder in main.js if playtest flips this.
+
+2026-04-21 — CRT v1 out of scope: chromatic aberration, screen curvature, bloom, per-frame noise, CSS-filter alternative, enable/disable toggle.

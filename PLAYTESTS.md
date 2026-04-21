@@ -28,6 +28,27 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (CRT post-process)
+
+**Build:** feat/crt-postprocess — src/ui/crt.js wired last in frame()
+**Session length:** ~5 min render check
+**Result:** N/A (visual pass, not a play session)
+
+### What happened
+- Scanlines + vignette render on top of gameplay and both overlays.
+- Verified prep, active, lose, and win states with CRT active.
+
+### What worked
+- Scanlines read as "CRT" without obscuring charge bars, drone colors, or legend text.
+- Vignette darkens corners subtly; no visible halo at the map edge.
+- Overlay headlines (DEFENSE FAILED / CITY HELD) stay legible under the final pass.
+
+### What felt off
+- Nothing — alphas (15% / 20%) feel right on first look. Leaving as-is; will revisit if an outside playtest flags readability.
+
+### Questions raised
+- Real sprites + SFX still pending before the v1 class submission.
+
 ## 2026-04-21 — solo (Wave system + win condition)
 
 **Build:** wave system plan complete — full v1 loop playable end-to-end

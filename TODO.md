@@ -20,7 +20,7 @@ Running task list. Check things off, add as they come up. Scratchpad, not a proj
 - [x] Step 6: critical structures with HP, damage, lose + win both live
 - [ ] Step 7: HUD — resources (done), wave counter (placeholder only), structure HP
 - [ ] Step 8: tuning pass — balance via playtesting
-- [ ] Step 9: visual polish — real pixel sprites, CRT post-processing
+- [~] Step 9: visual polish — CRT post-processing done; real pixel sprites still pending
 
 ## Later
 
