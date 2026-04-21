@@ -128,12 +128,16 @@ export const CONFIG = {
       drones: [
         { type: 'isr', count: 5, spawnInterval: 1500 },
       ],
+      briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. You got this.",
+      portrait: 'neutral',
     },
     // Wave 2: ISR scaled — teach range and coverage
     {
       drones: [
         { type: 'isr', count: 8, spawnInterval: 1200 },
       ],
+      briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges.",
+      portrait: 'neutral',
     },
     // Wave 3: RF Jammer breaks on OWA — forces Interceptor purchase
     {
@@ -141,6 +145,8 @@ export const CONFIG = {
         { type: 'isr', count: 6, spawnInterval: 1200 },
         { type: 'owa', count: 5, spawnInterval: 1800 },
       ],
+      briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east.",
+      portrait: 'stern',
     },
     // Wave 4: Armor appears — forces Laser/HPM purchase
     {
@@ -148,6 +154,8 @@ export const CONFIG = {
         { type: 'owa', count: 8, spawnInterval: 1200 },
         { type: 'payloadDelivery', count: 3, spawnInterval: 3000 },
       ],
+      briefing: "Payload birds inbound west. Those are armored — interceptors'll chip at 'em but laser burns through fast. Keep the east locked down too.",
+      portrait: 'stern',
     },
     // Wave 5: Saturation — HPM becomes valuable for crowd control
     {
@@ -156,9 +164,18 @@ export const CONFIG = {
         { type: 'owa', count: 12, spawnInterval: 800 },
         { type: 'payloadDelivery', count: 4, spawnInterval: 2500 },
       ],
+      briefing: "All of it. Saturation run — ISR, OWA, Payload, everything. You need the full stack. HPM earns its keep here. One pulse, many drones. Good luck, Watchfloor.",
+      portrait: 'angry',
     },
   ],
   prepTimeBetweenWaves: 15000,       // ms — player gets 15s between waves
+  warden: {
+    win: "City held. Good work. Red Cell'll remember this one.",
+    winPortrait: 'neutral',
+    lose: "They got through. Debrief hurts, but we learn. Again.",
+    losePortrait: 'bloody',
+    autoCollapseMs: 8000,
+  },
 
   // Colors (mirrors STYLE.md palette — keep in sync)
   // threatRedMid/Dim are derived quantization steps for trail fading.
@@ -185,3 +202,25 @@ export const CONFIG = {
     intervalMs: { isr: 3000, owa: 5000, payloadDelivery: 7000 },
   },
 };
+
+// Drift check: each wave's briefing text must mention every drone type
+// present in that wave. Shallow keyword search; warns on drift at boot.
+function validateBriefings() {
+  const keyword = { isr: 'ISR', owa: 'OWA', payloadDelivery: 'Payload' };
+  for (let i = 0; i < CONFIG.waves.length; i++) {
+    const w = CONFIG.waves[i];
+    if (!w.briefing) continue;
+    const types = new Set(w.drones.map(d => d.type));
+    const missing = [];
+    for (const t of types) {
+      const kw = keyword[t];
+      if (!kw) continue;
+      if (!w.briefing.includes(kw)) missing.push(kw);
+    }
+    if (missing.length) {
+      console.warn(`[briefing] wave ${i + 1} missing mention of: ${missing.join(', ')}`);
+    }
+  }
+}
+
+validateBriefings();
