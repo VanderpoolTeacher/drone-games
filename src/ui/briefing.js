@@ -2,12 +2,13 @@ import { CONFIG } from '../config.js';
 
 const PORTRAIT_SIZE = 64;
 const PORTRAIT_X = 4;
-const PORTRAIT_Y = CONFIG.virtualHeight - 68;   // 202
+// Sits above the bottom palette strip with a 4-px gap.
+const PORTRAIT_Y = CONFIG.virtualHeight - CONFIG.bottomPaletteHeight - 4 - PORTRAIT_SIZE;  // 170
 
 const BUBBLE_X = 72;
-const BUBBLE_Y = CONFIG.virtualHeight - 84;     // 186
 const BUBBLE_W = 320;
 const BUBBLE_H = 80;
+const BUBBLE_Y = CONFIG.virtualHeight - CONFIG.bottomPaletteHeight - 4 - BUBBLE_H;  // 154
 const BUBBLE_PAD = 4;
 
 const TAB_X = 4;
@@ -82,7 +83,7 @@ function drawBubble(ctx, state) {
   ctx.lineWidth = 1;
   ctx.strokeRect(BUBBLE_X + 0.5, BUBBLE_Y + 0.5, BUBBLE_W - 1, BUBBLE_H - 1);
 
-  const tailY = 210;
+  const tailY = PORTRAIT_Y + 8;
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.beginPath();
   ctx.moveTo(BUBBLE_X, tailY - 3);
