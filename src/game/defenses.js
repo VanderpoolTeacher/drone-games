@@ -142,6 +142,33 @@ export function renderDefenses(ctx, state) {
     } else if (d.type === 'laser') {
       ctx.fillStyle = d.overheated ? CONFIG.colors.alertAmber : CONFIG.colors.accentWhite;
       ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y - DEFENSE_SIZE / 2) + 1, 2, 2);
+    } else if (d.type === 'hpm') {
+      const cfg = CONFIG.defenses.hpm;
+
+      const wedgeX = Math.floor(d.x + Math.cos(d.facingRad) * (DEFENSE_SIZE / 2 - 2)) - 1;
+      const wedgeY = Math.floor(d.y + Math.sin(d.facingRad) * (DEFENSE_SIZE / 2 - 2)) - 1;
+      ctx.fillStyle = CONFIG.colors.accentWhite;
+      ctx.fillRect(wedgeX, wedgeY, 2, 2);
+
+      const chargeFrac = 1 - Math.min(1, d.cooldownMs / cfg.pulseCooldown);
+      const barLen = Math.floor(chargeFrac * (DEFENSE_SIZE - 2));
+      if (barLen > 0) {
+        ctx.fillStyle = CONFIG.colors.alertAmber;
+        ctx.fillRect(Math.floor(d.x - DEFENSE_SIZE / 2) + 1, Math.floor(d.y - DEFENSE_SIZE / 2) - 1, barLen, 1);
+      }
+
+      if (d.pulseFlashFrame > 0) {
+        const halfAngleRad = cfg.coneHalfAngleDeg * Math.PI / 180;
+        const flashFrac = (4 - d.pulseFlashFrame) / 3;
+        const flashR = cfg.coneRange * flashFrac;
+        ctx.strokeStyle = CONFIG.colors.friendlyCyan;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.arc(d.x, d.y, flashR, d.facingRad - halfAngleRad, d.facingRad + halfAngleRad);
+        ctx.closePath();
+        ctx.stroke();
+      }
     }
   }
 }
