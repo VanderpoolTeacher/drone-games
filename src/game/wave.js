@@ -4,7 +4,7 @@ import { spawnDrone } from './drones.js';
 export function updateWave(state, dt) {
   if (state.wave.phase === 'prep') {
     state.wave.prepMs -= dt * 1000;
-    if (state.wave.prepMs < 0.01) {
+    if (state.wave.prepMs <= 0) {
       state.wave.phase = 'active';
       state.wave.spawnProgress = CONFIG.waves[state.wave.number - 1].drones.map(d => ({
         type: d.type,
