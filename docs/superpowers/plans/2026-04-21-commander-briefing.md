@@ -71,7 +71,7 @@ Replace the `waves: [ ... ]` block in `src/config.js` (currently lines 125–160
         { type: 'owa', count: 8, spawnInterval: 1200 },
         { type: 'payloadDelivery', count: 3, spawnInterval: 3000 },
       ],
-      briefing: "Payload birds inbound west. Those are armored — interceptors'll chip at 'em but laser burns through fast. Keep the east locked down too.",
+      briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked.",
       portrait: 'stern',
     },
     // Wave 5: Saturation — HPM becomes valuable for crowd control

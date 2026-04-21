@@ -150,7 +150,7 @@ Final wording is tunable, but these set the tone. Each one mentions every drone 
 | 1 | neutral | First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. You got this. |
 | 2 | neutral | More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges. |
 | 3 | stern | They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east. |
-| 4 | stern | Payload birds inbound west. Those are armored — interceptors'll chip at 'em but laser burns through fast. Keep the east locked down too. |
+| 4 | stern | Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked. |
 | 5 | angry | All of it. Saturation run — ISR, OWA, Payload, everything. You need the full stack. HPM earns its keep here. One pulse, many drones. Good luck, Watchfloor. |
 
 ### Drift validator
