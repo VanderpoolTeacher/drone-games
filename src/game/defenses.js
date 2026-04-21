@@ -1,6 +1,7 @@
 import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 import { tileToPixel } from './drones.js';
+import { playSfx, startSfx, stopSfx } from '../audio/sfx.js';
 
 export function placeDefense(state, type, tile, facingRad = 0) {
   const cfg = CONFIG.defenses[type];
@@ -18,6 +19,8 @@ export function placeDefense(state, type, tile, facingRad = 0) {
     overheated: false,
     facingRad,
     pulseFlashFrame: 0,
+    laserFiring: false,
+    rfJamming: false,
   };
   state.defenses.push(defense);
   state.resources -= cfg.cost;
@@ -33,12 +36,17 @@ export function updateDefenses(state, dt) {
       const target = pickClosestToStructureTarget(state, d, CONFIG.defenses.interceptor.range);
       if (!target) { d.targetId = null; continue; }
       fireInterceptor(state, d, target);
+      playSfx('interceptorLaunch');
       d.cooldownMs = CONFIG.defenses.interceptor.cooldown;
       d.targetId = target.id;
     } else if (d.type === 'rfJammer') {
-      // area effect handled by applyJamEffects; nothing per-defense
+      // area effect handled by applyJamEffects; jam-sfx transitions also handled there.
     } else if (d.type === 'laser') {
       if (d.overheated) {
+        if (d.laserFiring) {
+          stopSfx('laser-' + d.id);
+          d.laserFiring = false;
+        }
         if (d.cooldownMs <= 0) {
           d.overheated = false;
           d.heatMs = 0;
@@ -51,13 +59,24 @@ export function updateDefenses(state, dt) {
         const eff = CONFIG.defenses.laser.effectivenessVs[target.type] ?? 1;
         target.hp -= CONFIG.defenses.laser.dps * dt * eff;
         d.heatMs = Math.min(d.heatMs + dt * 1000, CONFIG.defenses.laser.overheatTime);
+        if (!d.laserFiring) {
+          startSfx('laserFire', 'laser-' + d.id);
+          d.laserFiring = true;
+        }
         if (d.heatMs >= CONFIG.defenses.laser.overheatTime) {
           d.overheated = true;
           d.cooldownMs = CONFIG.defenses.laser.cooldownTime;
+          stopSfx('laser-' + d.id);
+          d.laserFiring = false;
+          playSfx('laserOverheat');
         }
         d.targetId = target.id;
       } else {
         d.heatMs = Math.max(0, d.heatMs - dt * 1000);
+        if (d.laserFiring) {
+          stopSfx('laser-' + d.id);
+          d.laserFiring = false;
+        }
         d.targetId = null;
       }
     } else if (d.type === 'hpm') {
@@ -76,6 +95,7 @@ export function updateDefenses(state, dt) {
       d.cooldownMs = cfg.pulseCooldown;
       d.pulseFlashFrame = 3;
       d.targetId = victims[0].id;
+      playSfx('hpmPulse');
     }
   }
 }
@@ -175,6 +195,11 @@ export function renderDefenses(ctx, state) {
 
 export function applyJamEffects(state) {
   const cfg = CONFIG.defenses.rfJammer;
+
+  // Reset per-defense jamming flag; we'll set true for any jammer with
+  // at least one drone in range this frame.
+  const jammersActiveThisFrame = new Set();
+
   for (const d of state.drones) {
     if (d.hp <= 0 || d.phase === 'done') { d.speedMultiplier = 1; continue; }
 
@@ -184,11 +209,25 @@ export function applyJamEffects(state) {
       const dx = d.x - def.x;
       const dy = d.y - def.y;
       if (Math.hypot(dx, dy) > cfg.range) continue;
+      jammersActiveThisFrame.add(def.id);
       const eff = cfg.effectivenessVs[d.type] ?? 0;
       const mult = 1 - (1 - cfg.slowFactor) * eff;
       if (mult < minMult) minMult = mult;
     }
     d.speedMultiplier = minMult;
+  }
+
+  // Emit start/stop transitions for each jammer.
+  for (const def of state.defenses) {
+    if (def.type !== 'rfJammer') continue;
+    const active = jammersActiveThisFrame.has(def.id);
+    if (active && !def.rfJamming) {
+      startSfx('rfJam', 'rf-' + def.id);
+      def.rfJamming = true;
+    } else if (!active && def.rfJamming) {
+      stopSfx('rf-' + def.id);
+      def.rfJamming = false;
+    }
   }
 }
 

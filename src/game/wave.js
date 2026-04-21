@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { spawnDrone } from './drones.js';
+import { playSfx } from '../audio/sfx.js';
 
 export function updateWave(state, dt) {
   if (state.wave.phase === 'prep') {
@@ -13,6 +14,7 @@ export function updateWave(state, dt) {
         timerMs: 0,
         spawned: 0,
       }));
+      playSfx('waveStart');
     }
     return;
   }
@@ -40,6 +42,7 @@ export function updateWave(state, dt) {
         // Final wave cleared — no bonus paid; winFlag fires instead.
         state.wave.phase = 'won';
         state.winFlag = true;
+        playSfx('win');
       }
     }
     return;

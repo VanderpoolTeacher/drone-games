@@ -1,6 +1,7 @@
 import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 import { applyDamage } from './structures.js';
+import { playSfx } from '../audio/sfx.js';
 
 const DRONE_SIZE = 16;
 const WAYPOINT_REACH_PX = 2;
@@ -113,6 +114,7 @@ export function updateDrones(state, dt) {
   for (const d of state.drones) {
     if (d.hp <= 0 && d.phase !== 'done') {
       state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
+      playSfx('droneKill');
       state.resources += CONFIG.resourcesPerDroneKill[d.type] ?? 0;
       d.phase = 'done';
     }
