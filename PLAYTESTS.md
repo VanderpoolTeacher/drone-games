@@ -28,6 +28,33 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-19 — solo (Laser)
+
+**Build:** Laser plan complete (third defense live)
+**Session length:** ~90 s soak
+**Result:** All three required defenses now present; first overheat cycle observed
+
+### What happened
+- Placed Laser at tile (8, 5) covering the Payload corridor + one at (12, 5) for redundancy
+- Payload drones died in ~2.5 s of continuous beam; lens started amber (overheat) about halfway through the second Payload in a row
+- OWAs melted in ~0.4 s each; 3-4 OWAs in a row pushed the Laser to overheat
+- ISR took ~1.7 s each, visibly inefficient vs the Interceptor
+
+### What worked
+- Beam is highly readable even without polish — a single pixel is enough to telegraph "this drone is being shot"
+- Lens color flip (white → amber) reads as overheat without explanation
+- Passive cooling during gaps in drone arrivals means one Laser can clear sparse waves indefinitely
+- Cost (200) feels right vs per-kill damage — expensive upfront but cheap per kill on OWA/Payload corridors
+
+### What felt off
+- No audio or FX on overheat onset — it just quietly stops. Easy to miss in heavy action. Defer to polish.
+- Laser accent when overheated (amber 2×2 at top) visually matches Interceptor accent. Real polish-plan sprites should differentiate.
+- With three defenses placed, the visual density gets high during wave 5-equivalent saturation. Legend + sprite accents help but a cleaner render pass might be worth a pass later.
+
+### Questions raised
+- Should overheat be accompanied by a 1-frame visual "pop" on the Laser to make it noticeable? Polish plan concern.
+- Should the Laser prioritize higher-HP drones (Payload) over low-HP (OWA) since it overkills OWAs? Currently "closest to structure" — works well in practice but might tune later.
+
 ## 2026-04-19 — solo (RF Jammer)
 
 **Build:** RF Jammer plan complete (second defense live)

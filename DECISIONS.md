@@ -66,3 +66,11 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-19 — Multi-jammer stacking: take the minimum multiplier across all in-range jammers (strongest slow wins; no multiplicative stacking). Prevents jammer-spam exploits and keeps "two jammers for coverage, not cumulative slow" intuition.
 
 2026-04-19 — Defense placeholder accents: Interceptor = 2×2 amber tip at top; RF Jammer = 4×2 accent-white "dish" protruding above the cyan square. Keeps the two types instantly distinguishable pre-real-sprites.
+
+2026-04-19 — Laser overheat model: heatMs accumulates while firing (dt*1000 per tick), cools passively when idle (same rate), overheats at 3000ms and enters cooldown (2000ms via reused cooldownMs field). On cooldown complete → overheated=false, heatMs=0. Fire/idle cycle encodes "thermal management without explanation" — player learns by watching the lens color.
+
+2026-04-19 — Targeting helper shared between Interceptor and Laser: pickClosestToStructureTarget(state, d, range). Both defenses prioritize the drone whose minimum distance to any structure is smallest; Interceptor cares about it because it fires once per cooldown, Laser cares because it can only sustain one target at a time.
+
+2026-04-19 — Laser beam rendered each frame from live target position (not fire-and-forget like projectile). Separate renderBeams function so the primitive stays decoupled from projectile physics. Beam = 1-pixel accentWhite line.
+
+2026-04-19 — Laser sprite lens: accentWhite 2×2 at top while cold/firing, shifts to alertAmber while overheated. Color-state signaling; silhouette differentiation deferred to polish plan's real sprites.
