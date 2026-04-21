@@ -39,13 +39,13 @@ All coordinates in virtual pixels (480×270).
   - Border: 1-px `CONFIG.colors.gridLine`.
   - Padding: 4 px inner.
   - **Tail:** 3-px filled triangle pointing from bubble-left toward portrait at head-height (`y ≈ 210`). Same fill/border as bubble.
-- **Text:** `Press Start 2P`, 8 px, `CONFIG.colors.offWhite`.
+- **Text:** `Press Start 2P`, 8 px, `CONFIG.colors.accentWhite`.
   - Line height: 11 px.
   - Word-wrap: manual, to bubble inner width (~312 px after padding + tail offset).
 - **Collapsed tab:** 16×16 at same bottom-left corner `(4, 250)`.
   - 14×14 center-crop of the current portrait (face only, no hat/shoulders), drawn at 14×14.
-  - 1-px `gridLine` border.
-  - A 2×2 `alertAmber` dot in top-right of the tab, blinks at 2 Hz while a briefing is unread; solid once player has expanded it at least once.
+  - 1-px `CONFIG.colors.gridLine` border.
+  - A 2×2 `CONFIG.colors.alertAmber` dot in top-right of the tab, blinks at 2 Hz while a briefing is unread; solid once player has expanded it at least once.
 - **Render order:** after `renderPalette`, before `renderLoseOverlay`/`renderWinOverlay`/`renderCRT`. Scanlines (CRT) cover the portrait for a unified look.
 
 ### Canvas edge adjustments
@@ -76,20 +76,22 @@ Reset by `resetGameState()` to the above default.
 ### Transitions
 
 ```
-idle
-  → visible      when wave.phase transitions to 'prep' (set activeBriefingIndex = wave.number - 1, visibleMs = 0)
+* (during prep, wave index changed)
+  → visible       set phase='visible', visibleMs=0, expandedOnce=false, activeBriefingIndex=wave.number-1
 
 visible
-  → tab          when visibleMs >= CONFIG.warden.autoCollapseMs (8000)
+  → tab           when visibleMs >= CONFIG.warden.autoCollapseMs (8000)
 
 tab
-  → visible      on click inside tab rect (set expandedOnce = true; no auto-collapse second time)
+  → visible       on click inside tab rect (set expandedOnce=true; no auto-collapse second time)
 
 visible (post-expand)
-  → tab          on click inside bubble rect (manual collapse)
+  → tab           on click inside bubble rect (manual collapse)
 
-* → idle         on resetGameState() (full game reset)
+* → idle          on resetGameState() (full game reset; first frame after reset re-enters 'visible' via the prep detector)
 ```
+
+All transitions live inside `updateBriefing` — it compares `wave.number - 1` to `briefing.activeBriefingIndex` during `prep` and re-seeds state when they differ. This handles boot, wave transitions, and post-reset uniformly without coupling to `wave.js`.
 
 Briefing is *independent* of wave phase once shown — tab persists through `active` phase, disappears on `won`/`lose` overlays via render guard (see below).
 
@@ -101,8 +103,9 @@ No separate onboarding state. The wave-1 briefing text simply starts with a welc
 
 Briefing bubble/tab is hidden while `state.loseFlag` or `state.winFlag` is true (render-time guard in `renderBriefing`). Instead:
 
-- `renderLoseOverlay` renders `CONFIG.warden.lose` as an 8 px subtitle under `DEFENSE FAILED`, at `CONFIG.colors.textSecondary` color.
+- `renderLoseOverlay` renders `CONFIG.warden.lose` as an 8 px subtitle under `DEFENSE FAILED`, at `CONFIG.colors.accentWhite` color. Positioned ~12 px below the headline; uses existing 75% `bgDark` scrim.
 - `renderWinOverlay` renders `CONFIG.warden.win` similarly under `CITY HELD`, using the same pattern.
+- The "CLICK TO RESTART" hint moves down ~12 px to accommodate the new subtitle.
 
 No portrait on the overlays in v1 (stay close to existing overlay style). Portrait key in config is still authored for future use.
 
@@ -214,7 +217,6 @@ export function briefingClickHit(state, vx, vy) { … }  // returns true if clic
 | `src/ui/briefing.js` | Create | update / render / click-hit logic; portrait cache |
 | `src/config.js` | Modify | add `briefing` + `portrait` per wave; add `warden` block; add `validateBriefings()` call on load |
 | `src/game/state.js` | Modify | add `briefing` slice to `gameState` + `resetGameState` |
-| `src/game/wave.js` | Modify | on `prep` entry, set `state.briefing = { phase: 'visible', visibleMs: 0, expandedOnce: false, activeBriefingIndex: wave.number - 1 }` |
 | `src/main.js` | Modify | call `updateBriefing` in update block; call `renderBriefing` after palette, before overlays; wire `briefingClickHit` into click handler |
 | `src/ui/loseOverlay.js` | Modify | render `CONFIG.warden.lose` as subtitle under DEFENSE FAILED |
 | `src/ui/winOverlay.js` | Modify | render `CONFIG.warden.win` as subtitle under CITY HELD |
