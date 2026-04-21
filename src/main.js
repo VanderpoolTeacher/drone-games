@@ -36,7 +36,7 @@ function frame(tMs) {
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 
-  renderMap(ctx, tMs);
+  renderMap(ctx, tMs, gameState);
   renderDefenses(ctx, gameState);
   renderDrones(ctx, gameState);
   renderBeams(ctx, gameState);

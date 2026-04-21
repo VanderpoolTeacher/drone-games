@@ -1,11 +1,11 @@
 import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 
-export function renderMap(ctx, tMs) {
+export function renderMap(ctx, tMs, state) {
   drawTiles(ctx);
   drawCoastline(ctx);
   drawZones(ctx, tMs);
-  drawStructures(ctx);
+  drawStructures(ctx, state);
 }
 
 function drawTiles(ctx) {
@@ -71,20 +71,34 @@ function drawCoastline(ctx) {
   }
 }
 
-function drawStructures(ctx) {
+function drawStructures(ctx, state) {
   const { tileSize, structures, padTop } = MAP;
   const size = 32;
 
   for (const s of structures) {
     const cx = s.tile.x * tileSize + tileSize / 2;
     const cy = CONFIG.topBarHeight + padTop + s.tile.y * tileSize + tileSize / 2;
+    const hp = state.structureHp[s.id];
+    const maxHp = CONFIG.structures.maxHP;
+    const flash = state.structureFlash[s.id] > 0;
 
-    ctx.fillStyle = CONFIG.colors.accentWhite;
+    ctx.fillStyle = bodyColorForHp(hp, maxHp, flash);
     ctx.fillRect(Math.floor(cx - size / 2), Math.floor(cy - size / 2), size, size);
 
-    ctx.fillStyle = CONFIG.colors.friendlyCyan;
-    ctx.fillRect(Math.floor(cx) - 1, Math.floor(cy) - 1, 2, 2);
+    if (hp > 0) {
+      ctx.fillStyle = CONFIG.colors.friendlyCyan;
+      ctx.fillRect(Math.floor(cx) - 1, Math.floor(cy) - 1, 2, 2);
+    }
   }
+}
+
+function bodyColorForHp(hp, maxHp, flash) {
+  if (flash) return CONFIG.colors.threatRed;
+  if (hp <= 0) return CONFIG.colors.gridLine;
+  const frac = hp / maxHp;
+  if (frac <= 0.25) return CONFIG.colors.threatRed;
+  if (frac <= 0.5) return CONFIG.colors.alertAmber;
+  return CONFIG.colors.accentWhite;
 }
 
 function drawZones(ctx, tMs) {
