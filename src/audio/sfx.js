@@ -264,6 +264,114 @@ function playLose() {
   osc.stop(t + 0.81);
 }
 
+// --- Continuous sounds -------------------------------------------------
+
+// id → { nodes: [...], gain } — nodes are stopped and disconnected on stopSfx.
+const continuous = new Map();
+
+function makeLaserFireNodes() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.value = 220;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 2000;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0;
+  gain.gain.setTargetAtTime(0.2, t, 0.02);    // 20ms fade-in
+
+  // LFO on gain for subtle amp wobble at 8 Hz.
+  const lfo = ctx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 8;
+  const lfoAmp = ctx.createGain();
+  lfoAmp.gain.value = 0.03;       // ±3% wobble
+  lfo.connect(lfoAmp);
+  lfoAmp.connect(gain.gain);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(masterGain);
+  osc.start(t);
+  lfo.start(t);
+
+  return { osc, lfo, gain };
+}
+
+function makeRfJamNodes() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+
+  // Looping 1-second noise buffer.
+  const src = ctx.createBufferSource();
+  src.buffer = makeNoiseBuffer(ctx, 1.0);
+  src.loop = true;
+
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 1000;
+  bp.Q.value = 1.5;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0;
+  gain.gain.setTargetAtTime(0.15, t, 0.03);   // 30ms fade-in
+
+  // Slow amp modulation at 3 Hz for that "electronic hum" feel.
+  const lfo = ctx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 3;
+  const lfoAmp = ctx.createGain();
+  lfoAmp.gain.value = 0.04;
+  lfo.connect(lfoAmp);
+  lfoAmp.connect(gain.gain);
+
+  src.connect(bp);
+  bp.connect(gain);
+  gain.connect(masterGain);
+  src.start(t);
+  lfo.start(t);
+
+  return { src, lfo, gain };
+}
+
+const CONTINUOUS_FACTORIES = {
+  laserFire: makeLaserFireNodes,
+  rfJam: makeRfJamNodes,
+};
+
+export function startSfx(name, id) {
+  if (continuous.has(id)) return;   // idempotent — already running
+  const factory = CONTINUOUS_FACTORIES[name];
+  if (!factory) {
+    console.warn('[sfx] unknown continuous sound: ' + name);
+    return;
+  }
+  continuous.set(id, factory());
+}
+
+export function stopSfx(id) {
+  const entry = continuous.get(id);
+  if (!entry) return;
+  continuous.delete(id);
+
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  // Ramp gain to 0 over 30ms to avoid click, then hard-stop.
+  entry.gain.gain.cancelScheduledValues(t);
+  entry.gain.gain.setValueAtTime(entry.gain.gain.value, t);
+  entry.gain.gain.linearRampToValueAtTime(0, t + 0.03);
+
+  const stopAt = t + 0.05;
+  if (entry.osc) entry.osc.stop(stopAt);
+  if (entry.src) entry.src.stop(stopAt);
+  if (entry.lfo) entry.lfo.stop(stopAt);
+}
+
 // --- Public API --------------------------------------------------------
 
 const ONE_SHOTS = {
