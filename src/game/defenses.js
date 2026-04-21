@@ -48,7 +48,7 @@ export function updateDefenses(state, dt) {
       if (target) {
         const eff = CONFIG.defenses.laser.effectivenessVs[target.type] ?? 1;
         target.hp -= CONFIG.defenses.laser.dps * dt * eff;
-        d.heatMs += dt * 1000;
+        d.heatMs = Math.min(d.heatMs + dt * 1000, CONFIG.defenses.laser.overheatTime);
         if (d.heatMs >= CONFIG.defenses.laser.overheatTime) {
           d.overheated = true;
           d.cooldownMs = CONFIG.defenses.laser.cooldownTime;
