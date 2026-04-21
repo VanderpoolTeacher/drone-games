@@ -17,7 +17,7 @@ Running task list. Check things off, add as they come up. Scratchpad, not a proj
 - [x] Step 3: resource system + click-to-place UI (done with Interceptor plan)
 - [ ] Step 4: wave system with prep phase between waves (replaces the dev auto-spawner)
 - [ ] Step 5: all drone types + all defenses landed (see Steps 2b-2d above)
-- [ ] Step 6: critical structures with HP, damage, win/lose conditions
+- [~] Step 6: critical structures with HP, damage, lose condition done; win deferred to wave system (Step 4)
 - [ ] Step 7: HUD — resources (done), wave counter (placeholder only), structure HP
 - [ ] Step 8: tuning pass — balance via playtesting
 - [ ] Step 9: visual polish — real pixel sprites, CRT post-processing

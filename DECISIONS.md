@@ -83,4 +83,16 @@ YYYY-MM-DD — Decision. Reason.
 
 2026-04-19 — HPM render: always-on white facing wedge on sprite edge (indicates orientation); amber top-edge charge bar fills left-to-right as cooldown ticks; on pulse, 3-frame expanding cone-sweep at 33% / 66% / 100% of coneRange.
 
+2026-04-21 — Structure HP lives on gameState (structureHp map by id) instead of on MAP.structures. Keeps MAP read-only as data, runtime state on gameState.
+
+2026-04-21 — Damage model: OWA terminal strike = 30 dmg to d.targetId; Payload drop = 60 dmg to every structure within 48 px of the drop point pixel. Payload AoE radius chosen so current drop points threaten one structure each (isolates AoE behavior from adjacency on current map).
+
+2026-04-21 — Destroyed structures stay on map as dim gridLine-colored ruins. OWA/Payload hitting a destroyed structure is a no-op (applyDamage early-returns). Keeps visual memory of what was lost.
+
+2026-04-21 — Hit flash: 2-frame threat-red body color overriding all other tiers. Triggered on every damaging applyDamage call. Decayed by updateStructures (runs every frame including under loseFlag).
+
+2026-04-21 — Lose state: all three structures at 0 HP. Freezes drone/defense/projectile/jammer updates; overlay renders DEFENSE FAILED + CLICK TO RESTART. Click anywhere or press Space/Enter calls resetGameState() for in-place reset (drones/explosions/defenses cleared, resources back to startingResources, structures back to maxHP).
+
+2026-04-21 — Win condition deferred to wave system plan. Lose alone doesn't depend on waves and is the cleanest first half of the win/lose pair.
+
 2026-04-19 — v1 defense roster complete: RF Jammer (soft-kill area slow), Interceptor (hard-kill projectile), Laser (hard-kill continuous beam with overheat), HPM (directed-energy cone AoE pulse). All four palette buttons live.

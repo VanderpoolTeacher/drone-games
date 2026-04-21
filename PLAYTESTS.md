@@ -28,6 +28,33 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (Structure HP + lose condition)
+
+**Build:** structure-hp plan complete — drones now matter
+**Session length:** ~3 min (two deaths, one survival run)
+**Result:** Game has stakes for the first time
+
+### What happened
+- Run 1: no defenses placed, watched OWAs eat City Hall in 4 hits, Comms in 4 hits, Power in 4 hits. DEFENSE FAILED at ~45s.
+- Run 2: after restart, placed HPM aimed south at (8,5), Interceptor at (7,6), Laser at (12,5). Survived indefinitely.
+- Payload drops only damaging one structure each (AoE radius 48 ≈ 2 tiles means adjacent structures on current map don't chain)
+
+### What worked
+- HP tier colors read perfectly — amber = "this is getting concerning", red = "panic", gridLine ruin = "too late"
+- 2-frame flash feels weighty; confirms hits without being gaudy
+- DEFENSE FAILED overlay reads clearly; restart is one click away — friction-free replay loop
+- Drones freeze on loss but explosions finish animating — feels deliberate, not crashed
+- resetGameState wipes cleanly; second run starts fresh with no stale state
+
+### What felt off
+- No audio on structure destroyed or on lose — visual only feels muted for such a big moment
+- No on-screen HP number. Visual tiers work but "am I at 60 or 35" is hard to read precisely
+- Payload AoE radius (48 px) is conservative — on current map no Payload threatens two structures. During tuning, might widen to 72–96 to create real multi-hit moments. Logged for later.
+
+### Questions raised
+- Should destroyed structures also fade their sprite over a few frames instead of snap-to-gray? Polish plan.
+- When the wave system lands, we need a WIN overlay too. Similar primitive: green-toned "CITY HELD" overlay with a "CONTINUE" or "RESTART" hint.
+
 ## 2026-04-19 — solo (HPM)
 
 **Build:** HPM plan complete — v1 defense roster shipped
