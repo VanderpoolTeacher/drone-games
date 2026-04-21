@@ -1,5 +1,5 @@
 import { CONFIG } from './config.js';
-import { gameState } from './game/state.js';
+import { gameState, resetGameState } from './game/state.js';
 import { MAP } from './game/map.js';
 import { renderMap } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
@@ -10,6 +10,8 @@ import { updateExplosions, renderExplosions } from './game/explosions.js';
 import { renderDrones, updateDrones } from './game/drones.js';
 import { updateDefenses, renderDefenses, placeDefense, applyJamEffects, renderBeams } from './game/defenses.js';
 import { updateProjectiles, renderProjectiles } from './game/projectiles.js';
+import { updateStructures } from './game/structures.js';
+import { renderLoseOverlay } from './ui/loseOverlay.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -27,10 +29,13 @@ function frame(tMs) {
   const dt = Math.min(dtRaw, 0.1);
   prevMs = tMs;
 
-  applyJamEffects(gameState);
-  updateDrones(gameState, dt);
-  updateDefenses(gameState, dt);
-  updateProjectiles(gameState, dt);
+  if (!gameState.loseFlag) {
+    applyJamEffects(gameState);
+    updateDrones(gameState, dt);
+    updateDefenses(gameState, dt);
+    updateProjectiles(gameState, dt);
+  }
+  updateStructures(gameState);
   updateExplosions(gameState, dt);
 
   ctx.fillStyle = CONFIG.colors.bgDark;
@@ -46,6 +51,7 @@ function frame(tMs) {
   renderPalette(ctx, gameState);
   renderLegend(ctx);
   renderPlacement(ctx, gameState);
+  renderLoseOverlay(ctx, gameState);
 
   requestAnimationFrame(frame);
 }
@@ -68,6 +74,10 @@ canvas.addEventListener('mousemove', e => {
 });
 
 canvas.addEventListener('click', e => {
+  if (gameState.loseFlag) {
+    resetGameState();
+    return;
+  }
   const [vx, vy] = toVirtual(e);
 
   const paletteHit = paletteHitTest(vx, vy);
@@ -95,4 +105,8 @@ canvas.addEventListener('contextmenu', e => {
 
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') gameState.placementMode = null;
+  if (gameState.loseFlag && (e.key === ' ' || e.key === 'Enter')) {
+    resetGameState();
+    e.preventDefault();
+  }
 });
