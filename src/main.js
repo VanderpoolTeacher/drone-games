@@ -17,6 +17,8 @@ import { renderWaveTelegraph } from './ui/waveTelegraph.js';
 import { renderWinOverlay } from './ui/winOverlay.js';
 import { renderCRT } from './ui/crt.js';
 import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } from './ui/briefing.js';
+import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
+import { playSfx, toggleMute } from './audio/sfx.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -54,6 +56,7 @@ function frame(tMs) {
   renderProjectiles(ctx, gameState);
   renderExplosions(ctx, gameState);
   renderChrome(ctx);
+  renderMuteIcon(ctx);
   renderPalette(ctx, gameState);
   renderLegend(ctx);
   renderBriefing(ctx, gameState, tMs);
@@ -89,9 +92,15 @@ canvas.addEventListener('mousemove', e => {
 canvas.addEventListener('click', e => {
   if (gameState.loseFlag || gameState.winFlag) {
     resetGameState();
+    playSfx('uiClick');
     return;
   }
   const [vx, vy] = toVirtual(e);
+
+  if (muteIconClickHit(vx, vy)) {
+    toggleMute();
+    return;
+  }
 
   if (briefingClickHit(gameState, vx, vy)) return;
 
@@ -104,6 +113,7 @@ canvas.addEventListener('click', e => {
           ? { type: 'hpm', facingRad: -Math.PI / 2 }
           : { type: paletteHit.type };
     collapseBriefing(gameState);
+    playSfx('uiClick');
     return;
   }
 
@@ -112,6 +122,7 @@ canvas.addEventListener('click', e => {
   if (!tile || !isValidZone(gameState, tile)) return;
   placeDefense(gameState, gameState.placementMode.type, tile, gameState.placementMode.facingRad ?? 0);
   gameState.placementMode = null;
+  playSfx('uiClick');
 });
 
 canvas.addEventListener('contextmenu', e => {
@@ -121,6 +132,7 @@ canvas.addEventListener('contextmenu', e => {
 
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') gameState.placementMode = null;
+  if (e.key === 'm' || e.key === 'M') toggleMute();
   if ((gameState.loseFlag || gameState.winFlag) && (e.key === ' ' || e.key === 'Enter')) {
     resetGameState();
     e.preventDefault();
