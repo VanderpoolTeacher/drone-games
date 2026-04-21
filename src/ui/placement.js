@@ -61,7 +61,18 @@ function drawGhostAndRange(ctx, state) {
   ctx.fillRect(Math.floor(cx - DEFENSE_SIZE / 2), Math.floor(cy - DEFENSE_SIZE / 2), DEFENSE_SIZE, DEFENSE_SIZE);
   ctx.restore();
 
-  if (range > 0) {
+  if (type === 'hpm') {
+    const cfg = CONFIG.defenses.hpm;
+    const halfAngleRad = cfg.coneHalfAngleDeg * Math.PI / 180;
+    const f = state.placementMode.facingRad ?? -Math.PI / 2;
+    ctx.strokeStyle = CONFIG.colors.friendlyCyan;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, cfg.coneRange, f - halfAngleRad, f + halfAngleRad);
+    ctx.closePath();
+    ctx.stroke();
+  } else if (range > 0) {
     ctx.strokeStyle = CONFIG.colors.friendlyCyan;
     ctx.lineWidth = 1;
     if (type === 'rfJammer') {

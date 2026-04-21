@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { gameState } from './game/state.js';
+import { MAP } from './game/map.js';
 import { renderMap } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
 import { renderLegend } from './ui/legend.js';
@@ -59,6 +60,11 @@ function toVirtual(e) {
 canvas.addEventListener('mousemove', e => {
   const [vx, vy] = toVirtual(e);
   gameState.hoverTile = pixelToTile(vx, vy);
+  if (gameState.placementMode?.type === 'hpm' && gameState.hoverTile) {
+    const cx = gameState.hoverTile.x * MAP.tileSize + MAP.tileSize / 2;
+    const cy = CONFIG.topBarHeight + MAP.padTop + gameState.hoverTile.y * MAP.tileSize + MAP.tileSize / 2;
+    gameState.placementMode.facingRad = Math.atan2(vy - cy, vx - cx);
+  }
 });
 
 canvas.addEventListener('click', e => {
@@ -67,14 +73,16 @@ canvas.addEventListener('click', e => {
   const paletteHit = paletteHitTest(vx, vy);
   if (paletteHit) {
     gameState.placementMode =
-      gameState.placementMode?.type === paletteHit.type ? null : { type: paletteHit.type };
+      gameState.placementMode?.type === paletteHit.type
+        ? null
+        : { type: paletteHit.type, facingRad: -Math.PI / 2 };
     return;
   }
 
   if (!gameState.placementMode) return;
   const tile = mapHitTest(vx, vy);
   if (!tile || !isValidZone(gameState, tile)) return;
-  placeDefense(gameState, gameState.placementMode.type, tile);
+  placeDefense(gameState, gameState.placementMode.type, tile, gameState.placementMode.facingRad ?? 0);
   gameState.placementMode = null;
 });
 

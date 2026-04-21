@@ -7,7 +7,7 @@ const BUTTONS = [
   { type: 'rfJammer',        label: 'RF JAM',  enabled: true  },
   { type: 'interceptor',     label: 'INTRCPT', enabled: true },
   { type: 'laser',           label: 'LASER',   enabled: true  },
-  { type: 'hpm',             label: 'HPM',     enabled: false },
+  { type: 'hpm',             label: 'HPM',     enabled: true  },
 ];
 
 export function renderPalette(ctx, state) {
