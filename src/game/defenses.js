@@ -60,6 +60,22 @@ export function updateDefenses(state, dt) {
         d.heatMs = Math.max(0, d.heatMs - dt * 1000);
         d.targetId = null;
       }
+    } else if (d.type === 'hpm') {
+      if (d.pulseFlashFrame > 0) d.pulseFlashFrame -= 1;
+      if (d.cooldownMs > 0) continue;
+
+      const cfg = CONFIG.defenses.hpm;
+      const halfAngleRad = cfg.coneHalfAngleDeg * Math.PI / 180;
+      const victims = findDronesInCone(state, d, cfg.coneRange, halfAngleRad);
+      if (victims.length === 0) continue;
+
+      for (const v of victims) {
+        const eff = cfg.effectivenessVs[v.type] ?? 1;
+        v.hp -= cfg.pulseDamage * eff;
+      }
+      d.cooldownMs = cfg.pulseCooldown;
+      d.pulseFlashFrame = 3;
+      d.targetId = victims[0].id;
     }
   }
 }
@@ -164,4 +180,26 @@ export function renderBeams(ctx, state) {
     ctx.lineTo(target.x + 0.5, target.y + 0.5);
     ctx.stroke();
   }
+}
+
+function normalizeAngle(a) {
+  while (a > Math.PI) a -= 2 * Math.PI;
+  while (a < -Math.PI) a += 2 * Math.PI;
+  return a;
+}
+
+function findDronesInCone(state, defense, range, halfAngleRad) {
+  const victims = [];
+  for (const dr of state.drones) {
+    if (dr.hp <= 0 || dr.phase === 'done') continue;
+    const dx = dr.x - defense.x;
+    const dy = dr.y - defense.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > range) continue;
+    if (dist < 0.0001) { victims.push(dr); continue; }
+    const bearing = Math.atan2(dy, dx);
+    const diff = normalizeAngle(bearing - defense.facingRad);
+    if (Math.abs(diff) <= halfAngleRad) victims.push(dr);
+  }
+  return victims;
 }
