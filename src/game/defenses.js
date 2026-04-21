@@ -2,7 +2,7 @@ import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 import { tileToPixel } from './drones.js';
 
-export function placeDefense(state, type, tile) {
+export function placeDefense(state, type, tile, facingRad = 0) {
   const cfg = CONFIG.defenses[type];
   if (!cfg) return null;
   const { x, y } = tileToPixel(tile);
@@ -16,6 +16,8 @@ export function placeDefense(state, type, tile) {
     targetId: null,
     heatMs: 0,
     overheated: false,
+    facingRad,
+    pulseFlashFrame: 0,
   };
   state.defenses.push(defense);
   state.resources -= cfg.cost;
