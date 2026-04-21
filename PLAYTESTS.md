@@ -28,6 +28,34 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-19 — solo (HPM)
+
+**Build:** HPM plan complete — v1 defense roster shipped
+**Session length:** ~90 s soak with all four defenses placed
+**Result:** First complete layered defense run
+
+### What happened
+- Placed HPM at (8, 5) aimed south at the OWA harbor corridor + Interceptor at (7, 6) for cleanup
+- First saturation OWA cluster got pulsed (4-drone kill in one flash); remaining stragglers died to the Interceptor
+- Placed second HPM at (12, 5) aimed east at the Payload corridor — Payload still takes 4 pulses but now it slow-cooks in the cone
+- RF Jammer at (6, 1) for N corridor ISR still does its soft-kill job
+
+### What worked
+- Aim-toward-mouse placement is intuitive — rotating the cone in real time reads immediately as "aim before commit"
+- 3-frame cone-sweep pulse flash feels weighty and snappy without being gaudy
+- Amber charge bar is a clear "am I ready" affordance; saves having to memorize cooldowns
+- One-shot kill on ISR/OWA makes HPM feel POWERFUL (which is correct per design thesis)
+- Facing wedge at rest is enough to remember which way each HPM points
+
+### What felt off
+- Placing an HPM "at mouse angle" is easy but means angling a shot to NE requires mouse position above-and-right. That's a bit awkward when the cursor is also on the palette button side of the screen. Defer fix.
+- No audio on pulse — visual only is readable but missing kinetic feel
+- Payload takes 4 pulses (16 s) which feels long solo. Pair HPM with Laser for Payload: Laser absorbs 120 hp in 2.5 s; HPM is for swarm, not singles
+
+### Questions raised
+- Should HPM cone outline be always-on (dim) at rest so the player can see coverage without re-arming? Defer — the facing wedge is a lighter-weight affordance
+- Does the player need a "rotate HPM" action post-placement? Probably yes in v2, but placement locks in v1 per spec
+
 ## 2026-04-19 — solo (Laser)
 
 **Build:** Laser plan complete (third defense live)

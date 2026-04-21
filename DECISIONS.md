@@ -74,3 +74,13 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-19 — Laser beam rendered each frame from live target position (not fire-and-forget like projectile). Separate renderBeams function so the primitive stays decoupled from projectile physics. Beam = 1-pixel accentWhite line.
 
 2026-04-19 — Laser sprite lens: accentWhite 2×2 at top while cold/firing, shifts to alertAmber while overheated. Color-state signaling; silhouette differentiation deferred to polish plan's real sprites.
+
+2026-04-19 — HPM placement uses aim-toward-mouse: while armed, placementMode.facingRad = atan2(mouse - tileCenter). Ghost draws arc sector. Click locks facing in the placed defense. No post-place rotation (polish plan).
+
+2026-04-19 — HPM pulse auto-fires on cooldown=0 AND ≥1 drone in cone. All in-cone drones take pulseDamage × effectivenessVs simultaneously. pulseCooldown 4000ms, coneRange 110, coneHalfAngle 35° (70° total cone).
+
+2026-04-19 — HPM cone math: Euclidean distance ≤ range AND |normalizeAngle(atan2(dy,dx) - facingRad)| ≤ halfAngle. Drones exactly on apex treated as in-cone (division-by-zero guard).
+
+2026-04-19 — HPM render: always-on white facing wedge on sprite edge (indicates orientation); amber top-edge charge bar fills left-to-right as cooldown ticks; on pulse, 3-frame expanding cone-sweep at 33% / 66% / 100% of coneRange.
+
+2026-04-19 — v1 defense roster complete: RF Jammer (soft-kill area slow), Interceptor (hard-kill projectile), Laser (hard-kill continuous beam with overheat), HPM (directed-energy cone AoE pulse). All four palette buttons live.

@@ -10,7 +10,7 @@ Running task list. Check things off, add as they come up. Scratchpad, not a proj
 - [x] Step 2a: Interceptor placed, auto-fires, drones killable, economy loop live
 - [x] Step 2b: RF Jammer placed, area-slow effect (soft-kill)
 - [x] Step 2c: Laser placed, continuous DPS + overheat
-- [ ] Step 2d: HPM placed, cone AoE (stretch)
+- [x] Step 2d: HPM placed, cone AoE (stretch)
 
 ## Next (build order from CLAUDE.md)
 
