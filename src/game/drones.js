@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
+import { applyDamage } from './structures.js';
 
 const DRONE_SIZE = 16;
 const WAYPOINT_REACH_PX = 2;
@@ -7,6 +8,7 @@ const ISR_JITTER_PX = 12;
 const TRAIL_SAMPLE_MS = 50;
 const TRAIL_MAX_SAMPLES = 8;
 const TRAIL_MAX_AGE_S = 1.2;
+const PAYLOAD_AOE_RADIUS = 48;
 
 export function spawnDrone(state, type) {
   const corridors = MAP.corridors[type];
@@ -281,6 +283,7 @@ function updateOwa(d, dt, state) {
 
     if (dist <= OWA_ARRIVAL_PX || step >= dist) {
       state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
+      applyDamage(state, d.targetId, CONFIG.structures.damageFromOWAStrike);
       d.phase = 'done';
       return;
     }
@@ -309,6 +312,12 @@ function updatePayload(d, dt, state) {
   const dy = drop.y - d.y;
   if (Math.hypot(dx, dy) <= PAYLOAD_DROP_PX) {
     state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
+    for (const s of MAP.structures) {
+      const sp = tileToPixel(s.tile);
+      if (Math.hypot(sp.x - drop.x, sp.y - drop.y) <= PAYLOAD_AOE_RADIUS) {
+        applyDamage(state, s.id, CONFIG.structures.damageFromPayloadDrop);
+      }
+    }
     d.phase = 'done';
   }
 }
