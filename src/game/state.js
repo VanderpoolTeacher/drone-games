@@ -30,6 +30,12 @@ export const gameState = {
     spawnProgress: [],
   },
   winFlag: false,
+  briefing: {
+    phase: 'idle',
+    visibleMs: 0,
+    expandedOnce: false,
+    activeBriefingIndex: -1,
+  },
 };
 
 export function resetGameState() {
@@ -59,4 +65,8 @@ export function resetGameState() {
   gameState.wave.prepMs = CONFIG.prepTimeBetweenWaves;
   gameState.wave.spawnProgress.length = 0;
   gameState.winFlag = false;
+  gameState.briefing.phase = 'idle';
+  gameState.briefing.visibleMs = 0;
+  gameState.briefing.expandedOnce = false;
+  gameState.briefing.activeBriefingIndex = -1;
 }
