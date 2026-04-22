@@ -19,7 +19,7 @@ Running task list. Check things off, add as they come up. Scratchpad, not a proj
 - [ ] Step 5: all drone types + all defenses landed (see Steps 2b-2d above)
 - [x] Step 6: critical structures with HP, damage, lose + win both live
 - [ ] Step 7: HUD — resources (done), wave counter (placeholder only), structure HP
-- [ ] Step 8: tuning pass — balance via playtesting
+- [~] Step 8: tuning pass — first pass shipped (issues #1, #15); expect follow-up after external playtest
 - [~] Step 9: visual polish — CRT post-processing done; real pixel sprites still pending
 
 ## Later

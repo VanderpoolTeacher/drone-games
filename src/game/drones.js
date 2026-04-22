@@ -15,8 +15,7 @@ export function spawnDrone(state, type) {
   const corridors = MAP.corridors[type];
   if (!corridors || corridors.length === 0) return null;
 
-  const corridorIdx = state.spawnRotation[type] % corridors.length;
-  state.spawnRotation[type] = (state.spawnRotation[type] + 1) % corridors.length;
+  const corridorIdx = Math.floor(Math.random() * corridors.length);
 
   const corridor = corridors[corridorIdx];
   const first = corridor.waypoints[0];

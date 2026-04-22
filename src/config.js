@@ -14,20 +14,20 @@ export const CONFIG = {
   bottomPaletteHeight: 32,
 
   // Economy
-  startingResources: 400,
-  resourcesPerWaveBonus: 200,
+  startingResources: 350,
+  resourcesPerWaveBonus: 150,
   resourcesPerDroneKill: {
-    isr: 10,
-    owa: 15,
-    payloadDelivery: 35,
+    isr: 8,
+    owa: 12,
+    payloadDelivery: 30,
   },
 
   // Critical structures
   structures: {
     count: 3,
-    maxHP: 100,
-    damageFromOWAStrike: 30,       // kamikaze contact
-    damageFromPayloadDrop: 60,     // area-effect payload
+    maxHP: 120,
+    damageFromOWAStrike: 25,       // kamikaze contact
+    damageFromPayloadDrop: 50,     // area-effect payload
   },
 
   // Drones — real DoD doctrinal roles
@@ -38,7 +38,7 @@ export const CONFIG = {
       classification: 'Group 1 sUAS, ISR',
       controlMode: 'fpv',            // vulnerable to RF jamming
       hp: 20,
-      speed: 60,                     // px per second
+      speed: 45,                     // px per second
       size: 16,
     },
     // Group 1 OWA / loitering munition — Shahed-class, FPV strike
@@ -46,8 +46,8 @@ export const CONFIG = {
       displayName: 'OWA Drone',
       classification: 'Group 1 OWA / loitering munition',
       controlMode: 'preprogrammed',  // RF jamming less effective mid-commit
-      hp: 15,
-      speed: 140,
+      hp: 25,
+      speed: 100,
       size: 16,
     },
     // Group 2 sUAS, payload-carrying — fixed-wing or heavy multirotor
@@ -55,8 +55,8 @@ export const CONFIG = {
       displayName: 'Payload-Delivery Drone',
       classification: 'Group 2 sUAS, payload role',
       controlMode: 'preprogrammed',
-      hp: 120,
-      speed: 30,
+      hp: 160,
+      speed: 25,
       size: 16,
     },
   },
@@ -123,52 +123,52 @@ export const CONFIG = {
   // Waves — designed to teach layered-defense thesis through escalation
   // See DESIGN.md "Wave progression" for the teaching arc
   waves: [
-    // Wave 1: ISR only — teach placement + soft-kill
+    // Wave 1 — Probe (90s active). ISR only; longer cadence.
     {
       drones: [
-        { type: 'isr', count: 5, spawnInterval: 1500 },
+        { type: 'isr', count: 15, spawnInterval: 5500, spawnDelayMs: 0 },
       ],
       briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. You got this.",
       portrait: 'neutral',
     },
-    // Wave 2: ISR scaled — teach range and coverage
+    // Wave 2 — Pressure (95s). More ISR, tighter cadence.
     {
       drones: [
-        { type: 'isr', count: 8, spawnInterval: 1200 },
+        { type: 'isr', count: 20, spawnInterval: 4500, spawnDelayMs: 0 },
       ],
       briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges.",
       portrait: 'neutral',
     },
-    // Wave 3: RF Jammer breaks on OWA — forces Interceptor purchase
+    // Wave 3 — Strike (100s). ISR + OWA mix; OWA starts 10s in.
     {
       drones: [
-        { type: 'isr', count: 6, spawnInterval: 1200 },
-        { type: 'owa', count: 5, spawnInterval: 1800 },
+        { type: 'isr', count: 12, spawnInterval: 6000, spawnDelayMs: 0 },
+        { type: 'owa', count: 10, spawnInterval: 8000, spawnDelayMs: 10000 },
       ],
       briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east.",
       portrait: 'stern',
     },
-    // Wave 4: Armor appears — forces Laser/HPM purchase
+    // Wave 4 — Heavy (110s). OWA first, Payload 20s in.
     {
       drones: [
-        { type: 'owa', count: 8, spawnInterval: 1200 },
-        { type: 'payloadDelivery', count: 3, spawnInterval: 3000 },
+        { type: 'owa', count: 12, spawnInterval: 8000, spawnDelayMs: 0 },
+        { type: 'payloadDelivery', count: 6, spawnInterval: 15000, spawnDelayMs: 20000 },
       ],
       briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked.",
       portrait: 'stern',
     },
-    // Wave 5: Saturation — HPM becomes valuable for crowd control
+    // Wave 5 — Saturation (120s). All three types; Payload waits 5s.
     {
       drones: [
-        { type: 'isr', count: 8, spawnInterval: 1000 },
-        { type: 'owa', count: 12, spawnInterval: 800 },
-        { type: 'payloadDelivery', count: 4, spawnInterval: 2500 },
+        { type: 'isr', count: 18, spawnInterval: 5000, spawnDelayMs: 0 },
+        { type: 'owa', count: 20, spawnInterval: 5000, spawnDelayMs: 0 },
+        { type: 'payloadDelivery', count: 7, spawnInterval: 12000, spawnDelayMs: 5000 },
       ],
       briefing: "All of it. Saturation run — ISR, OWA, Payload, everything. You need the full stack. HPM earns its keep here. One pulse, many drones. Good luck, Watchfloor.",
       portrait: 'angry',
     },
   ],
-  prepTimeBetweenWaves: 15000,       // ms — player gets 15s between waves
+  prepTimeBetweenWaves: 20000,       // ms — 20s prep window between waves
   warden: {
     win: "City held. Good work. Red Cell'll remember this one.",
     winPortrait: 'neutral',

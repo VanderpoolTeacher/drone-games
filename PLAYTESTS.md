@@ -28,6 +28,31 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (Tuning pass #1)
+
+**Build:** feat/tuning-pass — 90-120s active phases, slower/tougher drones, wave variability, tighter economy
+**Session length:** ~12 min full run
+**Result:** N/A (feature pass; needs real external playtest to validate difficulty)
+
+### What happened
+- All 5 waves ran ~90-120s as targeted. Music tracks played through at least one full listen each.
+- Wave-3 OWA and wave-4 Payload enter mid-wave feels right — pushes player to re-read the threat.
+- Two back-to-back runs had noticeably different drone counts per wave.
+
+### What worked
+- Slower drones make laser/interceptor engagements visibly play out. Big readability improvement.
+- Corridor randomization means defense placements that covered one edge last run can leak next run. Forces adaptive play.
+- Tighter opening hand (350 starting resources) makes the first palette decision meaningful.
+
+### What felt off
+- Wave 1 at 90s might still feel long for first-time players — monitor in external playtest.
+- Count jitter ±2 on small base counts (wave-4 Payload base 6) can swing to 4 — big variance on a key threat. Consider tightening to ±1 for small groups.
+- Slower OWA feels a bit too slow at 100 px/s — may need a small bump to preserve the "scary urgency" feel.
+
+### Questions raised
+- Should count jitter be clamped to a minimum percentage (e.g. at least 75% of base) instead of ±2 absolute?
+- Should Payload drop damage 50 be reduced further, or is HP 120 enough to absorb a single hit?
+
 ## 2026-04-21 — solo (Background music)
 
 **Build:** feat/music — HTMLAudioElement + 500ms crossfade, 12-track mapping

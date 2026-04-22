@@ -144,3 +144,17 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Single `updateMusic(state)` driver called once per frame; derives the correct track key from wave.number + wave.phase + loseFlag + winFlag. No scattered triggers in wave/structures/main — playTrack no-ops if the key hasn't changed.
 
 2026-04-21 — 13 mp3s (~50 MB) committed directly to the repo. Acceptable for a prototype; revisit (LFS or CDN) before adding more audio assets.
+
+2026-04-21 — Tuning pass #1. Target session length 11–12 min. Each active phase extended to 90–120s to give defenses time to visibly engage and let music tracks play through.
+
+2026-04-21 — Drone speeds reduced across the board (ISR 60→45, OWA 140→100, Payload 30→25). OWA HP 15→25 and Payload HP 120→160 compensate — Interceptors no longer one-shot OWA; Laser burn-through on Payload is a real time window.
+
+2026-04-21 — Wave compositions now include a per-group `spawnDelayMs` field so later drone types enter mid-wave (wave-3 OWA at +10s, wave-4 Payload at +20s, wave-5 Payload at +5s). Tells a tactical story inside a single wave instead of dumping everything at once.
+
+2026-04-21 — Wave variability: each wave rolls count ±2 per drone group at `prep → active`, plus ±15% per-spawn interval jitter, plus random (not round-robin) corridor selection. Same wave identity (Probe, Pressure, Strike, Heavy, Saturation), different run-to-run feel.
+
+2026-04-21 — Economy tightened: start 400→350, wave bonus 200→150, kill rewards ISR 10→8 / OWA 15→12 / Payload 35→30. Forces real allocation choices; can't afford one of every defense class on turn 1.
+
+2026-04-21 — Structure maxHP 100→120; OWA strike damage 30→25; Payload drop damage 60→50. More drones hit per run, so per-hit damage drops to keep the game from collapsing on a single leak.
+
+2026-04-21 — `state.spawnRotation` removed (was round-robin corridor index). No longer used; random corridor selection in spawnDrone supersedes it.

@@ -2,6 +2,15 @@ import { CONFIG } from '../config.js';
 import { spawnDrone } from './drones.js';
 import { playSfx, stopAllContinuous } from '../audio/sfx.js';
 
+function jitterInterval(ms) {
+  return ms * (0.85 + Math.random() * 0.3);   // ±15%
+}
+
+function jitterCount(base) {
+  const delta = Math.floor(Math.random() * 5) - 2;   // -2..+2 inclusive
+  return Math.max(1, base + delta);
+}
+
 export function updateWave(state, dt) {
   if (state.wave.phase === 'prep') {
     state.wave.prepMs -= dt * 1000;
@@ -9,10 +18,12 @@ export function updateWave(state, dt) {
       state.wave.phase = 'active';
       state.wave.spawnProgress = CONFIG.waves[state.wave.number - 1].drones.map(d => ({
         type: d.type,
-        count: d.count,
+        count: jitterCount(d.count),
         spawnInterval: d.spawnInterval,
+        spawnDelayMs: d.spawnDelayMs ?? 0,
         timerMs: 0,
         spawned: 0,
+        currentDelay: jitterInterval(d.spawnInterval),
       }));
       playSfx('waveStart');
     }
@@ -23,10 +34,13 @@ export function updateWave(state, dt) {
     for (const p of state.wave.spawnProgress) {
       if (p.spawned >= p.count) continue;
       p.timerMs += dt * 1000;
-      while (p.timerMs >= p.spawnInterval && p.spawned < p.count) {
+      if (p.timerMs < p.spawnDelayMs) continue;
+
+      while (p.spawned < p.count && (p.timerMs - p.spawnDelayMs) >= p.currentDelay) {
         spawnDrone(state, p.type);
         p.spawned += 1;
-        p.timerMs -= p.spawnInterval;
+        p.timerMs -= p.currentDelay;
+        p.currentDelay = jitterInterval(p.spawnInterval);
       }
     }
 

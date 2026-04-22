@@ -15,7 +15,6 @@ export const gameState = {
   droneIdCounter: 0,
   defenseIdCounter: 0,
   projectileIdCounter: 0,
-  spawnRotation: { isr: 0, owa: 0, payloadDelivery: 0 },
   devSpawnTimer: { isr: 0, owa: 0, payloadDelivery: 0 },
   resources: CONFIG.startingResources,
   placementMode: null,
@@ -46,9 +45,6 @@ export function resetGameState() {
   gameState.droneIdCounter = 0;
   gameState.defenseIdCounter = 0;
   gameState.projectileIdCounter = 0;
-  gameState.spawnRotation.isr = 0;
-  gameState.spawnRotation.owa = 0;
-  gameState.spawnRotation.payloadDelivery = 0;
   gameState.devSpawnTimer.isr = 0;
   gameState.devSpawnTimer.owa = 0;
   gameState.devSpawnTimer.payloadDelivery = 0;
