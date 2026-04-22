@@ -120,6 +120,7 @@ canvas.addEventListener('click', e => {
     gameState.mode = 'campaign';
     applyMode('campaign');
     applyDelivery(gameState, 0);
+    gameState.stats.runStartMs = Date.now();
     gameState.screenPhase = 'playing';
     return;
   }
@@ -179,6 +180,7 @@ window.addEventListener('keydown', e => {
     gameState.mode = mode;
     applyMode(mode);
     applyDelivery(gameState, 0);
+    gameState.stats.runStartMs = Date.now();
     gameState.screenPhase = 'playing';
     return;
   }

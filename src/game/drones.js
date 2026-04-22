@@ -131,6 +131,7 @@ export function updateDrones(state, dt) {
     if (d.hp <= 0 && d.phase !== 'done') {
       state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
       playSfx('droneKill');
+      state.stats.droneKills[d.type] = (state.stats.droneKills[d.type] ?? 0) + 1;
       d.phase = 'done';
     }
   }

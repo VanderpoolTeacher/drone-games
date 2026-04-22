@@ -16,6 +16,7 @@ export function applyDamage(state, structureId, amount) {
 
   if (before > 0 && state.structureHp[structureId] <= 0) {
     playSfx('structureDestroyed');
+    state.stats.structuresLost += 1;
   } else {
     playSfx('structureHit');
     if (amount >= CONFIG.structures.maxHP * HIT_HEAVY_FRAC) {
@@ -30,6 +31,7 @@ export function applyDamage(state, structureId, amount) {
 
   if (isAllDestroyed(state)) {
     state.loseFlag = true;
+    state.stats.runEndMs = Date.now();
     stopAllContinuous();
     playSfx('lose');
   }

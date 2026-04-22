@@ -123,7 +123,7 @@ export const CONFIG = {
       drones: [
         { type: 'isr', count: 15, spawnInterval: 5500, spawnDelayMs: 0 },
       ],
-      briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. You got this.",
+      briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. Heads up: next run you'll see heavier volume, still ISR.",
       portrait: 'neutral',
     },
     // Wave 2 — Pressure (95s). More ISR, tighter cadence.
@@ -131,7 +131,7 @@ export const CONFIG = {
       drones: [
         { type: 'isr', count: 20, spawnInterval: 4500, spawnDelayMs: 0 },
       ],
-      briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges.",
+      briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges. Intel says Red Cell starts mixing OWA strikes next — keep something kinetic in reserve.",
       portrait: 'neutral',
     },
     // Wave 3 — Strike (100s). ISR + OWA mix; OWA starts 10s in.
@@ -140,7 +140,7 @@ export const CONFIG = {
         { type: 'isr', count: 12, spawnInterval: 6000, spawnDelayMs: 0 },
         { type: 'owa', count: 10, spawnInterval: 8000, spawnDelayMs: 10000 },
       ],
-      briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east.",
+      briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east. Next wave: Payload birds, armored. Laser is the answer — save the delivery.",
       portrait: 'stern',
     },
     // Wave 4 — Heavy (110s). OWA first, Payload 20s in.
@@ -149,7 +149,7 @@ export const CONFIG = {
         { type: 'owa', count: 12, spawnInterval: 8000, spawnDelayMs: 0 },
         { type: 'payloadDelivery', count: 6, spawnInterval: 15000, spawnDelayMs: 20000 },
       ],
-      briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked.",
+      briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked. Next is the saturation run — all three types. HPM comes online in your next delivery. Don't sit on it.",
       portrait: 'stern',
     },
     // Wave 5 — Saturation (120s). All three types; Payload waits 5s.
@@ -372,12 +372,12 @@ CONFIG.modes = {
     waves: [
       {
         drones: [ { type: 'isr', count: 5, spawnInterval: 1500, spawnDelayMs: 0 } ],
-        briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. You got this.",
+        briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. Heads up: next run you'll see heavier volume, still ISR.",
         portrait: 'neutral',
       },
       {
         drones: [ { type: 'isr', count: 8, spawnInterval: 1200, spawnDelayMs: 0 } ],
-        briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges.",
+        briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges. Intel says Red Cell starts mixing OWA strikes next — keep something kinetic in reserve.",
         portrait: 'neutral',
       },
       {
@@ -385,7 +385,7 @@ CONFIG.modes = {
           { type: 'isr', count: 6, spawnInterval: 1200, spawnDelayMs: 0 },
           { type: 'owa', count: 5, spawnInterval: 1800, spawnDelayMs: 0 },
         ],
-        briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east.",
+        briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east. Next wave: Payload birds, armored. Laser is the answer — save the delivery.",
         portrait: 'stern',
       },
       {
@@ -393,7 +393,7 @@ CONFIG.modes = {
           { type: 'owa', count: 8, spawnInterval: 1200, spawnDelayMs: 0 },
           { type: 'payloadDelivery', count: 3, spawnInterval: 3000, spawnDelayMs: 0 },
         ],
-        briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked.",
+        briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked. Next is the saturation run — all three types. HPM comes online in your next delivery. Don't sit on it.",
         portrait: 'stern',
       },
       {

@@ -80,6 +80,13 @@ export const gameState = {
   structureFlash: makeStructureMap(0),
   apartmentPop: makeApartmentMap(),
   apartmentFlash: {},
+  stats: {
+    droneKills: { isr: 0, owa: 0, payloadDelivery: 0 },
+    defensesLost: 0,
+    structuresLost: 0,
+    runStartMs: 0,
+    runEndMs: 0,
+  },
   loseFlag: false,
   wave: {
     number: 1,
@@ -128,6 +135,13 @@ export function resetGameState() {
     gameState.apartmentPop[key] = apt.maxPop;
   }
   for (const k of Object.keys(gameState.apartmentFlash)) delete gameState.apartmentFlash[k];
+  gameState.stats.droneKills.isr = 0;
+  gameState.stats.droneKills.owa = 0;
+  gameState.stats.droneKills.payloadDelivery = 0;
+  gameState.stats.defensesLost = 0;
+  gameState.stats.structuresLost = 0;
+  gameState.stats.runStartMs = Date.now();
+  gameState.stats.runEndMs = 0;
   gameState.loseFlag = false;
   gameState.wave.number = 1;
   gameState.wave.phase = 'prep';

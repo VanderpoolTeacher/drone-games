@@ -142,6 +142,7 @@ export function updateDefenses(state, dt) {
       if (d.laserFiring) stopSfx('laser-' + d.id);
       if (d.rfJamming) stopSfx('rf-' + d.id);
       playSfx('structureDestroyed');
+      state.stats.defensesLost += 1;
     }
   }
   state.defenses = state.defenses.filter(d => d.hp > 0);

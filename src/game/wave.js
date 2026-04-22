@@ -57,6 +57,7 @@ export function updateWave(state, dt) {
         // Final wave cleared — no bonus paid; winFlag fires instead.
         state.wave.phase = 'won';
         state.winFlag = true;
+        state.stats.runEndMs = Date.now();
         stopAllContinuous();
         playSfx('win');
       }

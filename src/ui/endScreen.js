@@ -4,8 +4,8 @@ import { totalCasualties } from './casualtyHud.js';
 const TEXT_COL_X = 60;
 const TEXT_COL_W = 360;
 const HEADLINE_Y = 36;
-const BODY_TOP_Y = 90;
-const BODY_BOTTOM_Y = 230;
+const BODY_TOP_Y = 80;
+const BODY_BOTTOM_Y = 190;
 const LINE_HEIGHT = 11;
 const PROMPT_Y = 252;
 
@@ -109,11 +109,40 @@ export function renderEndScreen(ctx, state, tMs) {
   ctx.restore();
 }
 
+function formatRunTime(ms) {
+  if (!ms || ms < 0) return '0:00';
+  const totalSec = Math.floor(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
 function drawCasualties(ctx, state) {
   const lost = totalCasualties(state);
+  const waveTotal = 5;
+  const wavesSurvived = state.winFlag ? waveTotal : Math.max(0, state.wave.number - 1);
+  const runMs = (state.stats.runEndMs || Date.now()) - (state.stats.runStartMs || Date.now());
+  const kills = state.stats.droneKills;
+  const droneTotal = (kills.isr ?? 0) + (kills.owa ?? 0) + (kills.payloadDelivery ?? 0);
+
   ctx.font = '8px "Press Start 2P", monospace';
-  ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
+
+  const leftX = 80;
+  const rightX = 400;
+  const topY = 200;
+  const lineH = 11;
+
+  ctx.textAlign = 'left';
   ctx.fillStyle = lost > 0 ? CONFIG.colors.threatRed : CONFIG.colors.successGreen;
-  ctx.fillText('CASUALTIES ' + lost, CONFIG.virtualWidth / 2, 236);
+  ctx.fillText('CASUALTIES ' + lost, leftX, topY);
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillText('DRONES DOWN ' + droneTotal, leftX, topY + lineH);
+  ctx.fillText('DEFENSES LOST ' + state.stats.defensesLost, leftX, topY + lineH * 2);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillText('WAVES ' + wavesSurvived + '/' + waveTotal, rightX, topY);
+  ctx.fillText('TIME ' + formatRunTime(runMs), rightX, topY + lineH);
+  ctx.fillText('STRUCTURES LOST ' + state.stats.structuresLost, rightX, topY + lineH * 2);
 }
