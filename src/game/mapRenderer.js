@@ -2,7 +2,7 @@ import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 
 export function renderMap(ctx, tMs, state) {
-  drawTiles(ctx);
+  drawTiles(ctx, state);
   drawCoastline(ctx);
   drawZones(ctx, tMs);
   drawStructures(ctx, state);
@@ -22,7 +22,7 @@ export function renderTrucks(ctx, state) {
   }
 }
 
-function drawTiles(ctx) {
+function drawTiles(ctx, state) {
   const { tileSize, gridW, gridH, tiles, padTop, padBottom } = MAP;
 
   ctx.fillStyle = CONFIG.colors.bgMid;
