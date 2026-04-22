@@ -30,6 +30,7 @@ Running task list. Check things off, add as they come up. Scratchpad, not a proj
 - [x] Start screen — podium backdrop + scrolling brief (issue #16)
 - [x] Hover tooltips — name + matchup info (issue #3)
 - [x] Drones attack defenses — HP pools + OWA retarget + Payload AoE + ISR disable (issue #17)
+- [x] Victory + game-over screens — Liberty backdrops + extended Warden monologues (issues #19, #20)
 - [ ] Class writeup draft
 - [ ] Record gameplay video for class submission
 - [x] Commander Warden briefings — pre-wave speech bubble + portraits, win/lose subtitles (issue #5)

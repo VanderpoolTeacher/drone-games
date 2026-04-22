@@ -12,9 +12,8 @@ import { updateDefenses, renderDefenses, placeDefense, applyJamEffects, renderBe
 import { updateProjectiles, renderProjectiles } from './game/projectiles.js';
 import { updateStructures } from './game/structures.js';
 import { updateWave } from './game/wave.js';
-import { renderLoseOverlay } from './ui/loseOverlay.js';
 import { renderWaveTelegraph } from './ui/waveTelegraph.js';
-import { renderWinOverlay } from './ui/winOverlay.js';
+import { renderEndScreen } from './ui/endScreen.js';
 import { renderCRT } from './ui/crt.js';
 import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } from './ui/briefing.js';
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
@@ -68,8 +67,7 @@ function frame(tMs) {
   renderBriefing(ctx, gameState, tMs);
   renderPlacement(ctx, gameState);
   renderWaveTelegraph(ctx, gameState, tMs);
-  renderLoseOverlay(ctx, gameState);
-  renderWinOverlay(ctx, gameState);
+  renderEndScreen(ctx, gameState, tMs);
   renderStartScreen(ctx, gameState, tMs);
   renderCRT(ctx);
 
@@ -174,7 +172,7 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (e.key === 'Escape') gameState.placementMode = null;
-  if ((gameState.loseFlag || gameState.winFlag) && (e.key === ' ' || e.key === 'Enter')) {
+  if (gameState.loseFlag || gameState.winFlag) {
     resetGameState();
     e.preventDefault();
   }

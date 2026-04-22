@@ -181,11 +181,34 @@ export const CONFIG = {
     payloadDefenseDamage: 2,
   },
   warden: {
-    win: "City held. Good work. Red Cell'll remember this one.",
-    winPortrait: 'neutral',
-    lose: "They got through. Debrief hurts, but we learn. Again.",
-    losePortrait: 'bloody',
     autoCollapseMs: 8000,
+  },
+
+  endScreens: {
+    win: {
+      image: './src/images/statue-of-liberty.png',
+      headline: 'CITY HELD',
+      headlineColor: 'successGreen',
+      body: [
+        "City held. Against everything they threw, you kept the lights on.",
+        "",
+        "Red Cell will remember this name. The watchfloor never sleeps — get some rest.",
+        "",
+        "You earned it.",
+      ],
+    },
+    lose: {
+      image: './src/images/statue-of-liberty-post-attack.png',
+      headline: 'DEFENSE FAILED',
+      headlineColor: 'threatRed',
+      body: [
+        "They got through. Structures down, city dark.",
+        "",
+        "Debriefs hurt, but we learn — the ones who didn't come home taught us more than a hundred clean runs.",
+        "",
+        "Fall back, regroup. We go again.",
+      ],
+    },
   },
 
   music: {

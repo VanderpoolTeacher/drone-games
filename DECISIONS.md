@@ -188,3 +188,9 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Defense destruction reuses the `structureDestroyed` SFX and existing explosion FX. Continuous SFX (`laser-<id>`, `rf-<id>`) are stopped cleanly in the death sweep so audio doesn't leak past removal.
 
 2026-04-21 — HP segments render above each damaged defense (only when HP < max) — friendlyCyan for remaining segments, gridLine for lost. Hidden at full HP to avoid clutter.
+
+2026-04-22 — Win/lose overlays replaced by full-canvas end screens using Liberty imagery — intact Liberty for victory, post-attack Liberty for defeat. Single `src/ui/endScreen.js` module parameterized by `CONFIG.endScreens.{win,lose}`. `winOverlay.js` / `loseOverlay.js` deleted outright.
+
+2026-04-22 — End-screen bodies are extended 4-5-line Warden monologues (paragraph-break aware). `warden.win` / `warden.lose` one-liners removed from CONFIG — the body supersedes them. `warden.winPortrait` / `warden.losePortrait` also dropped (backdrop carries the image).
+
+2026-04-22 — Any key (not just Space/Enter) restarts after win/lose. M still toggles mute; mute icon still clickable without restarting.

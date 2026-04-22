@@ -28,6 +28,30 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-22 — solo (Victory + game-over screens)
+
+**Build:** feat/end-screens — Liberty backdrops + paragraph monologues
+**Session length:** ~2 min per state (forced win + forced lose)
+**Result:** N/A (feature pass)
+
+### What happened
+- Intact Liberty fills canvas on win with green blinking CITY HELD + 3-paragraph Warden line + amber blinking PRESS ANY KEY TO RESTART. Avenged continues to play.
+- Post-attack Liberty fills canvas on lose with red blinking DEFENSE FAILED + defeat monologue. Fallen Not Forgotten plays.
+- Any key restarts; M mutes; mute icon clickable during end screens.
+
+### What worked
+- Full-canvas backdrop landing simultaneously with the monologue hits harder than the old scrim.
+- Paragraph rendering (blank-line-aware wrap) reads like a real brief.
+- Shared `renderEndScreen` module keeps parity between states automatic — one config edit updates both copy + image together.
+
+### What felt off
+- Body text against the 55% alpha backdrop is readable but only just; could bump to 65% or add a text scrim if playtest flags.
+- No stats ("waves survived") — could be a nice addition for the class submission video.
+
+### Questions raised
+- Should end screens expose mid-run telemetry (structures lost, drones killed) for the class writeup? Deferred.
+- Warden speaks in extended monologue here but tight one-liners in briefings — tonal difference intentional (cinematic moment vs. in-the-moment brief) but worth watching.
+
 ## 2026-04-21 — solo (Drones attack defenses)
 
 **Build:** feat/drones-attack-defenses — defense HP, OWA retarget, Payload AoE, ISR disable
