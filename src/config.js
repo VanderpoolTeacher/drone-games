@@ -13,15 +13,6 @@ export const CONFIG = {
   topBarHeight: 24,
   bottomPaletteHeight: 32,
 
-  // Economy
-  startingResources: 350,
-  resourcesPerWaveBonus: 150,
-  resourcesPerDroneKill: {
-    isr: 8,
-    owa: 12,
-    payloadDelivery: 30,
-  },
-
   // Critical structures
   structures: {
     count: 3,
@@ -68,8 +59,8 @@ export const CONFIG = {
     rfJammer: {
       displayName: 'RF Jammer',
       category: 'soft-kill',
-      cost: 50,
       hp: 1,
+      installMs: 3000,
       range: 80,
       effect: 'slow',
       slowFactor: 0.5,               // multiplies drone speed while in range
@@ -81,8 +72,8 @@ export const CONFIG = {
     interceptor: {
       displayName: 'Interceptor',
       category: 'hard-kill kinetic',
-      cost: 100,
       hp: 2,
+      installMs: 5000,
       range: 100,
       damage: 30,
       cooldown: 1500,                // ms between shots
@@ -95,8 +86,8 @@ export const CONFIG = {
     laser: {
       displayName: 'Directed Energy (Laser)',
       category: 'directed energy — HEL',
-      cost: 200,
       hp: 3,
+      installMs: 8000,
       range: 120,
       dps: 40,                       // damage per second while firing
       overheatTime: 3000,            // ms of continuous fire before overheat
@@ -110,8 +101,8 @@ export const CONFIG = {
     hpm: {
       displayName: 'HPM',
       category: 'directed energy — HPM',
-      cost: 300,
       hp: 3,
+      installMs: 12000,
       coneRange: 110,                // radial depth of the cone
       coneHalfAngleDeg: 35,          // total cone = 70°
       pulseDamage: 40,               // per-pulse damage to each drone in cone
@@ -370,10 +361,14 @@ CONFIG.modes = {
       damageFromOWAStrike: 30,
       damageFromPayloadDrop: 60,
     },
-    startingResources: 400,
-    resourcesPerWaveBonus: 200,
-    resourcesPerDroneKill: { isr: 10, owa: 15, payloadDelivery: 35 },
     prepTimeBetweenWaves: 15000,
+    deliveries: [
+      { rfJammer: 3, interceptor: 2 },                 // Wave 1
+      { rfJammer: 2, interceptor: 1 },                 // Wave 2
+      {              interceptor: 1, laser: 1 },       // Wave 3
+      {              interceptor: 2, laser: 1 },       // Wave 4
+      {              interceptor: 1,            hpm: 1 }, // Wave 5
+    ],
     waves: [
       {
         drones: [ { type: 'isr', count: 5, spawnInterval: 1500, spawnDelayMs: 0 } ],
@@ -423,11 +418,15 @@ CONFIG.modes = {
       damageFromOWAStrike: 25,
       damageFromPayloadDrop: 50,
     },
-    startingResources: 350,
-    resourcesPerWaveBonus: 150,
-    resourcesPerDroneKill: { isr: 8, owa: 12, payloadDelivery: 30 },
     prepTimeBetweenWaves: 20000,
-    waves: CONFIG.waves,   // the tuned campaign waves already authored above
+    deliveries: [
+      { rfJammer: 2, interceptor: 1 },                 // Wave 1
+      { rfJammer: 1, interceptor: 1 },                 // Wave 2
+      {              interceptor: 1, laser: 1 },       // Wave 3
+      {              interceptor: 1, laser: 1 },       // Wave 4
+      {              interceptor: 1,            hpm: 1 }, // Wave 5
+    ],
+    waves: CONFIG.waves,
   },
 };
 
@@ -444,12 +443,8 @@ export function applyMode(name) {
   CONFIG.structures.maxHP = src.structures.maxHP;
   CONFIG.structures.damageFromOWAStrike = src.structures.damageFromOWAStrike;
   CONFIG.structures.damageFromPayloadDrop = src.structures.damageFromPayloadDrop;
-  CONFIG.startingResources = src.startingResources;
-  CONFIG.resourcesPerWaveBonus = src.resourcesPerWaveBonus;
-  CONFIG.resourcesPerDroneKill.isr = src.resourcesPerDroneKill.isr;
-  CONFIG.resourcesPerDroneKill.owa = src.resourcesPerDroneKill.owa;
-  CONFIG.resourcesPerDroneKill.payloadDelivery = src.resourcesPerDroneKill.payloadDelivery;
   CONFIG.prepTimeBetweenWaves = src.prepTimeBetweenWaves;
+  CONFIG.deliveries = src.deliveries;
 }
 
 // CONFIG boots at campaign (the tuned v1 — matches every existing read site).

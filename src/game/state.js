@@ -1,6 +1,14 @@
 import { CONFIG, applyMode } from '../config.js';
 import { MAP } from './map.js';
 
+export function applyDelivery(state, waveIdx) {
+  const delivery = CONFIG.deliveries?.[waveIdx];
+  if (!delivery) return;
+  for (const type of Object.keys(delivery)) {
+    state.inventory[type] = (state.inventory[type] ?? 0) + delivery[type];
+  }
+}
+
 function makeStructureMap(initial) {
   const out = {};
   for (const s of MAP.structures) out[s.id] = initial;
@@ -16,7 +24,7 @@ export const gameState = {
   defenseIdCounter: 0,
   projectileIdCounter: 0,
   devSpawnTimer: { isr: 0, owa: 0, payloadDelivery: 0 },
-  resources: CONFIG.startingResources,
+  inventory: { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 },
   placementMode: null,
   hoverTile: null,
   structureHp: makeStructureMap(CONFIG.structures.maxHP),
@@ -52,7 +60,11 @@ export function resetGameState() {
   gameState.devSpawnTimer.isr = 0;
   gameState.devSpawnTimer.owa = 0;
   gameState.devSpawnTimer.payloadDelivery = 0;
-  gameState.resources = CONFIG.startingResources;
+  gameState.inventory.rfJammer = 0;
+  gameState.inventory.interceptor = 0;
+  gameState.inventory.laser = 0;
+  gameState.inventory.hpm = 0;
+  applyDelivery(gameState, 0);
   gameState.placementMode = null;
   gameState.hoverTile = null;
   for (const id of Object.keys(gameState.structureHp)) {

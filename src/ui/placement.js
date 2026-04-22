@@ -20,8 +20,7 @@ export function isValidZone(state, tile) {
   if (!tile) return false;
   if (!state.placementMode) return false;
   const type = state.placementMode.type;
-  const cost = CONFIG.defenses[type]?.cost ?? Infinity;
-  if (state.resources < cost) return false;
+  if ((state.inventory?.[type] ?? 0) <= 0) return false;
   const onZone = MAP.placementZones.some(z => z.x === tile.x && z.y === tile.y);
   if (!onZone) return false;
   const occupied = state.defenses.some(d => d.tile.x === tile.x && d.tile.y === tile.y);

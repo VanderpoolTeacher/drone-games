@@ -88,9 +88,9 @@ function resolveTooltip(state) {
     const type = key.slice('palette-'.length);
     const entry = CONFIG.tooltips['defense-' + type];
     if (!entry) return null;
-    const cost = CONFIG.defenses[type]?.cost;
-    const costLine = cost != null ? 'COST: ' + cost + ' res' : '';
-    const body = [costLine, ...entry.body].slice(0, 3);
+    const count = state.inventory?.[type] ?? 0;
+    const availableLine = 'AVAILABLE: x' + count;
+    const body = [availableLine, ...entry.body].slice(0, 3);
     return { header: entry.header, headerColorKey: entry.headerColor, body };
   }
 

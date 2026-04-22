@@ -13,21 +13,8 @@ const BUTTONS = [
 export function renderPalette(ctx, state) {
   const paletteY = CONFIG.virtualHeight - CONFIG.bottomPaletteHeight;
 
-  renderResources(ctx, state, paletteY);
   renderButtons(ctx, state, paletteY);
   renderWaveHud(ctx, state, paletteY);
-}
-
-function renderResources(ctx, state, paletteY) {
-  ctx.font = '8px "Press Start 2P", monospace';
-  ctx.textBaseline = 'alphabetic';
-  ctx.textAlign = 'left';
-
-  ctx.fillStyle = CONFIG.colors.alertAmber;
-  ctx.fillText(`$${state.resources}`, 8, paletteY + 13);
-
-  ctx.fillStyle = CONFIG.colors.accentWhite;
-  ctx.fillText('RES', 8, paletteY + 25);
 }
 
 function renderButtons(ctx, state, paletteY) {
@@ -42,23 +29,22 @@ function renderButtons(ctx, state, paletteY) {
 }
 
 function drawButton(ctx, state, btn, x, y) {
-  const cfg = CONFIG.defenses[btn.type];
-  const cost = cfg?.cost ?? 0;
+  const count = state.inventory?.[btn.type] ?? 0;
   const isSelected = state.placementMode?.type === btn.type;
-  const isAffordable = state.resources >= cost;
-  const isActive = btn.enabled && isAffordable && !isSelected;
+  const hasStock = count > 0;
+  const isActive = btn.enabled && hasStock && !isSelected;
 
   let borderColor;
   let labelColor;
-  let costColor;
+  let countColor;
   if (isSelected) {
-    borderColor = labelColor = costColor = CONFIG.colors.alertAmber;
+    borderColor = labelColor = countColor = CONFIG.colors.alertAmber;
   } else if (isActive) {
     borderColor = CONFIG.colors.friendlyCyan;
     labelColor = CONFIG.colors.friendlyCyan;
-    costColor = CONFIG.colors.alertAmber;
+    countColor = CONFIG.colors.accentWhite;
   } else {
-    borderColor = labelColor = costColor = CONFIG.colors.gridLine;
+    borderColor = labelColor = countColor = CONFIG.colors.gridLine;
   }
 
   ctx.fillStyle = CONFIG.colors.bgDark;
@@ -74,8 +60,8 @@ function drawButton(ctx, state, btn, x, y) {
   ctx.fillStyle = labelColor;
   ctx.fillText(btn.label, x + BUTTON_W / 2, y + 12);
 
-  ctx.fillStyle = costColor;
-  ctx.fillText(`$${cost}`, x + BUTTON_W / 2, y + 24);
+  ctx.fillStyle = countColor;
+  ctx.fillText(`x${count}`, x + BUTTON_W / 2, y + 24);
 }
 
 function renderWaveHud(ctx, state, paletteY) {

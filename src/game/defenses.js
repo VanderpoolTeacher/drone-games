@@ -18,6 +18,7 @@ function isDisabledByIsr(state, def) {
 export function placeDefense(state, type, tile, facingRad = 0) {
   const cfg = CONFIG.defenses[type];
   if (!cfg) return null;
+  if ((state.inventory[type] ?? 0) <= 0) return null;
   const { x, y } = tileToPixel(tile);
   const defense = {
     id: ++state.defenseIdCounter,
@@ -26,6 +27,7 @@ export function placeDefense(state, type, tile, facingRad = 0) {
     x,
     y,
     hp: cfg.hp,
+    installMsRemaining: cfg.installMs ?? 0,
     cooldownMs: 0,
     targetId: null,
     heatMs: 0,
@@ -36,13 +38,21 @@ export function placeDefense(state, type, tile, facingRad = 0) {
     rfJamming: false,
   };
   state.defenses.push(defense);
-  state.resources -= cfg.cost;
+  state.inventory[type] -= 1;
   return defense;
 }
 
 export function updateDefenses(state, dt) {
   for (const d of state.defenses) {
     d.cooldownMs = Math.max(0, d.cooldownMs - dt * 1000);
+
+    if (d.installMsRemaining > 0) {
+      d.installMsRemaining = Math.max(0, d.installMsRemaining - dt * 1000);
+      if (d.laserFiring) { stopSfx('laser-' + d.id); d.laserFiring = false; }
+      if (d.rfJamming)   { stopSfx('rf-' + d.id);    d.rfJamming = false; }
+      d.targetId = null;
+      continue;
+    }
 
     if (isDisabledByIsr(state, d)) {
       if (d.laserFiring) {
@@ -228,16 +238,36 @@ export function renderDefenses(ctx, state) {
       }
     }
 
-    // HP segments — only if damaged
-    const maxHp = CONFIG.defenses[d.type].hp;
-    if (d.hp < maxHp) {
-      const segW = Math.max(1, Math.floor(DEFENSE_SIZE / maxHp) - 1);
+    if (d.installMsRemaining > 0) {
+      // Violet tint overlay + install progress bar
+      const cfg = CONFIG.defenses[d.type];
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = CONFIG.colors.threatViolet;
+      ctx.fillRect(Math.floor(d.x - DEFENSE_SIZE / 2), Math.floor(d.y - DEFENSE_SIZE / 2), DEFENSE_SIZE, DEFENSE_SIZE);
+      ctx.globalAlpha = 1.0;
+
+      const installProgress = 1 - (d.installMsRemaining / cfg.installMs);
+      const barW = Math.floor(installProgress * DEFENSE_SIZE);
       const barY = Math.floor(d.y - DEFENSE_SIZE / 2) - 4;
-      let segX = Math.floor(d.x - DEFENSE_SIZE / 2);
-      for (let i = 0; i < maxHp; i++) {
-        ctx.fillStyle = i < d.hp ? CONFIG.colors.friendlyCyan : CONFIG.colors.gridLine;
-        ctx.fillRect(segX, barY, segW, 2);
-        segX += segW + 1;
+      const barX = Math.floor(d.x - DEFENSE_SIZE / 2);
+      ctx.fillStyle = CONFIG.colors.gridLine;
+      ctx.fillRect(barX, barY, DEFENSE_SIZE, 2);
+      if (barW > 0) {
+        ctx.fillStyle = CONFIG.colors.friendlyCyan;
+        ctx.fillRect(barX, barY, barW, 2);
+      }
+    } else {
+      // HP segments — only if damaged
+      const maxHp = CONFIG.defenses[d.type].hp;
+      if (d.hp < maxHp) {
+        const segW = Math.max(1, Math.floor(DEFENSE_SIZE / maxHp) - 1);
+        const barY = Math.floor(d.y - DEFENSE_SIZE / 2) - 4;
+        let segX = Math.floor(d.x - DEFENSE_SIZE / 2);
+        for (let i = 0; i < maxHp; i++) {
+          ctx.fillStyle = i < d.hp ? CONFIG.colors.friendlyCyan : CONFIG.colors.gridLine;
+          ctx.fillRect(segX, barY, segW, 2);
+          segX += segW + 1;
+        }
       }
     }
   }
@@ -265,6 +295,7 @@ export function applyJamEffects(state) {
     let minMult = 1;
     for (const def of state.defenses) {
       if (def.type !== 'rfJammer') continue;
+      if (def.installMsRemaining > 0) continue;
       if (isDisabledByIsr(state, def)) continue;
       const dx = d.x - def.x;
       const dy = d.y - def.y;

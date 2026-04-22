@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { spawnDrone } from './drones.js';
+import { applyDelivery } from './state.js';
 import { playSfx, stopAllContinuous } from '../audio/sfx.js';
 
 function jitterInterval(ms) {
@@ -47,11 +48,11 @@ export function updateWave(state, dt) {
     const allSpawned = state.wave.spawnProgress.every(p => p.spawned >= p.count);
     if (allSpawned && state.drones.length === 0) {
       if (state.wave.number < CONFIG.waves.length) {
-        state.resources += CONFIG.resourcesPerWaveBonus;
         state.wave.number += 1;
         state.wave.phase = 'prep';
         state.wave.prepMs = CONFIG.prepTimeBetweenWaves;
         state.wave.spawnProgress = [];
+        applyDelivery(state, state.wave.number - 1);
       } else {
         // Final wave cleared — no bonus paid; winFlag fires instead.
         state.wave.phase = 'won';
