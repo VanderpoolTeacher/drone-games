@@ -31,26 +31,38 @@ function drawTiles(ctx) {
   for (let y = 0; y < gridH; y++) {
     for (let x = 0; x < gridW; x++) {
       const t = tiles[y][x];
-      if (t === 'land') {
-        ctx.fillStyle = CONFIG.colors.bgDark;
-        ctx.fillRect(
-          x * tileSize,
-          CONFIG.topBarHeight + padTop + y * tileSize,
-          tileSize,
-          tileSize
-        );
-      } else if (t === 'bridge') {
-        // Bridge deck — slightly lighter than water, with rails.
-        const py = CONFIG.topBarHeight + padTop + y * tileSize;
+      const px = x * tileSize;
+      const py = CONFIG.topBarHeight + padTop + y * tileSize;
+
+      if (t === 'water') continue;
+
+      // Everything land-ish gets a base dark fill.
+      ctx.fillStyle = CONFIG.colors.bgDark;
+      ctx.fillRect(px, py, tileSize, tileSize);
+
+      if (t === 'bridge') {
         ctx.fillStyle = CONFIG.colors.gridLine;
-        ctx.fillRect(x * tileSize, py + 2, tileSize, tileSize - 4);
+        ctx.fillRect(px, py + 2, tileSize, tileSize - 4);
         ctx.fillStyle = CONFIG.colors.accentWhite;
-        ctx.fillRect(x * tileSize, py + 1, tileSize, 1);
-        ctx.fillRect(x * tileSize, py + tileSize - 2, tileSize, 1);
+        ctx.fillRect(px, py + 1, tileSize, 1);
+        ctx.fillRect(px, py + tileSize - 2, tileSize, 1);
+      } else if (t === 'building') {
+        ctx.fillStyle = CONFIG.colors.bgMid;
+        ctx.fillRect(px + 2, py + 2, tileSize - 4, tileSize - 4);
+        ctx.fillStyle = CONFIG.colors.alertAmber;
+        ctx.fillRect(px + tileSize - 5, py + 4, 1, 1);
+        ctx.fillRect(px + 4, py + tileSize - 6, 1, 1);
+      } else if (t === 'road') {
+        ctx.fillStyle = CONFIG.colors.gridLine;
+        ctx.fillRect(px, py + Math.floor(tileSize / 2) - 1, tileSize, 3);
+      } else if (t === 'park') {
+        ctx.fillStyle = CONFIG.colors.successGreen;
+        ctx.fillRect(px + Math.floor(tileSize / 2) - 1, py + Math.floor(tileSize / 2) - 1, 2, 2);
       }
     }
   }
 
+  // Tile borders — only for generic land (keeps buildings/roads/parks clean).
   ctx.strokeStyle = CONFIG.colors.gridLine;
   ctx.lineWidth = 1;
   for (let y = 0; y < gridH; y++) {
@@ -72,13 +84,15 @@ function drawCoastline(ctx) {
   ctx.strokeStyle = CONFIG.colors.friendlyCyan;
   ctx.lineWidth = 1;
 
+  const landLike = t => t === 'land' || t === 'building' || t === 'road' || t === 'park';
+
   for (let y = 0; y < gridH; y++) {
     for (let x = 0; x < gridW; x++) {
-      if (tiles[y][x] !== 'land') continue;
+      if (!landLike(tiles[y][x])) continue;
       const px = x * tileSize;
       const py = CONFIG.topBarHeight + padTop + y * tileSize;
 
-      // Coastline only renders where land meets water (not land meets bridge).
+      // Coastline only renders where land-like meets water (bridge + landLike = no line).
       const isWaterEdge = (x2, y2) =>
         x2 < 0 || x2 >= gridW || y2 < 0 || y2 >= gridH || tiles[y2][x2] === 'water';
 
