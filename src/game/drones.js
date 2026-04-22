@@ -74,7 +74,13 @@ export function renderDrones(ctx, state) {
     const top = Math.floor(d.y - DRONE_SIZE / 2);
 
     if (d.type === 'payloadDelivery' && payloadSprite.complete && payloadSprite.naturalWidth > 0) {
-      ctx.drawImage(payloadSprite, left, top, DRONE_SIZE, DRONE_SIZE);
+      // Source sprite points "up" (nose = -Y). Rotate so nose tracks velocity.
+      const heading = Math.atan2(d.vy ?? 0, d.vx ?? 0);
+      ctx.save();
+      ctx.translate(Math.floor(d.x), Math.floor(d.y));
+      ctx.rotate(heading + Math.PI / 2);
+      ctx.drawImage(payloadSprite, -DRONE_SIZE / 2, -DRONE_SIZE / 2, DRONE_SIZE, DRONE_SIZE);
+      ctx.restore();
       continue;
     }
 
