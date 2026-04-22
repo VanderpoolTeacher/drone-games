@@ -1,7 +1,7 @@
 import { CONFIG, applyMode } from './config.js';
-import { gameState, resetGameState, applyDelivery } from './game/state.js';
+import { gameState, resetGameState, applyDelivery, updateTrucks } from './game/state.js';
 import { MAP } from './game/map.js';
-import { renderMap } from './game/mapRenderer.js';
+import { renderMap, renderTrucks } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
 import { renderLegend } from './ui/legend.js';
 import { renderPlacement, pixelToTile, mapHitTest, isValidZone } from './ui/placement.js';
@@ -47,12 +47,14 @@ function frame(tMs) {
   }
   updateStructures(gameState);
   updateExplosions(gameState, dt);
+  updateTrucks(gameState, dt);
   updateMusic(gameState);
 
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 
   renderMap(ctx, tMs, gameState);
+  renderTrucks(ctx, gameState);
   renderDefenses(ctx, gameState);
   renderDefenseDisablePulse(ctx, gameState, tMs);
   renderDrones(ctx, gameState);

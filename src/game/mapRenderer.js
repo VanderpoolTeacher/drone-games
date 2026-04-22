@@ -8,6 +8,20 @@ export function renderMap(ctx, tMs, state) {
   drawStructures(ctx, state);
 }
 
+export function renderTrucks(ctx, state) {
+  if (!state.trucks || state.trucks.length === 0) return;
+  for (const t of state.trucks) {
+    if (t.phase === 'waiting') continue;
+    // Truck body — 6×4 dark olive rectangle with an amber cab dot.
+    ctx.fillStyle = CONFIG.colors.alertAmber;
+    ctx.fillRect(Math.floor(t.x - 3), Math.floor(t.y - 2), 6, 4);
+    ctx.fillStyle = CONFIG.colors.bgDark;
+    ctx.fillRect(Math.floor(t.x - 3), Math.floor(t.y - 2), 2, 4);   // cab shadow
+    ctx.fillStyle = CONFIG.colors.accentWhite;
+    ctx.fillRect(Math.floor(t.x - 3), Math.floor(t.y - 2) + 1, 1, 2);  // headlight
+  }
+}
+
 function drawTiles(ctx) {
   const { tileSize, gridW, gridH, tiles, padTop, padBottom } = MAP;
 
@@ -16,7 +30,8 @@ function drawTiles(ctx) {
 
   for (let y = 0; y < gridH; y++) {
     for (let x = 0; x < gridW; x++) {
-      if (tiles[y][x] === 'land') {
+      const t = tiles[y][x];
+      if (t === 'land') {
         ctx.fillStyle = CONFIG.colors.bgDark;
         ctx.fillRect(
           x * tileSize,
@@ -24,6 +39,14 @@ function drawTiles(ctx) {
           tileSize,
           tileSize
         );
+      } else if (t === 'bridge') {
+        // Bridge deck — slightly lighter than water, with rails.
+        const py = CONFIG.topBarHeight + padTop + y * tileSize;
+        ctx.fillStyle = CONFIG.colors.gridLine;
+        ctx.fillRect(x * tileSize, py + 2, tileSize, tileSize - 4);
+        ctx.fillStyle = CONFIG.colors.accentWhite;
+        ctx.fillRect(x * tileSize, py + 1, tileSize, 1);
+        ctx.fillRect(x * tileSize, py + tileSize - 2, tileSize, 1);
       }
     }
   }
@@ -55,16 +78,20 @@ function drawCoastline(ctx) {
       const px = x * tileSize;
       const py = CONFIG.topBarHeight + padTop + y * tileSize;
 
-      if (x === 0 || tiles[y][x - 1] !== 'land') {
+      // Coastline only renders where land meets water (not land meets bridge).
+      const isWaterEdge = (x2, y2) =>
+        x2 < 0 || x2 >= gridW || y2 < 0 || y2 >= gridH || tiles[y2][x2] === 'water';
+
+      if (isWaterEdge(x - 1, y)) {
         ctx.beginPath(); ctx.moveTo(px + 0.5, py); ctx.lineTo(px + 0.5, py + tileSize); ctx.stroke();
       }
-      if (x === gridW - 1 || tiles[y][x + 1] !== 'land') {
+      if (isWaterEdge(x + 1, y)) {
         ctx.beginPath(); ctx.moveTo(px + tileSize - 0.5, py); ctx.lineTo(px + tileSize - 0.5, py + tileSize); ctx.stroke();
       }
-      if (y > 0 && tiles[y - 1][x] !== 'land') {
+      if (isWaterEdge(x, y - 1)) {
         ctx.beginPath(); ctx.moveTo(px, py + 0.5); ctx.lineTo(px + tileSize, py + 0.5); ctx.stroke();
       }
-      if (y === gridH - 1 || tiles[y + 1][x] !== 'land') {
+      if (isWaterEdge(x, y + 1)) {
         ctx.beginPath(); ctx.moveTo(px, py + tileSize - 0.5); ctx.lineTo(px + tileSize, py + tileSize - 0.5); ctx.stroke();
       }
     }

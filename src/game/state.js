@@ -7,6 +7,46 @@ export function applyDelivery(state, waveIdx) {
   for (const type of Object.keys(delivery)) {
     state.inventory[type] = (state.inventory[type] ?? 0) + delivery[type];
   }
+  spawnSupplyTrucks(state, delivery);
+}
+
+// Supply trucks drive in from the north bridge for each unit delivered.
+// Purely decorative; they animate down, pause briefly, then despawn.
+const TRUCK_BRIDGE_X = 15;   // matches MAP.js north bridge cols 15-16
+const TRUCK_SPEED = 30;      // px/s
+
+function spawnSupplyTrucks(state, delivery) {
+  if (!state.trucks) state.trucks = [];
+  let staggerMs = 0;
+  for (const type of Object.keys(delivery)) {
+    for (let i = 0; i < delivery[type]; i++) {
+      state.trucks.push({
+        type,
+        x: TRUCK_BRIDGE_X * 16 + 8,
+        y: -8,
+        targetY: CONFIG.topBarHeight + 40,
+        delayMs: staggerMs,
+        phase: 'waiting',
+      });
+      staggerMs += 350;
+    }
+  }
+}
+
+export function updateTrucks(state, dt) {
+  const dtMs = dt * 1000;
+  for (const t of state.trucks) {
+    if (t.phase === 'done') continue;
+    if (t.phase === 'waiting') {
+      t.delayMs -= dtMs;
+      if (t.delayMs <= 0) t.phase = 'driving';
+      continue;
+    }
+    // driving
+    t.y += TRUCK_SPEED * dt;
+    if (t.y >= t.targetY) t.phase = 'done';
+  }
+  state.trucks = state.trucks.filter(t => t.phase !== 'done');
 }
 
 function makeStructureMap(initial) {
@@ -25,6 +65,7 @@ export const gameState = {
   projectileIdCounter: 0,
   devSpawnTimer: { isr: 0, owa: 0, payloadDelivery: 0 },
   inventory: { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 },
+  trucks: [],
   placementMode: null,
   hoverTile: null,
   structureHp: makeStructureMap(CONFIG.structures.maxHP),
@@ -64,6 +105,7 @@ export function resetGameState() {
   gameState.inventory.interceptor = 0;
   gameState.inventory.laser = 0;
   gameState.inventory.hpm = 0;
+  gameState.trucks.length = 0;
   applyDelivery(gameState, 0);
   gameState.placementMode = null;
   gameState.hoverTile = null;
