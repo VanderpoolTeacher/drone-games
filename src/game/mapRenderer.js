@@ -19,6 +19,7 @@ function drawPlainMap(ctx) {
   const { tileSize, gridW, gridH, padTop } = MAP;
   const mapTop = CONFIG.topBarHeight + padTop;
   const mapH = gridH * tileSize;
+  const mapW = gridW * tileSize;
 
   ctx.fillStyle = CONFIG.colors.bgMid;
   ctx.fillRect(0, mapTop, CONFIG.virtualWidth, mapH);
@@ -33,9 +34,23 @@ function drawPlainMap(ctx) {
   }
   for (let y = 0; y <= gridH; y++) {
     ctx.moveTo(0, mapTop + y * tileSize + 0.5);
-    ctx.lineTo(CONFIG.virtualWidth, mapTop + y * tileSize + 0.5);
+    ctx.lineTo(mapW, mapTop + y * tileSize + 0.5);
   }
   ctx.stroke();
+
+  // Column letters (A, B, C…) in the TOP-LEFT of each row-0 cell,
+  // row numbers (1, 2, 3…) in the TOP-LEFT of each col-0 cell.
+  ctx.font = '8px "Press Start 2P", monospace';
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  for (let x = 0; x < gridW; x++) {
+    const letter = String.fromCharCode(65 + x);
+    ctx.fillText(letter, x * tileSize + 2, mapTop + 2);
+  }
+  for (let y = 1; y < gridH; y++) {
+    ctx.fillText(String(y + 1), 2, mapTop + y * tileSize + 2);
+  }
 }
 
 function drawBackdrop(ctx) {

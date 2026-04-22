@@ -1,75 +1,55 @@
-// Logical tile grid. With the image-backdrop enabled, the tile TYPES are
-// decoration for apartment/casualty feedback only — the image carries the
-// land/water visuals. Tile COORDINATES still drive placement, corridors,
-// structure positions, apartment locations, etc.
-//
-// Positions are tuned so structures, zones, and corridor mouths land on
-// plausible Manhattan landmarks when manhattan.png is rotated 90° CCW and
-// cover-fit to the map area (Harlem at left edge, Battery at right).
+// 20×8 tile grid at 24 px — bigger cells, A-T columns × 1-8 rows for easy
+// reference when the backdrop is off. Apartments authored directly rather
+// than scraped from TILE_STRING (TILE_STRING now only encodes apartment
+// positions — everything else is scenery in the image).
 
-const TILE_STRING = `
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWaWWWWWWaWWWWaWWWaWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWaWWWWWaWWWWWaWWWWWaWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWaWWWWWWWWWWaWWWWaWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWaWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-`.trim().split('\n').map(row => row.split('').map(ch => {
-  if (ch === 'L') return 'land';
-  if (ch === 'B') return 'bridge';
-  if (ch === '#') return 'building';
-  if (ch === 'r') return 'road';
-  if (ch === 'p') return 'park';
-  if (ch === 'a') return 'apartment';
-  return 'water';
-}));
+const GRID_W = 20;
+const GRID_H = 8;
 
-const APARTMENT_POPULATION = 100;
-const APARTMENTS = [];
-for (let y = 0; y < TILE_STRING.length; y++) {
-  for (let x = 0; x < TILE_STRING[y].length; x++) {
-    if (TILE_STRING[y][x] === 'apartment') {
-      APARTMENTS.push({ tile: { x, y }, maxPop: APARTMENT_POPULATION });
-    }
-  }
+const APARTMENTS = [
+  { tile: { x: 3,  y: 2 }, maxPop: 100 },
+  { tile: { x: 6,  y: 2 }, maxPop: 100 },
+  { tile: { x: 9,  y: 2 }, maxPop: 100 },
+  { tile: { x: 13, y: 3 }, maxPop: 100 },
+  { tile: { x: 4,  y: 4 }, maxPop: 100 },
+  { tile: { x: 11, y: 4 }, maxPop: 100 },
+  { tile: { x: 15, y: 4 }, maxPop: 100 },
+  { tile: { x: 5,  y: 5 }, maxPop: 100 },
+  { tile: { x: 12, y: 5 }, maxPop: 100 },
+  { tile: { x: 16, y: 6 }, maxPop: 100 },
+];
+
+// Tile string just encodes apartments now; everything else is 'water' and
+// the image carries the visual. With backdrop off, cells show as blue grid.
+const TILE_STRING = [];
+for (let y = 0; y < GRID_H; y++) {
+  const row = new Array(GRID_W).fill('water');
+  TILE_STRING.push(row);
+}
+for (const apt of APARTMENTS) {
+  TILE_STRING[apt.tile.y][apt.tile.x] = 'apartment';
 }
 
 export const MAP = {
   shape: 'manhattan',
-  gridW: 30,
-  gridH: 13,
-  tileSize: 16,
-  padTop: 3,
-  padBottom: 3,
+  gridW: GRID_W,
+  gridH: GRID_H,
+  tileSize: 24,
+  padTop: 8,
+  padBottom: 8,
   tiles: TILE_STRING,
   apartments: APARTMENTS,
   structures: [
-    // Rough Manhattan landmarks on the rotated backdrop (Harlem left → Battery right):
-    { id: 'power',    type: 'power',    tile: { x: 20, y: 7 }, displayName: 'Power Substation' },  // Con Ed East 14th area
-    { id: 'comms',    type: 'comms',    tile: { x: 13, y: 6 }, displayName: 'Comms Tower' },       // Midtown (30 Rock-ish)
-    { id: 'cityHall', type: 'cityHall', tile: { x: 25, y: 8 }, displayName: 'City Hall' },         // Lower Manhattan (City Hall Park)
+    { id: 'power',    type: 'power',    tile: { x: 13, y: 4 }, displayName: 'Power Substation' },  // Con Ed-ish, Midtown East
+    { id: 'comms',    type: 'comms',    tile: { x: 9,  y: 4 }, displayName: 'Comms Tower' },       // 30 Rock-ish, Midtown
+    { id: 'cityHall', type: 'cityHall', tile: { x: 17, y: 5 }, displayName: 'City Hall' },         // Lower Manhattan
   ],
   placementZones: [
-    // Upper Manhattan / Harlem
-    { x: 6,  y: 6 }, { x: 6,  y: 8 },
-    { x: 9,  y: 5 }, { x: 9,  y: 9 },
-    // Upper East/West
-    { x: 12, y: 7 }, { x: 12, y: 9 },
-    // Midtown
-    { x: 15, y: 5 }, { x: 15, y: 8 },
-    // Chelsea / Flatiron
-    { x: 18, y: 7 }, { x: 18, y: 9 },
-    // SoHo / Lower East Side
-    { x: 22, y: 6 }, { x: 22, y: 9 },
-    // Financial District / Battery
-    { x: 26, y: 7 }, { x: 27, y: 9 },
+    { x: 2,  y: 3 }, { x: 5,  y: 3 },
+    { x: 7,  y: 3 }, { x: 10, y: 3 }, { x: 12, y: 3 }, { x: 14, y: 3 },
+    { x: 3,  y: 5 }, { x: 6,  y: 5 }, { x: 8,  y: 5 }, { x: 11, y: 5 },
+    { x: 14, y: 5 }, { x: 16, y: 5 }, { x: 18, y: 5 },
+    { x: 10, y: 6 },
   ],
   spawnEdges: {
     N: { active: true,  waves: [1, 2, 3, 4, 5], droneTypes: ['isr'] },
@@ -78,22 +58,22 @@ export const MAP = {
     E: { active: true,  waves: [4, 5],           droneTypes: ['payloadDelivery'] },
   },
   corridors: {
-    // ISR drones cross from East River (N edge) south over Manhattan, exiting via Hudson
+    // ISR crosses north→south over Manhattan
     isr: [
-      { waypoints: [{ x: 8,  y: 0 }, { x: 8,  y: 5 }, { x: 8,  y: 8 }, { x: 8,  y: 13 }], exitEdge: 'S' },
-      { waypoints: [{ x: 16, y: 0 }, { x: 16, y: 6 }, { x: 16, y: 9 }, { x: 16, y: 13 }], exitEdge: 'S' },
-      { waypoints: [{ x: 24, y: 0 }, { x: 24, y: 5 }, { x: 24, y: 9 }, { x: 24, y: 13 }], exitEdge: 'S' },
+      { waypoints: [{ x: 5,  y: 0 }, { x: 5,  y: 3 }, { x: 5,  y: 6 }, { x: 5,  y: 8 }], exitEdge: 'S' },
+      { waypoints: [{ x: 11, y: 0 }, { x: 11, y: 3 }, { x: 11, y: 6 }, { x: 11, y: 8 }], exitEdge: 'S' },
+      { waypoints: [{ x: 17, y: 0 }, { x: 17, y: 3 }, { x: 17, y: 6 }, { x: 17, y: 8 }], exitEdge: 'S' },
     ],
-    // OWA drones enter from Hudson (S edge), commit north to their structure
+    // OWA enters from Hudson (S edge) committing north to each structure
     owa: [
-      { waypoints: [{ x: 20, y: 13 }, { x: 20, y: 10 }, { x: 20, y: 7 }], targetStructureId: 'power' },
-      { waypoints: [{ x: 13, y: 13 }, { x: 13, y: 10 }, { x: 13, y: 6 }], targetStructureId: 'comms' },
-      { waypoints: [{ x: 25, y: 13 }, { x: 25, y: 11 }, { x: 25, y: 8 }], targetStructureId: 'cityHall' },
+      { waypoints: [{ x: 13, y: 8 }, { x: 13, y: 6 }, { x: 13, y: 4 }], targetStructureId: 'power' },
+      { waypoints: [{ x: 9,  y: 8 }, { x: 9,  y: 6 }, { x: 9,  y: 4 }], targetStructureId: 'comms' },
+      { waypoints: [{ x: 17, y: 8 }, { x: 17, y: 6 }, { x: 17, y: 5 }], targetStructureId: 'cityHall' },
     ],
-    // Payload drones cross east↔west at mid-Manhattan, dropping on the comms or cityHall axis
+    // Payload crosses east↔west, dropping on comms and cityHall axes
     payloadDelivery: [
-      { waypoints: [{ x: -1, y: 7 }, { x: 30, y: 7 }], dropPoint: { x: 13, y: 6 } },
-      { waypoints: [{ x: 30, y: 8 }, { x: -1, y: 8 }], dropPoint: { x: 25, y: 8 } },
+      { waypoints: [{ x: -1, y: 4 }, { x: 20, y: 4 }], dropPoint: { x: 9,  y: 4 } },
+      { waypoints: [{ x: 20, y: 5 }, { x: -1, y: 5 }], dropPoint: { x: 17, y: 5 } },
     ],
   },
 };
