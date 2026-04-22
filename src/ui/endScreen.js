@@ -51,7 +51,7 @@ function drawBackdrop(ctx, key) {
 }
 
 function drawHeadline(ctx, entry, tMs, modeTag) {
-  const blink = Math.floor(tMs / 250) % 2 === 0;
+  const blink = tMs % 1000 < 750;
   if (!blink) return;
   ctx.font = '16px "Press Start 2P", monospace';
   ctx.textAlign = 'center';
@@ -82,7 +82,7 @@ function drawBody(ctx, entry) {
 }
 
 function drawPrompt(ctx, tMs) {
-  const blink = Math.floor(tMs / 250) % 2 === 0;
+  const blink = tMs % 1000 < 750;
   if (!blink) return;
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.textAlign = 'center';
