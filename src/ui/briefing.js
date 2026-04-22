@@ -1,19 +1,19 @@
 import { CONFIG } from '../config.js';
 
 const PORTRAIT_SIZE = 64;
-const PORTRAIT_X = 4;
-// Sits above the bottom palette strip with a 4-px gap.
+// Right-anchored: portrait hugs the right edge, bubble extends to its left.
+const PORTRAIT_X = CONFIG.virtualWidth - 4 - PORTRAIT_SIZE;       // 412
 const PORTRAIT_Y = CONFIG.virtualHeight - CONFIG.bottomPaletteHeight - 4 - PORTRAIT_SIZE;  // 170
 
-const BUBBLE_X = 72;
 const BUBBLE_W = 320;
 const BUBBLE_H = 80;
+const BUBBLE_X = PORTRAIT_X - 8 - BUBBLE_W;                       // 84
 const BUBBLE_Y = CONFIG.virtualHeight - CONFIG.bottomPaletteHeight - 4 - BUBBLE_H;  // 154
 const BUBBLE_PAD = 4;
 
-const TAB_X = 4;
-const TAB_Y = CONFIG.virtualHeight - 20;        // 250
 const TAB_SIZE = 16;
+const TAB_X = CONFIG.virtualWidth - 4 - TAB_SIZE;                 // 460
+const TAB_Y = CONFIG.virtualHeight - 20;                          // 250
 
 const TEXT_SIZE = 8;
 const TEXT_LINE_HEIGHT = 11;
@@ -83,12 +83,14 @@ function drawBubble(ctx, state) {
   ctx.lineWidth = 1;
   ctx.strokeRect(BUBBLE_X + 0.5, BUBBLE_Y + 0.5, BUBBLE_W - 1, BUBBLE_H - 1);
 
+  // Tail points RIGHT from the bubble toward the portrait, at head height.
   const tailY = PORTRAIT_Y + 8;
+  const tailBase = BUBBLE_X + BUBBLE_W;
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.beginPath();
-  ctx.moveTo(BUBBLE_X, tailY - 3);
-  ctx.lineTo(BUBBLE_X - 3, tailY);
-  ctx.lineTo(BUBBLE_X, tailY + 3);
+  ctx.moveTo(tailBase, tailY - 3);
+  ctx.lineTo(tailBase + 3, tailY);
+  ctx.lineTo(tailBase, tailY + 3);
   ctx.closePath();
   ctx.fill();
 
