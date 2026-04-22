@@ -92,9 +92,9 @@ function drawPrompt(ctx, tMs) {
 
 function drawLogo(ctx) {
   if (!logoImg.complete || logoImg.naturalWidth === 0) return;
-  const size = 72;
-  const x = 8;
-  const y = 4;
+  const size = 180;
+  const x = Math.round((CONFIG.virtualWidth - size) / 2);
+  const y = Math.round((CONFIG.virtualHeight - size) / 2);
   ctx.drawImage(logoImg, x, y, size, size);
 }
 
