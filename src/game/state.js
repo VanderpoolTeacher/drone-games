@@ -1,21 +1,33 @@
 import { CONFIG, applyMode } from '../config.js';
 import { MAP } from './map.js';
 
-const BACKDROP_KEY = 'droneDefense.backdropVisible';
+const BACKDROP_KEY = 'droneDefense.backdropAlpha';
+const BACKDROP_CYCLE = [1, 0.66, 0.33, 0];   // B key cycles through these
 
 function loadBackdropFromStorage() {
   try {
     const v = localStorage.getItem(BACKDROP_KEY);
-    return v === null ? true : v === '1';
+    if (v === null) return 1;
+    const f = parseFloat(v);
+    return isFinite(f) ? Math.max(0, Math.min(1, f)) : 1;
   } catch (_e) {
-    return true;
+    return 1;
   }
 }
 
 export function toggleBackdrop(state) {
-  state.backdropVisible = !state.backdropVisible;
+  // Snap current alpha to the nearest cycle slot, advance to the next.
+  const cur = state.backdropAlpha ?? 1;
+  let idx = 0;
+  let bestDiff = Infinity;
+  for (let i = 0; i < BACKDROP_CYCLE.length; i++) {
+    const d = Math.abs(BACKDROP_CYCLE[i] - cur);
+    if (d < bestDiff) { bestDiff = d; idx = i; }
+  }
+  const next = BACKDROP_CYCLE[(idx + 1) % BACKDROP_CYCLE.length];
+  state.backdropAlpha = next;
   try {
-    localStorage.setItem(BACKDROP_KEY, state.backdropVisible ? '1' : '0');
+    localStorage.setItem(BACKDROP_KEY, String(next));
   } catch (_e) {
     // private mode — ignore.
   }
@@ -117,7 +129,7 @@ export const gameState = {
   winFlag: false,
   screenPhase: 'idle',
   mode: 'campaign',
-  backdropVisible: loadBackdropFromStorage(),
+  backdropAlpha: loadBackdropFromStorage(),
   tooltipKey: null,
   briefing: {
     phase: 'idle',

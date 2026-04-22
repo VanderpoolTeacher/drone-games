@@ -5,11 +5,11 @@ const BACKDROP_IMG = new Image();
 BACKDROP_IMG.src = './src/images/manhattan.png';
 
 export function renderMap(ctx, tMs, state) {
-  if (state.backdropVisible) {
-    drawBackdrop(ctx);
-  } else {
-    drawPlainMap(ctx);
-  }
+  // Always draw the plain map (water + grid + coord labels) as a base; then
+  // overlay the image at state.backdropAlpha (1 = image hides grid fully).
+  drawPlainMap(ctx);
+  const alpha = state.backdropAlpha ?? 1;
+  if (alpha > 0) drawBackdrop(ctx, alpha);
   drawApartments(ctx, state);
   drawZones(ctx, tMs);
   drawStructures(ctx, state);
@@ -53,14 +53,10 @@ function drawPlainMap(ctx) {
   }
 }
 
-function drawBackdrop(ctx) {
+function drawBackdrop(ctx, alpha) {
   const mapTop = CONFIG.topBarHeight + MAP.padTop;
   const mapH = MAP.gridH * MAP.tileSize;
   const mapW = CONFIG.virtualWidth;
-
-  // Base fill — shows until image loads, and fills any letterbox gaps.
-  ctx.fillStyle = CONFIG.colors.bgDark;
-  ctx.fillRect(0, mapTop, mapW, mapH);
 
   if (!BACKDROP_IMG.complete || BACKDROP_IMG.naturalWidth === 0) return;
 
@@ -74,6 +70,7 @@ function drawBackdrop(ctx) {
   const dy = mapTop + (mapH - drawH) / 2;
 
   ctx.save();
+  ctx.globalAlpha = alpha;
   ctx.beginPath();
   ctx.rect(0, mapTop, mapW, mapH);
   ctx.clip();
