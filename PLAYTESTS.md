@@ -28,6 +28,30 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (Hover tooltips)
+
+**Build:** feat/tooltips — top-center info panel with authored copy
+**Session length:** ~5 min UX check
+**Result:** N/A (feature pass)
+
+### What happened
+- Palette hover shows defense info + cost; on-map hover for same defense shows info without cost (reuse confirmed).
+- Drone hover shows type + matchup table row.
+- Structure hover shows HP numerically + color-tiered header.
+
+### What worked
+- Fixed top-center position reads as a command-center readout; no cursor-following flicker.
+- Matchup text finally makes the layered-defense thesis legible in-game without Warden having to recite it.
+- Color-tiered structure header gives an at-a-glance damage readout without needing a separate HP bar in the HUD.
+
+### What felt off
+- Panel briefly covers the top of the map. If a drone is spawning from the north edge the player might miss it during a hover.
+- Defense-hover tooltip header says just `LASER (HEL)` — no current-state info like "OVERHEATED" or "FIRING". Candidate for follow-up.
+
+### Questions raised
+- Should tooltip auto-hide if player is mid-placement? Currently shows on top of placement cursor; not a big deal but could be cleaner.
+- Is there room for a 5th line showing "current state" on defenses?
+
 ## 2026-04-21 — solo (Start screen)
 
 **Build:** feat/start-screen — podium backdrop + scrolling briefing + phase-gated gameplay

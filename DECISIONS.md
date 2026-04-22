@@ -166,3 +166,13 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Title track promoted from bench: `Fortress Static` plays on the start screen, crossfades to wave 1 prep track (Barbed Lullaby) when the player presses start. Because audio is blocked pre-gesture AND the gesture flips phase, the title track is effectively silent — acceptable for v1.
 
 2026-04-21 — Mute icon hit-test runs BEFORE the start-screen phase flip so the user can silence audio on the start screen without accidentally starting the game. Same applies to `M` key.
+
+2026-04-21 — Tooltip content lives in `CONFIG.tooltips` keyed by entity type (`drone-isr`, `defense-laser`, `structure-power`, etc.). One edit site for all copy; no hardcoded text in tooltip.js.
+
+2026-04-21 — Tooltip panel is fixed top-center (x=100, y=28, 280×56) not cursor-following. Predictable location, no flicker risk, no clamp math. Trade-off: panel briefly covers the top of the map during hover.
+
+2026-04-21 — Palette tooltips reuse the on-map defense entries and prepend a `COST:` line; body truncated to 3 lines so total stays at 4 (header + 3).
+
+2026-04-21 — Structure tooltips compute header color dynamically from HP tier (>=66% green, >=33% amber, else red) and append `HP: cur / max`. Single authored entry per structure; render does the work.
+
+2026-04-21 — Tooltip hit-test precedence: palette → on-map defense → drone → structure. First hit wins; ghost placement cursor has no tooltip.

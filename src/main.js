@@ -21,6 +21,7 @@ import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
 import { playSfx, toggleMute, getAudioContext } from './audio/sfx.js';
 import { updateMusic } from './audio/music.js';
 import { renderStartScreen } from './ui/startScreen.js';
+import { updateTooltip, renderTooltip } from './ui/tooltip.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -62,6 +63,7 @@ function frame(tMs) {
   renderMuteIcon(ctx);
   renderPalette(ctx, gameState);
   renderLegend(ctx);
+  renderTooltip(ctx, gameState);
   renderBriefing(ctx, gameState, tMs);
   renderPlacement(ctx, gameState);
   renderWaveTelegraph(ctx, gameState, tMs);
@@ -91,6 +93,7 @@ canvas.addEventListener('mousemove', e => {
     const cy = CONFIG.topBarHeight + MAP.padTop + gameState.hoverTile.y * MAP.tileSize + MAP.tileSize / 2;
     gameState.placementMode.facingRad = Math.atan2(vy - cy, vx - cx);
   }
+  updateTooltip(gameState, vx, vy);
 });
 
 canvas.addEventListener('click', e => {

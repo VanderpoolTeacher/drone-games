@@ -192,6 +192,84 @@ export const CONFIG = {
     crossfadeMs: 500,
   },
 
+  tooltips: {
+    'drone-isr': {
+      header: 'ISR DRONE',
+      headerColor: 'threatRed',
+      body: [
+        'Surveillance scout (Group 1 sUAS)',
+        'STRONG: RF Jammer',
+        'WEAK: Interceptor, Laser',
+      ],
+    },
+    'drone-owa': {
+      header: 'OWA DRONE',
+      headerColor: 'threatRed',
+      body: [
+        'One-way attack / loitering munition',
+        'STRONG: Interceptor, Laser',
+        'WEAK: RF Jammer (preprogrammed)',
+      ],
+    },
+    'drone-payloadDelivery': {
+      header: 'PAYLOAD-DELIVERY DRONE',
+      headerColor: 'threatRed',
+      body: [
+        'Armored Group 2 payload carrier',
+        'STRONG: Laser, HPM',
+        'WEAK: RF Jammer',
+      ],
+    },
+    'defense-rfJammer': {
+      header: 'RF JAMMER',
+      headerColor: 'friendlyCyan',
+      body: [
+        'Soft-kill electronic warfare',
+        'STRONG: ISR',
+        'WEAK: OWA, Payload',
+      ],
+    },
+    'defense-interceptor': {
+      header: 'INTERCEPTOR',
+      headerColor: 'friendlyCyan',
+      body: [
+        'Hard-kill kinetic (single target)',
+        'STRONG: OWA, Payload',
+        'WEAK: ISR (cooldown waste)',
+      ],
+    },
+    'defense-laser': {
+      header: 'LASER (HEL)',
+      headerColor: 'friendlyCyan',
+      body: [
+        'Directed energy — continuous beam',
+        'STRONG: Payload, OWA',
+        'WEAK: ISR; overheats on sustained fire',
+      ],
+    },
+    'defense-hpm': {
+      header: 'HPM',
+      headerColor: 'friendlyCyan',
+      body: [
+        'Directed energy — cone area pulse',
+        'STRONG: Swarms (all types in cone)',
+        'WEAK: Single high-HP targets',
+      ],
+    },
+    'structure-power': {
+      header: 'POWER SUBSTATION',
+      body: ['Critical infrastructure'],
+    },
+    'structure-comms': {
+      header: 'COMMS TOWER',
+      body: ['Critical infrastructure'],
+    },
+    'structure-cityHall': {
+      header: 'CITY HALL',
+      body: ['Critical infrastructure'],
+    },
+  },
+
   // Colors (mirrors STYLE.md palette — keep in sync)
   // threatRedMid/Dim are derived quantization steps for trail fading.
   // droneIsr/Owa/Payload are semantic aliases for per-type drone body colors (legend + renderer use these).

@@ -30,6 +30,7 @@ export const gameState = {
   },
   winFlag: false,
   screenPhase: 'idle',
+  tooltipKey: null,
   briefing: {
     phase: 'idle',
     visibleMs: 0,
@@ -66,4 +67,5 @@ export function resetGameState() {
   gameState.briefing.visibleMs = 0;
   gameState.briefing.expandedOnce = false;
   gameState.briefing.activeBriefingIndex = -1;
+  gameState.tooltipKey = null;
 }
