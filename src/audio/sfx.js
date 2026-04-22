@@ -264,6 +264,58 @@ function playLose() {
   osc.stop(t + 0.81);
 }
 
+function playStructureHit() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+
+  const nSrc = ctx.createBufferSource();
+  nSrc.buffer = makeNoiseBuffer(ctx, 0.08);
+  const nGain = ctx.createGain();
+  nGain.gain.setValueAtTime(0.15, t);
+  nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+  nSrc.connect(nGain);
+  nGain.connect(masterGain);
+  nSrc.start(t);
+  nSrc.stop(t + 0.09);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = 100;
+  const oGain = ctx.createGain();
+  oGain.gain.setValueAtTime(0.2, t);
+  oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+  osc.connect(oGain);
+  oGain.connect(masterGain);
+  osc.start(t);
+  osc.stop(t + 0.13);
+}
+
+function playStructureHitHeavy() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+
+  const nSrc = ctx.createBufferSource();
+  nSrc.buffer = makeNoiseBuffer(ctx, 0.25);
+  const nGain = ctx.createGain();
+  nGain.gain.setValueAtTime(0.35, t);
+  nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+  nSrc.connect(nGain);
+  nGain.connect(masterGain);
+  nSrc.start(t);
+  nSrc.stop(t + 0.26);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = 55;
+  const oGain = ctx.createGain();
+  oGain.gain.setValueAtTime(0.5, t);
+  oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+  osc.connect(oGain);
+  oGain.connect(masterGain);
+  osc.start(t);
+  osc.stop(t + 0.31);
+}
+
 // --- Continuous sounds -------------------------------------------------
 
 // id → { nodes: [...], gain } — nodes are stopped and disconnected on stopSfx.
@@ -339,9 +391,45 @@ function makeRfJamNodes() {
   return { src, lfo, gain };
 }
 
+function makeStructuresAlarmNodes() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+
+  // Two-tone siren: osc center 550 Hz modulated ±110 Hz by a 1 Hz square
+  // LFO → alternates 440 / 660 Hz every 0.5 s.
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = 550;
+
+  const lfo = ctx.createOscillator();
+  lfo.type = 'square';
+  lfo.frequency.value = 1;
+  const lfoAmp = ctx.createGain();
+  lfoAmp.gain.value = 110;
+  lfo.connect(lfoAmp);
+  lfoAmp.connect(osc.frequency);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 1500;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0;
+  gain.gain.setTargetAtTime(0.08, t, 0.1);   // soft 100ms fade-in, quiet
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(masterGain);
+  osc.start(t);
+  lfo.start(t);
+
+  return { osc, lfo, gain };
+}
+
 const CONTINUOUS_FACTORIES = {
   laserFire: makeLaserFireNodes,
   rfJam: makeRfJamNodes,
+  structuresAlarm: makeStructuresAlarmNodes,
 };
 
 export function startSfx(name, id) {
@@ -372,6 +460,10 @@ export function stopSfx(id) {
   if (entry.lfo) entry.lfo.stop(stopAt);
 }
 
+export function stopAllContinuous() {
+  for (const id of [...continuous.keys()]) stopSfx(id);
+}
+
 // --- Public API --------------------------------------------------------
 
 const ONE_SHOTS = {
@@ -381,6 +473,8 @@ const ONE_SHOTS = {
   laserOverheat: playLaserOverheat,
   hpmPulse: playHpmPulse,
   structureDestroyed: playStructureDestroyed,
+  structureHit: playStructureHit,
+  structureHitHeavy: playStructureHitHeavy,
   waveStart: playWaveStart,
   win: playWin,
   lose: playLose,

@@ -1,4 +1,9 @@
-import { playSfx } from '../audio/sfx.js';
+import { CONFIG } from '../config.js';
+import { playSfx, startSfx, stopAllContinuous } from '../audio/sfx.js';
+
+const HIT_HEAVY_FRAC = 0.25;   // hit ≥25% of maxHP → structureHitHeavy
+const ALARM_HP_FRAC = 0.5;     // any structure below 50% HP → alarm on
+const ALARM_ID = 'structures-alarm';
 
 export function applyDamage(state, structureId, amount) {
   if (state.loseFlag) return;
@@ -11,10 +16,21 @@ export function applyDamage(state, structureId, amount) {
 
   if (before > 0 && state.structureHp[structureId] <= 0) {
     playSfx('structureDestroyed');
+  } else {
+    playSfx('structureHit');
+    if (amount >= CONFIG.structures.maxHP * HIT_HEAVY_FRAC) {
+      playSfx('structureHitHeavy');
+    }
   }
+
+  const anySubCritical = Object.values(state.structureHp).some(
+    hp => hp > 0 && hp < CONFIG.structures.maxHP * ALARM_HP_FRAC
+  );
+  if (anySubCritical) startSfx('structuresAlarm', ALARM_ID);
 
   if (isAllDestroyed(state)) {
     state.loseFlag = true;
+    stopAllContinuous();
     playSfx('lose');
   }
 }
