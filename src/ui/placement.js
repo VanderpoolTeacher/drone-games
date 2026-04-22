@@ -29,23 +29,7 @@ export function isValidZone(state, tile) {
 
 export function renderPlacement(ctx, state) {
   if (!state.placementMode) return;
-
-  drawInvalidOverlays(ctx, state);
   drawGhostAndRange(ctx, state);
-}
-
-function drawInvalidOverlays(ctx, state) {
-  const { gridW, gridH, tiles } = MAP;
-  ctx.fillStyle = CONFIG.colors.threatRed;
-  for (let y = 0; y < gridH; y++) {
-    for (let x = 0; x < gridW; x++) {
-      const t = tiles[y][x];
-      if (t === 'water' || t === 'bridge' || t === 'apartment') continue;
-      if (MAP.placementZones.some(z => z.x === x && z.y === y)) continue;
-      const { x: cx, y: cy } = tileToPixel({ x, y });
-      ctx.fillRect(Math.floor(cx) - 1, Math.floor(cy) - 1, 2, 2);
-    }
-  }
 }
 
 function drawGhostAndRange(ctx, state) {

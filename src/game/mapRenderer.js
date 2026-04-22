@@ -6,8 +6,7 @@ BACKDROP_IMG.src = './src/images/manhattan.png';
 
 export function renderMap(ctx, tMs, state) {
   drawBackdrop(ctx);
-  drawTiles(ctx, state);
-  drawCoastline(ctx);
+  drawApartments(ctx, state);
   drawZones(ctx, tMs);
   drawStructures(ctx, state);
 }
@@ -17,11 +16,14 @@ function drawBackdrop(ctx) {
   const mapH = MAP.gridH * MAP.tileSize;
   const mapW = CONFIG.virtualWidth;
 
+  // Base fill — shows until image loads, and fills any letterbox gaps.
+  ctx.fillStyle = CONFIG.colors.bgDark;
+  ctx.fillRect(0, mapTop, mapW, mapH);
+
   if (!BACKDROP_IMG.complete || BACKDROP_IMG.naturalWidth === 0) return;
 
-  // Rotate portrait Manhattan image 90° CCW so it fits the landscape map area.
-  // Aspect-fit (contain) — crop excess, center in map area.
-  const rotW = BACKDROP_IMG.naturalHeight;   // after 90° rotation
+  // Rotate portrait Manhattan image 90° CCW and cover-fit to the map area.
+  const rotW = BACKDROP_IMG.naturalHeight;
   const rotH = BACKDROP_IMG.naturalWidth;
   const scale = Math.max(mapW / rotW, mapH / rotH);
   const drawW = rotW * scale;
@@ -30,12 +32,37 @@ function drawBackdrop(ctx) {
   const dy = mapTop + (mapH - drawH) / 2;
 
   ctx.save();
-  ctx.globalAlpha = 0.35;
-  // Translate to image center + rotate 90° CCW + draw centered.
+  ctx.beginPath();
+  ctx.rect(0, mapTop, mapW, mapH);
+  ctx.clip();
   ctx.translate(dx + drawW / 2, dy + drawH / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.drawImage(BACKDROP_IMG, -drawH / 2, -drawW / 2, drawH, drawW);
   ctx.restore();
+}
+
+function drawApartments(ctx, state) {
+  const { tileSize, padTop, tiles } = MAP;
+  for (let y = 0; y < MAP.gridH; y++) {
+    for (let x = 0; x < MAP.gridW; x++) {
+      if (tiles[y][x] !== 'apartment') continue;
+      const px = x * tileSize;
+      const py = CONFIG.topBarHeight + padTop + y * tileSize;
+      const key = x + ',' + y;
+      const cur = state.apartmentPop?.[key];
+      const max = MAP.apartments.find(a => a.tile.x === x && a.tile.y === y)?.maxPop ?? 1;
+      const frac = cur == null ? 1 : Math.max(0, cur / max);
+      const flash = state.apartmentFlash?.[key] > 0;
+      ctx.fillStyle = flash ? CONFIG.colors.threatRed : (cur === 0 ? CONFIG.colors.gridLine : CONFIG.colors.bgMid);
+      ctx.fillRect(px + 2, py + 2, tileSize - 4, tileSize - 4);
+      const windowColor = frac > 0.33 ? CONFIG.colors.accentWhite : (frac > 0 ? CONFIG.colors.alertAmber : CONFIG.colors.gridLine);
+      ctx.fillStyle = windowColor;
+      ctx.fillRect(px + 4, py + 4, 2, 2);
+      ctx.fillRect(px + tileSize - 6, py + 4, 2, 2);
+      ctx.fillRect(px + 4, py + tileSize - 6, 2, 2);
+      ctx.fillRect(px + tileSize - 6, py + tileSize - 6, 2, 2);
+    }
+  }
 }
 
 export function renderTrucks(ctx, state) {
@@ -49,120 +76,6 @@ export function renderTrucks(ctx, state) {
     ctx.fillRect(Math.floor(t.x - 3), Math.floor(t.y - 2), 2, 4);   // cab shadow
     ctx.fillStyle = CONFIG.colors.accentWhite;
     ctx.fillRect(Math.floor(t.x - 3), Math.floor(t.y - 2) + 1, 1, 2);  // headlight
-  }
-}
-
-function drawTiles(ctx, state) {
-  const { tileSize, gridW, gridH, tiles, padTop, padBottom } = MAP;
-
-  // Semi-transparent water wash so the NYC backdrop ghosts through.
-  ctx.save();
-  ctx.globalAlpha = 0.55;
-  ctx.fillStyle = CONFIG.colors.bgMid;
-  ctx.fillRect(0, CONFIG.topBarHeight, CONFIG.virtualWidth, gridH * tileSize + padTop + padBottom);
-  ctx.restore();
-
-  for (let y = 0; y < gridH; y++) {
-    for (let x = 0; x < gridW; x++) {
-      const t = tiles[y][x];
-      const px = x * tileSize;
-      const py = CONFIG.topBarHeight + padTop + y * tileSize;
-
-      if (t === 'water') continue;
-
-      // Everything land-ish gets a base dark fill at reduced alpha so the
-      // backdrop ghosts through the land, not just the water.
-      ctx.save();
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = CONFIG.colors.bgDark;
-      ctx.fillRect(px, py, tileSize, tileSize);
-      ctx.restore();
-
-      if (t === 'bridge') {
-        ctx.fillStyle = CONFIG.colors.gridLine;
-        ctx.fillRect(px, py + 2, tileSize, tileSize - 4);
-        ctx.fillStyle = CONFIG.colors.accentWhite;
-        ctx.fillRect(px, py + 1, tileSize, 1);
-        ctx.fillRect(px, py + tileSize - 2, tileSize, 1);
-      } else if (t === 'building') {
-        ctx.fillStyle = CONFIG.colors.bgMid;
-        ctx.fillRect(px + 2, py + 2, tileSize - 4, tileSize - 4);
-        ctx.fillStyle = CONFIG.colors.alertAmber;
-        ctx.fillRect(px + tileSize - 5, py + 4, 1, 1);
-        ctx.fillRect(px + 4, py + tileSize - 6, 1, 1);
-      } else if (t === 'road') {
-        ctx.fillStyle = CONFIG.colors.gridLine;
-        ctx.fillRect(px, py + Math.floor(tileSize / 2) - 1, tileSize, 3);
-      } else if (t === 'park') {
-        ctx.fillStyle = CONFIG.colors.successGreen;
-        ctx.fillRect(px + Math.floor(tileSize / 2) - 1, py + Math.floor(tileSize / 2) - 1, 2, 2);
-      } else if (t === 'apartment') {
-        // Residential block — window grid. Redder when damaged.
-        const key = x + ',' + y;
-        const cur = state.apartmentPop?.[key];
-        const max = MAP.apartments.find(a => a.tile.x === x && a.tile.y === y)?.maxPop ?? 1;
-        const frac = cur == null ? 1 : Math.max(0, cur / max);
-        const flash = state.apartmentFlash?.[key] > 0;
-        ctx.fillStyle = flash ? CONFIG.colors.threatRed : (cur === 0 ? CONFIG.colors.gridLine : CONFIG.colors.bgMid);
-        ctx.fillRect(px + 1, py + 1, tileSize - 2, tileSize - 2);
-        // 2×2 lit-window grid dimmed by population loss.
-        const windowColor = frac > 0.33 ? CONFIG.colors.accentWhite : (frac > 0 ? CONFIG.colors.alertAmber : CONFIG.colors.gridLine);
-        ctx.fillStyle = windowColor;
-        ctx.fillRect(px + 4, py + 4, 2, 2);
-        ctx.fillRect(px + tileSize - 6, py + 4, 2, 2);
-        ctx.fillRect(px + 4, py + tileSize - 6, 2, 2);
-        ctx.fillRect(px + tileSize - 6, py + tileSize - 6, 2, 2);
-      }
-    }
-  }
-
-  // Tile borders — only for generic land (keeps buildings/roads/parks clean).
-  ctx.strokeStyle = CONFIG.colors.gridLine;
-  ctx.lineWidth = 1;
-  for (let y = 0; y < gridH; y++) {
-    for (let x = 0; x < gridW; x++) {
-      if (tiles[y][x] === 'land') {
-        ctx.strokeRect(
-          x * tileSize + 0.5,
-          CONFIG.topBarHeight + padTop + y * tileSize + 0.5,
-          tileSize - 1,
-          tileSize - 1
-        );
-      }
-    }
-  }
-}
-
-function drawCoastline(ctx) {
-  const { tileSize, gridW, gridH, tiles, padTop } = MAP;
-  ctx.strokeStyle = CONFIG.colors.friendlyCyan;
-  ctx.lineWidth = 1;
-
-  const landLike = t => t === 'land' || t === 'building' || t === 'road' || t === 'park' || t === 'apartment';
-
-  for (let y = 0; y < gridH; y++) {
-    for (let x = 0; x < gridW; x++) {
-      if (!landLike(tiles[y][x])) continue;
-      const px = x * tileSize;
-      const py = CONFIG.topBarHeight + padTop + y * tileSize;
-
-      // Coastline only renders where land-like meets water (bridge + landLike = no line).
-      const isWaterEdge = (x2, y2) =>
-        x2 < 0 || x2 >= gridW || y2 < 0 || y2 >= gridH || tiles[y2][x2] === 'water';
-
-      if (isWaterEdge(x - 1, y)) {
-        ctx.beginPath(); ctx.moveTo(px + 0.5, py); ctx.lineTo(px + 0.5, py + tileSize); ctx.stroke();
-      }
-      if (isWaterEdge(x + 1, y)) {
-        ctx.beginPath(); ctx.moveTo(px + tileSize - 0.5, py); ctx.lineTo(px + tileSize - 0.5, py + tileSize); ctx.stroke();
-      }
-      if (isWaterEdge(x, y - 1)) {
-        ctx.beginPath(); ctx.moveTo(px, py + 0.5); ctx.lineTo(px + tileSize, py + 0.5); ctx.stroke();
-      }
-      if (isWaterEdge(x, y + 1)) {
-        ctx.beginPath(); ctx.moveTo(px, py + tileSize - 0.5); ctx.lineTo(px + tileSize, py + tileSize - 0.5); ctx.stroke();
-      }
-    }
   }
 }
 
