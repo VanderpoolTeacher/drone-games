@@ -19,16 +19,17 @@ const APARTMENTS = [
   { tile: { x: 16, y: 6 }, maxPop: 100 },
 ];
 
+const BRIDGE_MAX_HP = 1;
 const BRIDGES = [
-  { x: 1,  y: 5 },   // B6
-  { x: 1,  y: 6 },   // B7
-  { x: 8,  y: 0 },   // I1
-  { x: 12, y: 0 },   // M1
-  { x: 12, y: 1 },   // M2
-  { x: 15, y: 1 },   // P2
-  { x: 17, y: 1 },   // R2
-  { x: 17, y: 2 },   // R3
-  { x: 16, y: 3 },   // Q4
+  { id: 'br-B6', tile: { x: 1,  y: 5 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-B7', tile: { x: 1,  y: 6 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-I1', tile: { x: 8,  y: 0 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-M1', tile: { x: 12, y: 0 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-M2', tile: { x: 12, y: 1 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-P2', tile: { x: 15, y: 1 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-R2', tile: { x: 17, y: 1 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-R3', tile: { x: 17, y: 2 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-Q4', tile: { x: 16, y: 3 }, maxHp: BRIDGE_MAX_HP },
 ];
 
 // Tile string encodes bridges + apartments; everything else is 'water' with
@@ -38,9 +39,8 @@ for (let y = 0; y < GRID_H; y++) {
   const row = new Array(GRID_W).fill('water');
   TILE_STRING.push(row);
 }
-for (const b of BRIDGES) {
-  TILE_STRING[b.y][b.x] = 'bridge';
-}
+// Bridges aren't rendered as tiles — image shows them — but they're
+// gameplay entities. Tile stays 'water' underneath for placement logic.
 for (const apt of APARTMENTS) {
   TILE_STRING[apt.tile.y][apt.tile.x] = 'apartment';
 }
@@ -54,6 +54,7 @@ export const MAP = {
   padBottom: 8,
   tiles: TILE_STRING,
   apartments: APARTMENTS,
+  bridges: BRIDGES,
   structures: [
     { id: 'power',    type: 'power',    tile: { x: 13, y: 4 }, displayName: 'Power Substation' },  // Con Ed-ish, Midtown East
     { id: 'comms',    type: 'comms',    tile: { x: 9,  y: 4 }, displayName: 'Comms Tower' },       // 30 Rock-ish, Midtown

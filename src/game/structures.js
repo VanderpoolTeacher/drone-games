@@ -52,4 +52,7 @@ export function updateStructures(state) {
   for (const k of Object.keys(state.apartmentFlash)) {
     if (state.apartmentFlash[k] > 0) state.apartmentFlash[k] -= 1;
   }
+  for (const k of Object.keys(state.bridgeFlash)) {
+    if (state.bridgeFlash[k] > 0) state.bridgeFlash[k] -= 1;
+  }
 }

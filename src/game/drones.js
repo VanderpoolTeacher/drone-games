@@ -424,11 +424,17 @@ function updatePayload(d, dt, state) {
       const key = apt.tile.x + ',' + apt.tile.y;
       const cur = state.apartmentPop[key] ?? 0;
       if (cur <= 0) continue;
-      // Proximity-weighted loss: full wipeout at center, ~0 at edge.
       const lethality = 1 - dist / PAYLOAD_AOE_RADIUS;
       const losses = Math.min(cur, Math.ceil(cur * lethality));
       state.apartmentPop[key] = cur - losses;
       state.apartmentFlash[key] = 2;
+    }
+    for (const br of MAP.bridges) {
+      const p = tileToPixel(br.tile);
+      if (Math.hypot(p.x - drop.x, p.y - drop.y) > PAYLOAD_AOE_RADIUS) continue;
+      if ((state.bridgeHp[br.id] ?? 0) <= 0) continue;
+      state.bridgeHp[br.id] = Math.max(0, state.bridgeHp[br.id] - 1);
+      state.bridgeFlash[br.id] = 2;
     }
     d.phase = 'done';
   }

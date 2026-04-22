@@ -36,27 +36,49 @@ export function toggleBackdrop(state) {
 export function applyDelivery(state, waveIdx) {
   const delivery = CONFIG.deliveries?.[waveIdx];
   if (!delivery) return;
+
+  // Delivery scales with bridge status: each live bridge contributes 1/N
+  // of the authored supply. Lose bridges → lose supply.
+  const total = totalBridgeCount();
+  const live = liveBridgeCount(state);
+  const frac = total > 0 ? live / total : 1;
+
+  const scaled = {};
   for (const type of Object.keys(delivery)) {
-    state.inventory[type] = (state.inventory[type] ?? 0) + delivery[type];
+    const effective = Math.round(delivery[type] * frac);
+    if (effective <= 0) continue;
+    state.inventory[type] = (state.inventory[type] ?? 0) + effective;
+    scaled[type] = effective;
   }
-  spawnSupplyTrucks(state, delivery);
+  spawnSupplyTrucks(state, scaled);
 }
 
-// Supply trucks drive in from the north bridge for each unit delivered.
-// Purely decorative; they animate down, pause briefly, then despawn.
-const TRUCK_BRIDGE_X = 15;   // matches MAP.js north bridge cols 15-16
-const TRUCK_SPEED = 30;      // px/s
+// Supply trucks drive in from a live bridge for each unit delivered.
+// Purely decorative; they animate from the bridge tile toward Midtown.
+const TRUCK_SPEED = 30;   // px/s
+
+function tilePixel(tile) {
+  return {
+    x: tile.x * MAP.tileSize + MAP.tileSize / 2,
+    y: CONFIG.topBarHeight + MAP.padTop + tile.y * MAP.tileSize + MAP.tileSize / 2,
+  };
+}
 
 function spawnSupplyTrucks(state, delivery) {
   if (!state.trucks) state.trucks = [];
+  const liveBridges = MAP.bridges.filter(b => (state.bridgeHp?.[b.id] ?? 0) > 0);
+  if (liveBridges.length === 0) return;
+
   let staggerMs = 0;
   for (const type of Object.keys(delivery)) {
     for (let i = 0; i < delivery[type]; i++) {
+      const bridge = liveBridges[Math.floor(Math.random() * liveBridges.length)];
+      const start = tilePixel(bridge.tile);
       state.trucks.push({
         type,
-        x: TRUCK_BRIDGE_X * 16 + 8,
-        y: -8,
-        targetY: CONFIG.topBarHeight + 40,
+        x: start.x,
+        y: start.y,
+        targetY: CONFIG.topBarHeight + MAP.padTop + 4 * MAP.tileSize,
         delayMs: staggerMs,
         phase: 'waiting',
       });
@@ -95,6 +117,24 @@ function makeApartmentMap() {
   return out;
 }
 
+function makeBridgeMap() {
+  const out = {};
+  for (const b of MAP.bridges) out[b.id] = b.maxHp;
+  return out;
+}
+
+export function liveBridgeCount(state) {
+  let live = 0;
+  for (const b of MAP.bridges) {
+    if ((state.bridgeHp?.[b.id] ?? 0) > 0) live += 1;
+  }
+  return live;
+}
+
+export function totalBridgeCount() {
+  return MAP.bridges.length;
+}
+
 export const gameState = {
   drones: [],
   explosions: [],
@@ -112,6 +152,8 @@ export const gameState = {
   structureFlash: makeStructureMap(0),
   apartmentPop: makeApartmentMap(),
   apartmentFlash: {},
+  bridgeHp: makeBridgeMap(),
+  bridgeFlash: {},
   stats: {
     droneKills: { isr: 0, owa: 0, payloadDelivery: 0 },
     defensesLost: 0,
@@ -168,6 +210,8 @@ export function resetGameState() {
     gameState.apartmentPop[key] = apt.maxPop;
   }
   for (const k of Object.keys(gameState.apartmentFlash)) delete gameState.apartmentFlash[k];
+  for (const b of MAP.bridges) gameState.bridgeHp[b.id] = b.maxHp;
+  for (const k of Object.keys(gameState.bridgeFlash)) delete gameState.bridgeFlash[k];
   gameState.stats.droneKills.isr = 0;
   gameState.stats.droneKills.owa = 0;
   gameState.stats.droneKills.payloadDelivery = 0;

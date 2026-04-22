@@ -11,8 +11,31 @@ export function renderMap(ctx, tMs, state) {
   const alpha = state.backdropAlpha ?? 1;
   if (alpha > 0) drawBackdrop(ctx, alpha);
   drawApartments(ctx, state);
+  drawBridgeDamage(ctx, state);
   drawZones(ctx, tMs);
   drawStructures(ctx, state);
+}
+
+// Bridges are invisible on the map (the image shows them). We flash when
+// they're hit, and render a red X over destroyed ones so the player can
+// tell which supply lines are down.
+function drawBridgeDamage(ctx, state) {
+  const { tileSize, padTop } = MAP;
+  for (const br of MAP.bridges) {
+    const hp = state.bridgeHp?.[br.id] ?? br.maxHp;
+    const flash = (state.bridgeFlash?.[br.id] ?? 0) > 0;
+    if (hp > 0 && !flash) continue;
+    const px = br.tile.x * tileSize;
+    const py = CONFIG.topBarHeight + padTop + br.tile.y * tileSize;
+    ctx.strokeStyle = CONFIG.colors.threatRed;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px + 3, py + 3);
+    ctx.lineTo(px + tileSize - 3, py + tileSize - 3);
+    ctx.moveTo(px + tileSize - 3, py + 3);
+    ctx.lineTo(px + 3, py + tileSize - 3);
+    ctx.stroke();
+  }
 }
 
 function drawPlainMap(ctx) {
@@ -86,16 +109,6 @@ function drawApartments(ctx, state) {
   for (let y = 0; y < MAP.gridH; y++) {
     for (let x = 0; x < MAP.gridW; x++) {
       const t = tiles[y][x];
-      if (t === 'bridge') {
-        const px = x * tileSize;
-        const py = CONFIG.topBarHeight + padTop + y * tileSize;
-        ctx.fillStyle = CONFIG.colors.gridLine;
-        ctx.fillRect(px, py + 3, tileSize, tileSize - 6);
-        ctx.fillStyle = CONFIG.colors.accentWhite;
-        ctx.fillRect(px, py + 2, tileSize, 1);
-        ctx.fillRect(px, py + tileSize - 3, tileSize, 1);
-        continue;
-      }
       if (t !== 'apartment') continue;
       const px = x * tileSize;
       const py = CONFIG.topBarHeight + padTop + y * tileSize;

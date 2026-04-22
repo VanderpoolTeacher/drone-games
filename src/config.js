@@ -123,7 +123,7 @@ export const CONFIG = {
       drones: [
         { type: 'isr', count: 15, spawnInterval: 5500, spawnDelayMs: 0 },
       ],
-      briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. Heads up: next run you'll see heavier volume, still ISR.",
+      briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. One more thing: watch the bridges. Every bridge that falls is a laser we don't get next shipment. Heads up: next run you'll see heavier volume, still ISR.",
       portrait: 'neutral',
     },
     // Wave 2 — Pressure (95s). More ISR, tighter cadence.
@@ -372,7 +372,7 @@ CONFIG.modes = {
     waves: [
       {
         drones: [ { type: 'isr', count: 5, spawnInterval: 1500, spawnDelayMs: 0 } ],
-        briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. Heads up: next run you'll see heavier volume, still ISR.",
+        briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. One more thing: watch the bridges. Every bridge that falls is a laser we don't get next shipment. Heads up: next run you'll see heavier volume, still ISR.",
         portrait: 'neutral',
       },
       {
