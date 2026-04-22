@@ -88,8 +88,12 @@ export const MAP = {
     ],
     // Payload crosses east↔west, dropping on comms and cityHall axes
     payloadDelivery: [
+      // Structure-attack corridors (drop on Comms / City Hall)
       { waypoints: [{ x: -1, y: 4 }, { x: 20, y: 4 }], dropPoint: { x: 9,  y: 4 } },
       { waypoints: [{ x: 20, y: 5 }, { x: -1, y: 5 }], dropPoint: { x: 17, y: 5 } },
+      // Bridge-attack corridors — drop points hit clusters of bridges
+      { waypoints: [{ x: -1, y: 0 }, { x: 20, y: 0 }], dropPoint: { x: 12, y: 0 } },   // I1 + M1 cluster
+      { waypoints: [{ x: 20, y: 2 }, { x: -1, y: 2 }], dropPoint: { x: 16, y: 2 } },   // P2 + R2 + R3 + Q4 cluster
     ],
   },
 };
