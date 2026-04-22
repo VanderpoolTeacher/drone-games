@@ -36,3 +36,14 @@ export function renderLegend(ctx) {
     x += itemWidths[i] + GAP_ITEM;
   }
 }
+
+export function legendHitTest(vx, vy) {
+  if (vy < 0 || vy >= CONFIG.topBarHeight) return null;
+  const itemWidths = ITEMS.map(it => SQUARE + GAP_ICON_LABEL + it.label.length * LABEL_CHAR_W);
+  let x = LEFT_PAD;
+  for (let i = 0; i < ITEMS.length; i++) {
+    if (vx >= x && vx < x + itemWidths[i]) return ITEMS[i].type;
+    x += itemWidths[i] + GAP_ITEM;
+  }
+  return null;
+}

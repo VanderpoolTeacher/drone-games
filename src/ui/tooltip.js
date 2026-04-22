@@ -2,6 +2,7 @@ import { CONFIG } from '../config.js';
 import { MAP } from '../game/map.js';
 import { tileToPixel } from '../game/drones.js';
 import { paletteHitTest } from './palette.js';
+import { legendHitTest } from './legend.js';
 
 const PANEL_X = 100;
 const PANEL_Y = 28;
@@ -57,6 +58,12 @@ export function updateTooltip(state, vx, vy) {
   const paletteHit = paletteHitTest(vx, vy);
   if (paletteHit) {
     state.tooltipKey = 'palette-' + paletteHit.type;
+    return;
+  }
+
+  const legendHit = legendHitTest(vx, vy);
+  if (legendHit) {
+    state.tooltipKey = 'drone-' + legendHit;
     return;
   }
 
