@@ -37,17 +37,6 @@ let scrollStartMs = null;
 function drawBackdrop(ctx) {
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
-
-  if (portrait.complete && portrait.naturalWidth > 0) {
-    const srcW = portrait.naturalWidth;
-    const srcH = portrait.naturalHeight;
-    const destH = CONFIG.virtualHeight;
-    const destW = Math.round(destH * srcW / srcH);
-    const destX = Math.round((CONFIG.virtualWidth - destW) / 2);
-    ctx.globalAlpha = 0.45;
-    ctx.drawImage(portrait, destX, 0, destW, destH);
-    ctx.globalAlpha = 1.0;
-  }
 }
 
 function drawHeadline(ctx, tMs) {
