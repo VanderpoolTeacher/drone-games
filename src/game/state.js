@@ -55,6 +55,14 @@ function makeStructureMap(initial) {
   return out;
 }
 
+function makeApartmentMap() {
+  const out = {};
+  for (const apt of MAP.apartments) {
+    out[apt.tile.x + ',' + apt.tile.y] = apt.maxPop;
+  }
+  return out;
+}
+
 export const gameState = {
   drones: [],
   explosions: [],
@@ -70,6 +78,8 @@ export const gameState = {
   hoverTile: null,
   structureHp: makeStructureMap(CONFIG.structures.maxHP),
   structureFlash: makeStructureMap(0),
+  apartmentPop: makeApartmentMap(),
+  apartmentFlash: {},
   loseFlag: false,
   wave: {
     number: 1,
@@ -113,6 +123,11 @@ export function resetGameState() {
     gameState.structureHp[id] = CONFIG.structures.maxHP;
     gameState.structureFlash[id] = 0;
   }
+  for (const apt of MAP.apartments) {
+    const key = apt.tile.x + ',' + apt.tile.y;
+    gameState.apartmentPop[key] = apt.maxPop;
+  }
+  for (const k of Object.keys(gameState.apartmentFlash)) delete gameState.apartmentFlash[k];
   gameState.loseFlag = false;
   gameState.wave.number = 1;
   gameState.wave.phase = 'prep';

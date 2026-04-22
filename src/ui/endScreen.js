@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { totalCasualties } from './casualtyHud.js';
 
 const TEXT_COL_X = 60;
 const TEXT_COL_W = 360;
@@ -103,6 +104,16 @@ export function renderEndScreen(ctx, state, tMs) {
   drawBackdrop(ctx, key);
   drawHeadline(ctx, entry, tMs, modeTag);
   drawBody(ctx, entry);
+  drawCasualties(ctx, state);
   drawPrompt(ctx, tMs);
   ctx.restore();
+}
+
+function drawCasualties(ctx, state) {
+  const lost = totalCasualties(state);
+  ctx.font = '8px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = lost > 0 ? CONFIG.colors.threatRed : CONFIG.colors.successGreen;
+  ctx.fillText('CASUALTIES ' + lost, CONFIG.virtualWidth / 2, 236);
 }

@@ -58,6 +58,22 @@ function drawTiles(ctx) {
       } else if (t === 'park') {
         ctx.fillStyle = CONFIG.colors.successGreen;
         ctx.fillRect(px + Math.floor(tileSize / 2) - 1, py + Math.floor(tileSize / 2) - 1, 2, 2);
+      } else if (t === 'apartment') {
+        // Residential block — window grid. Redder when damaged.
+        const key = x + ',' + y;
+        const cur = state.apartmentPop?.[key];
+        const max = MAP.apartments.find(a => a.tile.x === x && a.tile.y === y)?.maxPop ?? 1;
+        const frac = cur == null ? 1 : Math.max(0, cur / max);
+        const flash = state.apartmentFlash?.[key] > 0;
+        ctx.fillStyle = flash ? CONFIG.colors.threatRed : (cur === 0 ? CONFIG.colors.gridLine : CONFIG.colors.bgMid);
+        ctx.fillRect(px + 1, py + 1, tileSize - 2, tileSize - 2);
+        // 2×2 lit-window grid dimmed by population loss.
+        const windowColor = frac > 0.33 ? CONFIG.colors.accentWhite : (frac > 0 ? CONFIG.colors.alertAmber : CONFIG.colors.gridLine);
+        ctx.fillStyle = windowColor;
+        ctx.fillRect(px + 4, py + 4, 2, 2);
+        ctx.fillRect(px + tileSize - 6, py + 4, 2, 2);
+        ctx.fillRect(px + 4, py + tileSize - 6, 2, 2);
+        ctx.fillRect(px + tileSize - 6, py + tileSize - 6, 2, 2);
       }
     }
   }
@@ -84,7 +100,7 @@ function drawCoastline(ctx) {
   ctx.strokeStyle = CONFIG.colors.friendlyCyan;
   ctx.lineWidth = 1;
 
-  const landLike = t => t === 'land' || t === 'building' || t === 'road' || t === 'park';
+  const landLike = t => t === 'land' || t === 'building' || t === 'road' || t === 'park' || t === 'apartment';
 
   for (let y = 0; y < gridH; y++) {
     for (let x = 0; x < gridW; x++) {

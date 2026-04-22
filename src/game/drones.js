@@ -416,6 +416,19 @@ function updatePayload(d, dt, state) {
         def.hp -= CONFIG.combat.payloadDefenseDamage;
       }
     }
+    for (const apt of MAP.apartments) {
+      const p = tileToPixel(apt.tile);
+      const dist = Math.hypot(p.x - drop.x, p.y - drop.y);
+      if (dist > PAYLOAD_AOE_RADIUS) continue;
+      const key = apt.tile.x + ',' + apt.tile.y;
+      const cur = state.apartmentPop[key] ?? 0;
+      if (cur <= 0) continue;
+      // Proximity-weighted loss: full wipeout at center, ~0 at edge.
+      const lethality = 1 - dist / PAYLOAD_AOE_RADIUS;
+      const losses = Math.min(cur, Math.ceil(cur * lethality));
+      state.apartmentPop[key] = cur - losses;
+      state.apartmentFlash[key] = 2;
+    }
     d.phase = 'done';
   }
 }

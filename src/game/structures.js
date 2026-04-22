@@ -47,4 +47,7 @@ export function updateStructures(state) {
   for (const id of Object.keys(state.structureFlash)) {
     if (state.structureFlash[id] > 0) state.structureFlash[id] -= 1;
   }
+  for (const k of Object.keys(state.apartmentFlash)) {
+    if (state.apartmentFlash[k] > 0) state.apartmentFlash[k] -= 1;
+  }
 }

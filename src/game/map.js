@@ -2,13 +2,13 @@ const TILE_STRING = `
 WWWWWWWWWWWWWWWBBWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWBBWWWWWWWWWWWWW
 WWWWWLLL#LLLLLLrLLLLLLL#LWWWWW
-WWWWLL#LLLLLLLLrLLL#LLLLLLWWWW
-WWWLL#LLLLLLLLLrLLLL#LLLLLLWWW
-BBBLLLLLLLLLLLLrLLLLLLLLLLLBBB
-WWWLLLppLLLLLLLrLLLLLLLLLLLWWW
+WWWWLL#LLLLLLLLrLLL#LLaLLLWWWW
+WWWLL#LLLLLLLaLrLLaL#LLLLLLWWW
+BBBLLLLLLLLaLLLrLLaLLLLLLLLBBB
+WWWLLLppLLLLLaLrLLLLLaLLLLLWWW
 WWWWLLpLLLLLLLLrLLLLLLLLLLWWWW
 WWWWWrrrrrrrrrrrrrrrrrrrrWWWWW
-WWWWWWLLL##LLLLLLLLLL##LLWWWWW
+WWWWWWLLL##LLLaLLLLLL##LLWWWWW
 WWWWWWWLLLLLLLLLLLLLLLLWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
@@ -18,8 +18,19 @@ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
   if (ch === '#') return 'building';
   if (ch === 'r') return 'road';
   if (ch === 'p') return 'park';
+  if (ch === 'a') return 'apartment';
   return 'water';
 }));
+
+const APARTMENT_POPULATION = 100;
+const APARTMENTS = [];
+for (let y = 0; y < TILE_STRING.length; y++) {
+  for (let x = 0; x < TILE_STRING[y].length; x++) {
+    if (TILE_STRING[y][x] === 'apartment') {
+      APARTMENTS.push({ tile: { x, y }, maxPop: APARTMENT_POPULATION });
+    }
+  }
+}
 
 export const MAP = {
   shape: 'coastalPeninsula',
@@ -29,6 +40,7 @@ export const MAP = {
   padTop: 3,
   padBottom: 3,
   tiles: TILE_STRING,
+  apartments: APARTMENTS,
   structures: [
     { id: 'power',    type: 'power',    tile: { x: 22, y: 5 }, displayName: 'Power Substation' },
     { id: 'comms',    type: 'comms',    tile: { x: 15, y: 5 }, displayName: 'Comms Tower' },

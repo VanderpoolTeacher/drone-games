@@ -17,6 +17,7 @@ import { renderEndScreen } from './ui/endScreen.js';
 import { renderCRT } from './ui/crt.js';
 import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } from './ui/briefing.js';
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
+import { renderCasualtyHud } from './ui/casualtyHud.js';
 import { playSfx, toggleMute, getAudioContext } from './audio/sfx.js';
 import { updateMusic } from './audio/music.js';
 import { renderStartScreen } from './ui/startScreen.js';
@@ -63,6 +64,7 @@ function frame(tMs) {
   renderExplosions(ctx, gameState);
   renderChrome(ctx);
   renderMuteIcon(ctx);
+  renderCasualtyHud(ctx, gameState);
   renderPalette(ctx, gameState);
   renderLegend(ctx);
   renderTooltip(ctx, gameState);
