@@ -4,6 +4,10 @@ const IMG_PATH = './src/images/commander-warden-podium.png';
 const portrait = new Image();
 portrait.src = IMG_PATH;
 
+const DRONE_IMG_PATH = './src/images/drone-heavy-payload.png';
+const droneImg = new Image();
+droneImg.src = DRONE_IMG_PATH;
+
 const BRIEF_LINES = [
   '>> BRIEFING FOLLOWS <<',
   '',
@@ -97,12 +101,28 @@ function drawPrompt(ctx, tMs) {
   ctx.fillText('PRESS 1 TRAINING  ·  2 CAMPAIGN  ·  ANY KEY CAMPAIGN', CONFIG.virtualWidth / 2, 252);
 }
 
+function drawDroneSilhouette(ctx, tMs) {
+  if (!droneImg.complete || droneImg.naturalWidth === 0) return;
+  const size = 56;
+  // Slow rotation so it reads as "drone overhead" without distraction.
+  const angle = (tMs / 4000) * Math.PI * 2;
+  const cx = CONFIG.virtualWidth - size / 2 - 8;
+  const cy = CONFIG.virtualHeight - size / 2 - 42;
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+  ctx.drawImage(droneImg, -size / 2, -size / 2, size, size);
+  ctx.restore();
+}
+
 export function renderStartScreen(ctx, state, tMs) {
   if (state.screenPhase !== 'idle' && state.screenPhase !== 'start') return;
   ctx.save();
   drawBackdrop(ctx);
   drawHeadline(ctx, tMs);
   drawScrollingBrief(ctx, tMs, state);
+  drawDroneSilhouette(ctx, tMs);
   drawPrompt(ctx, tMs);
   ctx.restore();
 }
