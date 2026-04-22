@@ -185,6 +185,7 @@ export const CONFIG = {
       { prep: 'Steel Rations',     active: 'Marching Forth' },     // Wave 4
       { prep: 'Welded Bastion',    active: 'Steel Hero' },         // Wave 5
     ],
+    title: 'Fortress Static',
     win: 'Avenged',
     lose: 'Fallen Not Forgotten',
     volume: 0.4,

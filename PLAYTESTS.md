@@ -28,6 +28,30 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (Start screen)
+
+**Build:** feat/start-screen — podium backdrop + scrolling briefing + phase-gated gameplay
+**Session length:** ~5 min UX check
+**Result:** N/A (feature pass)
+
+### What happened
+- Fresh page load shows Warden-at-podium with the scrolling brief and blinking prompts.
+- Any key / click (except mute) starts the game cleanly; music crossfades from title to wave 1 prep.
+- Restart after win/lose skips the start screen as designed.
+
+### What worked
+- Podium image at 45% alpha reads as "command center backdrop" without overpowering the text.
+- Two-second blink cycle on INCOMING DRONE ATTACK + PRESS ANY KEY matches the amber-chevron cadence used in prep telegraphs.
+- Bottom-up crawl loops without a visible seam (padded blank lines at the ends of BRIEF_LINES help this).
+
+### What felt off
+- Title-track-is-silent edge case feels odd in theory but is invisible in practice (player clicks before hearing silence).
+- If the player lingers on start screen >30s and hears Fortress Static loop, the transition to Barbed Lullaby works cleanly.
+
+### Questions raised
+- Should the scroll speed slow down on the final "GOOD LUCK" line so it lingers? Deferred to later polish.
+- Should restart loop back to the start screen on every N-th game to re-set tone? Probably not — players want to jump in.
+
 ## 2026-04-21 — solo (Tuning pass #1)
 
 **Build:** feat/tuning-pass — 90-120s active phases, slower/tougher drones, wave variability, tighter economy

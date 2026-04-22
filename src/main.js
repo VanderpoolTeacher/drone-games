@@ -20,6 +20,7 @@ import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } fr
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
 import { playSfx, toggleMute, getAudioContext } from './audio/sfx.js';
 import { updateMusic } from './audio/music.js';
+import { renderStartScreen } from './ui/startScreen.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -36,7 +37,7 @@ function frame(tMs) {
   const dt = Math.min(dtRaw, 0.1);
   prevMs = tMs;
 
-  if (!gameState.loseFlag && !gameState.winFlag) {
+  if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag) {
     applyJamEffects(gameState);
     updateDrones(gameState, dt);
     updateDefenses(gameState, dt);
@@ -66,6 +67,7 @@ function frame(tMs) {
   renderWaveTelegraph(ctx, gameState, tMs);
   renderLoseOverlay(ctx, gameState);
   renderWinOverlay(ctx, gameState);
+  renderStartScreen(ctx, gameState, tMs);
   renderCRT(ctx);
 
   requestAnimationFrame(frame);
@@ -101,6 +103,11 @@ canvas.addEventListener('click', e => {
 
   if (muteIconClickHit(vx, vy)) {
     toggleMute();
+    return;
+  }
+
+  if (gameState.screenPhase === 'start') {
+    gameState.screenPhase = 'playing';
     return;
   }
 
@@ -146,8 +153,15 @@ window.addEventListener('keydown', wakeAudio);
 window.addEventListener('touchstart', wakeAudio);
 
 window.addEventListener('keydown', e => {
+  if (e.key === 'm' || e.key === 'M') {
+    toggleMute();
+    return;
+  }
+  if (gameState.screenPhase === 'start') {
+    gameState.screenPhase = 'playing';
+    return;
+  }
   if (e.key === 'Escape') gameState.placementMode = null;
-  if (e.key === 'm' || e.key === 'M') toggleMute();
   if ((gameState.loseFlag || gameState.winFlag) && (e.key === ' ' || e.key === 'Enter')) {
     resetGameState();
     e.preventDefault();

@@ -29,6 +29,7 @@ export const gameState = {
     spawnProgress: [],
   },
   winFlag: false,
+  screenPhase: 'start',
   briefing: {
     phase: 'idle',
     visibleMs: 0,

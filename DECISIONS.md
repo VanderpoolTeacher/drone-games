@@ -158,3 +158,11 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Structure maxHP 100→120; OWA strike damage 30→25; Payload drop damage 60→50. More drones hit per run, so per-hit damage drops to keep the game from collapsing on a single leak.
 
 2026-04-21 — `state.spawnRotation` removed (was round-robin corridor index). No longer used; random corridor selection in spawnDrone supersedes it.
+
+2026-04-21 — Start screen uses commander-warden-podium.png as a full-canvas backdrop at 45% alpha. Blinking red "INCOMING DRONE ATTACK" headline + amber "PRESS ANY KEY TO START" prompt + bottom-up scrolling mission brief.
+
+2026-04-21 — `gameState.screenPhase` ('start' → 'playing') gates the entire gameplay update block. Initial page load starts at 'start'; first non-mute input flips to 'playing'. Restart after win/lose goes directly to wave 1 prep — start screen is one-shot per page load only.
+
+2026-04-21 — Title track promoted from bench: `Fortress Static` plays on the start screen, crossfades to wave 1 prep track (Barbed Lullaby) when the player presses start. Because audio is blocked pre-gesture AND the gesture flips phase, the title track is effectively silent — acceptable for v1.
+
+2026-04-21 — Mute icon hit-test runs BEFORE the start-screen phase flip so the user can silence audio on the start screen without accidentally starting the game. Same applies to `M` key.
