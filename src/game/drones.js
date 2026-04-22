@@ -325,6 +325,14 @@ function updateOwa(d, dt, state) {
   }
 
   if (d.phase === 'terminal') {
+    // If the authored target is already dead, retarget to the closest
+    // live structure — otherwise the drone wastes itself on rubble.
+    if ((state.structureHp[d.targetId] ?? 0) <= 0) {
+      const newId = pickClosestLiveStructureId(d, state);
+      if (!newId) { d.phase = 'exiting'; return; }
+      d.targetId = newId;
+    }
+
     const target = structurePixelPos(d.targetId);
     if (!target) { d.phase = 'exiting'; return; }
 
@@ -347,6 +355,21 @@ function updateOwa(d, dt, state) {
     d.x += d.vx * dt;
     d.y += d.vy * dt;
   }
+}
+
+function pickClosestLiveStructureId(drone, state) {
+  let bestId = null;
+  let bestDist = Infinity;
+  for (const s of MAP.structures) {
+    if ((state.structureHp[s.id] ?? 0) <= 0) continue;
+    const p = tileToPixel(s.tile);
+    const dist = Math.hypot(p.x - drone.x, p.y - drone.y);
+    if (dist < bestDist) {
+      bestId = s.id;
+      bestDist = dist;
+    }
+  }
+  return bestId;
 }
 
 function findClosestDefenseInRange(state, drone, range) {
