@@ -4,7 +4,7 @@
 
 const MUTED_KEY = 'droneDefense.muted';
 
-const SFX_VOLUME = 0.45;           // sits under music/voice without squashing SFX
+const SFX_VOLUME = 0.25;           // sits under music/voice without squashing SFX
 
 let audioCtx = null;
 let masterGain = null;
