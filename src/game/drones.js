@@ -6,6 +6,9 @@ import { playSfx } from '../audio/sfx.js';
 const DRONE_SIZE = 16;
 const WAYPOINT_REACH_PX = 2;
 const ISR_JITTER_PX = 12;
+
+const payloadSprite = new Image();
+payloadSprite.src = './src/images/drone-heavy-payload.png';
 const TRAIL_SAMPLE_MS = 50;
 const TRAIL_MAX_SAMPLES = 8;
 const TRAIL_MAX_AGE_S = 1.2;
@@ -67,8 +70,16 @@ export function renderDrones(ctx, state) {
   }
 
   for (const d of state.drones) {
+    const left = Math.floor(d.x - DRONE_SIZE / 2);
+    const top = Math.floor(d.y - DRONE_SIZE / 2);
+
+    if (d.type === 'payloadDelivery' && payloadSprite.complete && payloadSprite.naturalWidth > 0) {
+      ctx.drawImage(payloadSprite, left, top, DRONE_SIZE, DRONE_SIZE);
+      continue;
+    }
+
     ctx.fillStyle = bodyColorFor(d.type);
-    ctx.fillRect(Math.floor(d.x - DRONE_SIZE / 2), Math.floor(d.y - DRONE_SIZE / 2), DRONE_SIZE, DRONE_SIZE);
+    ctx.fillRect(left, top, DRONE_SIZE, DRONE_SIZE);
 
     const accent = accentFor(d.type);
     if (accent) {
