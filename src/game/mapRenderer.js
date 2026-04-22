@@ -48,8 +48,9 @@ function drawPlainMap(ctx) {
     const letter = String.fromCharCode(65 + x);
     ctx.fillText(letter, x * tileSize + 2, mapTop + 2);
   }
-  for (let y = 1; y < gridH; y++) {
-    ctx.fillText(String(y + 1), 2, mapTop + y * tileSize + 2);
+  for (let y = 0; y < gridH; y++) {
+    // Bottom-left corner so row 1 doesn't overlap the column letter in (0,0).
+    ctx.fillText(String(y + 1), 2, mapTop + y * tileSize + tileSize - 9);
   }
 }
 
@@ -84,7 +85,18 @@ function drawApartments(ctx, state) {
   const { tileSize, padTop, tiles } = MAP;
   for (let y = 0; y < MAP.gridH; y++) {
     for (let x = 0; x < MAP.gridW; x++) {
-      if (tiles[y][x] !== 'apartment') continue;
+      const t = tiles[y][x];
+      if (t === 'bridge') {
+        const px = x * tileSize;
+        const py = CONFIG.topBarHeight + padTop + y * tileSize;
+        ctx.fillStyle = CONFIG.colors.gridLine;
+        ctx.fillRect(px, py + 3, tileSize, tileSize - 6);
+        ctx.fillStyle = CONFIG.colors.accentWhite;
+        ctx.fillRect(px, py + 2, tileSize, 1);
+        ctx.fillRect(px, py + tileSize - 3, tileSize, 1);
+        continue;
+      }
+      if (t !== 'apartment') continue;
       const px = x * tileSize;
       const py = CONFIG.topBarHeight + padTop + y * tileSize;
       const key = x + ',' + y;

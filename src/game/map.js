@@ -19,12 +19,27 @@ const APARTMENTS = [
   { tile: { x: 16, y: 6 }, maxPop: 100 },
 ];
 
-// Tile string just encodes apartments now; everything else is 'water' and
-// the image carries the visual. With backdrop off, cells show as blue grid.
+const BRIDGES = [
+  { x: 1,  y: 5 },   // B6
+  { x: 1,  y: 6 },   // B7
+  { x: 8,  y: 0 },   // I1
+  { x: 12, y: 0 },   // M1
+  { x: 12, y: 1 },   // M2
+  { x: 15, y: 1 },   // P2
+  { x: 17, y: 1 },   // R2
+  { x: 17, y: 2 },   // R3
+  { x: 16, y: 3 },   // Q4
+];
+
+// Tile string encodes bridges + apartments; everything else is 'water' with
+// the image carrying the visual. With backdrop off, cells show as blue grid.
 const TILE_STRING = [];
 for (let y = 0; y < GRID_H; y++) {
   const row = new Array(GRID_W).fill('water');
   TILE_STRING.push(row);
+}
+for (const b of BRIDGES) {
+  TILE_STRING[b.y][b.x] = 'bridge';
 }
 for (const apt of APARTMENTS) {
   TILE_STRING[apt.tile.y][apt.tile.x] = 'apartment';
