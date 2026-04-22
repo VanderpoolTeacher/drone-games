@@ -35,7 +35,7 @@ const TEXT_SIZE = 8;
 let scrollStartMs = null;
 
 function drawBackdrop(ctx) {
-  ctx.fillStyle = CONFIG.colors.bgDark;
+  ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 }
 
