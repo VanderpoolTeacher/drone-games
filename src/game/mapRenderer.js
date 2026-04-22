@@ -1,11 +1,41 @@
 import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 
+const BACKDROP_IMG = new Image();
+BACKDROP_IMG.src = './src/images/manhattan.png';
+
 export function renderMap(ctx, tMs, state) {
+  drawBackdrop(ctx);
   drawTiles(ctx, state);
   drawCoastline(ctx);
   drawZones(ctx, tMs);
   drawStructures(ctx, state);
+}
+
+function drawBackdrop(ctx) {
+  const mapTop = CONFIG.topBarHeight + MAP.padTop;
+  const mapH = MAP.gridH * MAP.tileSize;
+  const mapW = CONFIG.virtualWidth;
+
+  if (!BACKDROP_IMG.complete || BACKDROP_IMG.naturalWidth === 0) return;
+
+  // Rotate portrait Manhattan image 90° CCW so it fits the landscape map area.
+  // Aspect-fit (contain) — crop excess, center in map area.
+  const rotW = BACKDROP_IMG.naturalHeight;   // after 90° rotation
+  const rotH = BACKDROP_IMG.naturalWidth;
+  const scale = Math.max(mapW / rotW, mapH / rotH);
+  const drawW = rotW * scale;
+  const drawH = rotH * scale;
+  const dx = (mapW - drawW) / 2;
+  const dy = mapTop + (mapH - drawH) / 2;
+
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  // Translate to image center + rotate 90° CCW + draw centered.
+  ctx.translate(dx + drawW / 2, dy + drawH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.drawImage(BACKDROP_IMG, -drawH / 2, -drawW / 2, drawH, drawW);
+  ctx.restore();
 }
 
 export function renderTrucks(ctx, state) {
@@ -25,8 +55,12 @@ export function renderTrucks(ctx, state) {
 function drawTiles(ctx, state) {
   const { tileSize, gridW, gridH, tiles, padTop, padBottom } = MAP;
 
+  // Semi-transparent water wash so the NYC backdrop ghosts through.
+  ctx.save();
+  ctx.globalAlpha = 0.55;
   ctx.fillStyle = CONFIG.colors.bgMid;
   ctx.fillRect(0, CONFIG.topBarHeight, CONFIG.virtualWidth, gridH * tileSize + padTop + padBottom);
+  ctx.restore();
 
   for (let y = 0; y < gridH; y++) {
     for (let x = 0; x < gridW; x++) {
@@ -36,9 +70,13 @@ function drawTiles(ctx, state) {
 
       if (t === 'water') continue;
 
-      // Everything land-ish gets a base dark fill.
+      // Everything land-ish gets a base dark fill at reduced alpha so the
+      // backdrop ghosts through the land, not just the water.
+      ctx.save();
+      ctx.globalAlpha = 0.5;
       ctx.fillStyle = CONFIG.colors.bgDark;
       ctx.fillRect(px, py, tileSize, tileSize);
+      ctx.restore();
 
       if (t === 'bridge') {
         ctx.fillStyle = CONFIG.colors.gridLine;
