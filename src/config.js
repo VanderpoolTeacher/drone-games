@@ -351,3 +351,106 @@ function validateBriefings() {
 }
 
 validateBriefings();
+
+// --- Mode overrides -------------------------------------------------------
+// Campaign = current tuned v1 (what's already authored above). Training =
+// pre-tuning baseline (shorter, faster, easier). applyMode(name) writes the
+// selected mode's values over the flat CONFIG fields that game logic reads,
+// so existing read sites stay unchanged.
+
+CONFIG.modes = {
+  training: {
+    drones: {
+      isr:             { speed: 60,  hp: 20  },
+      owa:             { speed: 140, hp: 15  },
+      payloadDelivery: { speed: 30,  hp: 120 },
+    },
+    structures: {
+      maxHP: 100,
+      damageFromOWAStrike: 30,
+      damageFromPayloadDrop: 60,
+    },
+    startingResources: 400,
+    resourcesPerWaveBonus: 200,
+    resourcesPerDroneKill: { isr: 10, owa: 15, payloadDelivery: 35 },
+    prepTimeBetweenWaves: 15000,
+    waves: [
+      {
+        drones: [ { type: 'isr', count: 5, spawnInterval: 1500, spawnDelayMs: 0 } ],
+        briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. Easy start. You got this.",
+        portrait: 'neutral',
+      },
+      {
+        drones: [ { type: 'isr', count: 8, spawnInterval: 1200, spawnDelayMs: 0 } ],
+        briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges.",
+        portrait: 'neutral',
+      },
+      {
+        drones: [
+          { type: 'isr', count: 6, spawnInterval: 1200, spawnDelayMs: 0 },
+          { type: 'owa', count: 5, spawnInterval: 1800, spawnDelayMs: 0 },
+        ],
+        briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east.",
+        portrait: 'stern',
+      },
+      {
+        drones: [
+          { type: 'owa', count: 8, spawnInterval: 1200, spawnDelayMs: 0 },
+          { type: 'payloadDelivery', count: 3, spawnInterval: 3000, spawnDelayMs: 0 },
+        ],
+        briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked.",
+        portrait: 'stern',
+      },
+      {
+        drones: [
+          { type: 'isr', count: 8, spawnInterval: 1000, spawnDelayMs: 0 },
+          { type: 'owa', count: 12, spawnInterval: 800, spawnDelayMs: 0 },
+          { type: 'payloadDelivery', count: 4, spawnInterval: 2500, spawnDelayMs: 0 },
+        ],
+        briefing: "All of it. Saturation run — ISR, OWA, Payload, everything. You need the full stack. HPM earns its keep here. One pulse, many drones. Good luck, Watchfloor.",
+        portrait: 'angry',
+      },
+    ],
+  },
+  campaign: {
+    drones: {
+      isr:             { speed: 45,  hp: 20  },
+      owa:             { speed: 100, hp: 25  },
+      payloadDelivery: { speed: 25,  hp: 160 },
+    },
+    structures: {
+      maxHP: 120,
+      damageFromOWAStrike: 25,
+      damageFromPayloadDrop: 50,
+    },
+    startingResources: 350,
+    resourcesPerWaveBonus: 150,
+    resourcesPerDroneKill: { isr: 8, owa: 12, payloadDelivery: 30 },
+    prepTimeBetweenWaves: 20000,
+    waves: CONFIG.waves,   // the tuned campaign waves already authored above
+  },
+};
+
+export function applyMode(name) {
+  const src = CONFIG.modes[name];
+  if (!src) return;
+  CONFIG.waves = src.waves;
+  CONFIG.drones.isr.speed = src.drones.isr.speed;
+  CONFIG.drones.isr.hp = src.drones.isr.hp;
+  CONFIG.drones.owa.speed = src.drones.owa.speed;
+  CONFIG.drones.owa.hp = src.drones.owa.hp;
+  CONFIG.drones.payloadDelivery.speed = src.drones.payloadDelivery.speed;
+  CONFIG.drones.payloadDelivery.hp = src.drones.payloadDelivery.hp;
+  CONFIG.structures.maxHP = src.structures.maxHP;
+  CONFIG.structures.damageFromOWAStrike = src.structures.damageFromOWAStrike;
+  CONFIG.structures.damageFromPayloadDrop = src.structures.damageFromPayloadDrop;
+  CONFIG.startingResources = src.startingResources;
+  CONFIG.resourcesPerWaveBonus = src.resourcesPerWaveBonus;
+  CONFIG.resourcesPerDroneKill.isr = src.resourcesPerDroneKill.isr;
+  CONFIG.resourcesPerDroneKill.owa = src.resourcesPerDroneKill.owa;
+  CONFIG.resourcesPerDroneKill.payloadDelivery = src.resourcesPerDroneKill.payloadDelivery;
+  CONFIG.prepTimeBetweenWaves = src.prepTimeBetweenWaves;
+}
+
+// CONFIG boots at campaign (the tuned v1 — matches every existing read site).
+applyMode('campaign');

@@ -94,7 +94,7 @@ function drawPrompt(ctx, tMs) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillStyle = CONFIG.colors.alertAmber;
-  ctx.fillText('PRESS ANY KEY TO START', CONFIG.virtualWidth / 2, 252);
+  ctx.fillText('PRESS 1 TRAINING  ·  2 CAMPAIGN  ·  ANY KEY CAMPAIGN', CONFIG.virtualWidth / 2, 252);
 }
 
 export function renderStartScreen(ctx, state, tMs) {

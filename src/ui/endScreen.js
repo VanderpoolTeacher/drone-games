@@ -50,14 +50,14 @@ function drawBackdrop(ctx, key) {
   }
 }
 
-function drawHeadline(ctx, entry, tMs) {
+function drawHeadline(ctx, entry, tMs, modeTag) {
   const blink = Math.floor(tMs / 250) % 2 === 0;
   if (!blink) return;
   ctx.font = '16px "Press Start 2P", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillStyle = CONFIG.colors[entry.headlineColor] ?? CONFIG.colors.accentWhite;
-  ctx.fillText(entry.headline, CONFIG.virtualWidth / 2, HEADLINE_Y);
+  ctx.fillText(entry.headline + (modeTag ? ' · ' + modeTag : ''), CONFIG.virtualWidth / 2, HEADLINE_Y);
 }
 
 function drawBody(ctx, entry) {
@@ -97,9 +97,11 @@ export function renderEndScreen(ctx, state, tMs) {
   const entry = CONFIG.endScreens[key];
   if (!entry) return;
 
+  const modeTag = state.mode ? state.mode.toUpperCase() : '';
+
   ctx.save();
   drawBackdrop(ctx, key);
-  drawHeadline(ctx, entry, tMs);
+  drawHeadline(ctx, entry, tMs, modeTag);
   drawBody(ctx, entry);
   drawPrompt(ctx, tMs);
   ctx.restore();

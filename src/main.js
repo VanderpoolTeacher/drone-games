@@ -1,4 +1,4 @@
-import { CONFIG } from './config.js';
+import { CONFIG, applyMode } from './config.js';
 import { gameState, resetGameState } from './game/state.js';
 import { MAP } from './game/map.js';
 import { renderMap } from './game/mapRenderer.js';
@@ -113,6 +113,8 @@ canvas.addEventListener('click', e => {
     return;
   }
   if (gameState.screenPhase === 'start') {
+    gameState.mode = 'campaign';
+    applyMode('campaign');
     gameState.screenPhase = 'playing';
     return;
   }
@@ -168,6 +170,9 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (gameState.screenPhase === 'start') {
+    const mode = (e.key === '1') ? 'training' : 'campaign';
+    gameState.mode = mode;
+    applyMode(mode);
     gameState.screenPhase = 'playing';
     return;
   }

@@ -1,4 +1,4 @@
-import { CONFIG } from '../config.js';
+import { CONFIG, applyMode } from '../config.js';
 import { MAP } from './map.js';
 
 function makeStructureMap(initial) {
@@ -30,6 +30,7 @@ export const gameState = {
   },
   winFlag: false,
   screenPhase: 'idle',
+  mode: 'campaign',
   tooltipKey: null,
   briefing: {
     phase: 'idle',
@@ -40,6 +41,7 @@ export const gameState = {
 };
 
 export function resetGameState() {
+  applyMode(gameState.mode);
   gameState.drones.length = 0;
   gameState.explosions.length = 0;
   gameState.defenses.length = 0;
