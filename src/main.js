@@ -18,7 +18,7 @@ import { renderWinOverlay } from './ui/winOverlay.js';
 import { renderCRT } from './ui/crt.js';
 import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } from './ui/briefing.js';
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
-import { playSfx, toggleMute } from './audio/sfx.js';
+import { playSfx, toggleMute, getAudioContext } from './audio/sfx.js';
 import { updateMusic } from './audio/music.js';
 
 const canvas = document.getElementById('game');
@@ -131,6 +131,19 @@ canvas.addEventListener('contextmenu', e => {
   e.preventDefault();
   gameState.placementMode = null;
 });
+
+// Wake the AudioContext on the first user interaction anywhere on the page,
+// so music starts without needing to hit a palette/placement target.
+function wakeAudio() {
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === 'suspended') ctx.resume();
+  window.removeEventListener('click', wakeAudio);
+  window.removeEventListener('keydown', wakeAudio);
+  window.removeEventListener('touchstart', wakeAudio);
+}
+window.addEventListener('click', wakeAudio);
+window.addEventListener('keydown', wakeAudio);
+window.addEventListener('touchstart', wakeAudio);
 
 window.addEventListener('keydown', e => {
   if (e.key === 'Escape') gameState.placementMode = null;
