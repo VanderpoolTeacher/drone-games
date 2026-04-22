@@ -278,6 +278,14 @@ function updateOwa(d, dt, state) {
   if (d.commitLineFrame > 0) d.commitLineFrame -= 1;
 
   if (d.phase === 'cruise') {
+    const def = findClosestDefenseInRange(state, d, CONFIG.combat.owaEngageRange);
+    if (def) {
+      d.targetDefenseId = def.id;
+      d.phase = 'terminalDefense';
+      d.commitLineFrame = 1;
+      return;
+    }
+
     const corridor = MAP.corridors.owa[d.corridorIdx];
     if (d.wpIdx >= corridor.waypoints.length) {
       d.phase = 'terminal';
@@ -285,6 +293,34 @@ function updateOwa(d, dt, state) {
       return;
     }
     advanceCruise(d, dt);
+    return;
+  }
+
+  if (d.phase === 'terminalDefense') {
+    const def = state.defenses.find(x => x.id === d.targetDefenseId);
+    if (!def) {
+      d.targetDefenseId = null;
+      d.phase = 'terminal';
+      return;
+    }
+
+    const dx = def.x - d.x;
+    const dy = def.y - d.y;
+    const dist = Math.hypot(dx, dy);
+    const speed = CONFIG.drones.owa.speed * (d.speedMultiplier ?? 1);
+    const step = speed * dt;
+
+    if (dist <= OWA_ARRIVAL_PX || step >= dist) {
+      state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
+      def.hp -= CONFIG.combat.owaDefenseDamage;
+      d.phase = 'done';
+      return;
+    }
+
+    d.vx = (dx / dist) * speed;
+    d.vy = (dy / dist) * speed;
+    d.x += d.vx * dt;
+    d.y += d.vy * dt;
     return;
   }
 
@@ -313,6 +349,23 @@ function updateOwa(d, dt, state) {
   }
 }
 
+function findClosestDefenseInRange(state, drone, range) {
+  let best = null;
+  let bestDist = Infinity;
+  const rSq = range * range;
+  for (const def of state.defenses) {
+    const dx = def.x - drone.x;
+    const dy = def.y - drone.y;
+    const dSq = dx * dx + dy * dy;
+    if (dSq > rSq) continue;
+    if (dSq < bestDist) {
+      best = def;
+      bestDist = dSq;
+    }
+  }
+  return best;
+}
+
 function structurePixelPos(id) {
   const s = MAP.structures.find(x => x.id === id);
   if (!s) return null;
@@ -334,6 +387,11 @@ function updatePayload(d, dt, state) {
       const sp = tileToPixel(s.tile);
       if (Math.hypot(sp.x - drop.x, sp.y - drop.y) <= PAYLOAD_AOE_RADIUS) {
         applyDamage(state, s.id, CONFIG.structures.damageFromPayloadDrop);
+      }
+    }
+    for (const def of state.defenses) {
+      if (Math.hypot(def.x - drop.x, def.y - drop.y) <= PAYLOAD_AOE_RADIUS) {
+        def.hp -= CONFIG.combat.payloadDefenseDamage;
       }
     }
     d.phase = 'done';

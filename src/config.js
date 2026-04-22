@@ -69,6 +69,7 @@ export const CONFIG = {
       displayName: 'RF Jammer',
       category: 'soft-kill',
       cost: 50,
+      hp: 1,
       range: 80,
       effect: 'slow',
       slowFactor: 0.5,               // multiplies drone speed while in range
@@ -81,6 +82,7 @@ export const CONFIG = {
       displayName: 'Interceptor',
       category: 'hard-kill kinetic',
       cost: 100,
+      hp: 2,
       range: 100,
       damage: 30,
       cooldown: 1500,                // ms between shots
@@ -94,6 +96,7 @@ export const CONFIG = {
       displayName: 'Directed Energy (Laser)',
       category: 'directed energy — HEL',
       cost: 200,
+      hp: 3,
       range: 120,
       dps: 40,                       // damage per second while firing
       overheatTime: 3000,            // ms of continuous fire before overheat
@@ -108,6 +111,7 @@ export const CONFIG = {
       displayName: 'HPM',
       category: 'directed energy — HPM',
       cost: 300,
+      hp: 3,
       coneRange: 110,                // radial depth of the cone
       coneHalfAngleDeg: 35,          // total cone = 70°
       pulseDamage: 40,               // per-pulse damage to each drone in cone
@@ -169,6 +173,13 @@ export const CONFIG = {
     },
   ],
   prepTimeBetweenWaves: 20000,       // ms — 20s prep window between waves
+
+  combat: {
+    owaEngageRange: 60,
+    isrDisableRange: 36,
+    owaDefenseDamage: 1,
+    payloadDefenseDamage: 2,
+  },
   warden: {
     win: "City held. Good work. Red Cell'll remember this one.",
     winPortrait: 'neutral',

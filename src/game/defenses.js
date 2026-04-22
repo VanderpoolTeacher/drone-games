@@ -3,6 +3,18 @@ import { MAP } from './map.js';
 import { tileToPixel } from './drones.js';
 import { playSfx, startSfx, stopSfx } from '../audio/sfx.js';
 
+function isDisabledByIsr(state, def) {
+  const rSq = CONFIG.combat.isrDisableRange * CONFIG.combat.isrDisableRange;
+  for (const d of state.drones) {
+    if (d.type !== 'isr') continue;
+    if (d.hp <= 0 || d.phase === 'done') continue;
+    const dx = d.x - def.x;
+    const dy = d.y - def.y;
+    if (dx * dx + dy * dy <= rSq) return true;
+  }
+  return false;
+}
+
 export function placeDefense(state, type, tile, facingRad = 0) {
   const cfg = CONFIG.defenses[type];
   if (!cfg) return null;
@@ -13,6 +25,7 @@ export function placeDefense(state, type, tile, facingRad = 0) {
     tile: { x: tile.x, y: tile.y },
     x,
     y,
+    hp: cfg.hp,
     cooldownMs: 0,
     targetId: null,
     heatMs: 0,
@@ -30,6 +43,19 @@ export function placeDefense(state, type, tile, facingRad = 0) {
 export function updateDefenses(state, dt) {
   for (const d of state.defenses) {
     d.cooldownMs = Math.max(0, d.cooldownMs - dt * 1000);
+
+    if (isDisabledByIsr(state, d)) {
+      if (d.laserFiring) {
+        stopSfx('laser-' + d.id);
+        d.laserFiring = false;
+      }
+      if (d.rfJamming) {
+        stopSfx('rf-' + d.id);
+        d.rfJamming = false;
+      }
+      d.targetId = null;
+      continue;
+    }
 
     if (d.type === 'interceptor') {
       if (d.cooldownMs > 0) continue;
@@ -98,6 +124,17 @@ export function updateDefenses(state, dt) {
       playSfx('hpmPulse');
     }
   }
+
+  // Sweep dead defenses: explosion + SFX cleanup + remove.
+  for (const d of state.defenses) {
+    if (d.hp <= 0) {
+      state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
+      if (d.laserFiring) stopSfx('laser-' + d.id);
+      if (d.rfJamming) stopSfx('rf-' + d.id);
+      playSfx('structureDestroyed');
+    }
+  }
+  state.defenses = state.defenses.filter(d => d.hp > 0);
 }
 
 function pickClosestToStructureTarget(state, d, range) {
@@ -190,6 +227,28 @@ export function renderDefenses(ctx, state) {
         ctx.stroke();
       }
     }
+
+    // HP segments — only if damaged
+    const maxHp = CONFIG.defenses[d.type].hp;
+    if (d.hp < maxHp) {
+      const segW = Math.max(1, Math.floor(DEFENSE_SIZE / maxHp) - 1);
+      const barY = Math.floor(d.y - DEFENSE_SIZE / 2) - 4;
+      let segX = Math.floor(d.x - DEFENSE_SIZE / 2);
+      for (let i = 0; i < maxHp; i++) {
+        ctx.fillStyle = i < d.hp ? CONFIG.colors.friendlyCyan : CONFIG.colors.gridLine;
+        ctx.fillRect(segX, barY, segW, 2);
+        segX += segW + 1;
+      }
+    }
+  }
+}
+
+export function renderDefenseDisablePulse(ctx, state, tMs) {
+  if (Math.floor(tMs / 125) % 2 !== 0) return;
+  for (const d of state.defenses) {
+    if (!isDisabledByIsr(state, d)) continue;
+    ctx.fillStyle = CONFIG.colors.threatViolet;
+    ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y) - 1, 3, 3);
   }
 }
 
@@ -206,6 +265,7 @@ export function applyJamEffects(state) {
     let minMult = 1;
     for (const def of state.defenses) {
       if (def.type !== 'rfJammer') continue;
+      if (isDisabledByIsr(state, def)) continue;
       const dx = d.x - def.x;
       const dy = d.y - def.y;
       if (Math.hypot(dx, dy) > cfg.range) continue;

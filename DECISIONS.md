@@ -176,3 +176,15 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Structure tooltips compute header color dynamically from HP tier (>=66% green, >=33% amber, else red) and append `HP: cur / max`. Single authored entry per structure; render does the work.
 
 2026-04-21 — Tooltip hit-test precedence: palette → on-map defense → drone → structure. First hit wins; ghost placement cursor has no tooltip.
+
+2026-04-21 — Defenses are now mortal. HP per type: RF 1, Interceptor 2, Laser 3, HPM 3. Stored on each instance; no refund on destruction.
+
+2026-04-21 — OWA drones retarget opportunistically. During cruise, if a defense sits within 60px, OWA switches to a new `terminalDefense` phase, flies straight at the defense, contact kills itself + deals 1 HP to the defense. Fallback to authored structure target if the chosen defense dies mid-flight.
+
+2026-04-21 — Payload AoE (48px) now also damages defenses — 2 HP per hit. Same iteration pattern as the existing structure damage.
+
+2026-04-21 — ISR drones temp-disable defenses within 36px each frame. Stateless check — `isDisabledByIsr(state, def)` scans live ISR drones every tick. Disabled defenses stop firing, stop jamming, cut any continuous SFX, and render a pulsing threatViolet square. Resumes instantly when ISR leaves range. `applyJamEffects` also honors the disable gate to prevent continuous-SFX flip-flop.
+
+2026-04-21 — Defense destruction reuses the `structureDestroyed` SFX and existing explosion FX. Continuous SFX (`laser-<id>`, `rf-<id>`) are stopped cleanly in the death sweep so audio doesn't leak past removal.
+
+2026-04-21 — HP segments render above each damaged defense (only when HP < max) — friendlyCyan for remaining segments, gridLine for lost. Hidden at full HP to avoid clutter.

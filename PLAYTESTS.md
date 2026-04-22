@@ -28,6 +28,30 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (Drones attack defenses)
+
+**Build:** feat/drones-attack-defenses — defense HP, OWA retarget, Payload AoE, ISR disable
+**Session length:** ~12 min full run
+**Result:** N/A (feature pass; needs external playtest for tuning)
+
+### What happened
+- Wave 1 ISR passes disabled RF Jammer at expected range; pulse visual legible.
+- Wave 3 OWA broke off mid-cruise to attack a Laser near the east corridor; second OWA finished it off.
+- Wave 4 Payload drop inside a defense cluster took out the Jammer and chipped the HPM by 2.
+
+### What worked
+- Defense HP bar only showing when damaged keeps the HUD clean but still informative.
+- OWA retargeting feels like real opportunism — the drones that switch targets feel "smart."
+- ISR disable pulse + audio cut is an unmistakable "this defense is suppressed right now" signal.
+
+### What felt off
+- Wave 5 sometimes clears with ~3 defenses lost; might need to nudge defense HP up or OWA damage down for balance.
+- Laser dying mid-beam fires `structureDestroyed` SFX — a bit dramatic for a single laser. Candidate for a dedicated "defense destroyed" SFX in a later pass.
+
+### Questions raised
+- Should Interceptor projectile kill defenses too? (No — friendly fire would be confusing. Ignore.)
+- Should HPM pulses disable ISR drones before they get into disable range? HPM effectivenessVs.isr = 1.0 already handles this; check tuning.
+
 ## 2026-04-21 — solo (Hover tooltips)
 
 **Build:** feat/tooltips — top-center info panel with authored copy
