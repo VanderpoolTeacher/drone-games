@@ -177,6 +177,20 @@ export const CONFIG = {
     autoCollapseMs: 8000,
   },
 
+  music: {
+    waves: [
+      { prep: 'Barbed Lullaby',    active: 'Barricade Pulse' },    // Wave 1
+      { prep: 'Fortress Rations',  active: 'Fortress Beat' },      // Wave 2
+      { prep: 'Barricade Static',  active: 'Determined Forces' },  // Wave 3
+      { prep: 'Steel Rations',     active: 'Marching Forth' },     // Wave 4
+      { prep: 'Welded Bastion',    active: 'Steel Hero' },         // Wave 5
+    ],
+    win: 'Avenged',
+    lose: 'Fallen Not Forgotten',
+    volume: 0.4,
+    crossfadeMs: 500,
+  },
+
   // Colors (mirrors STYLE.md palette — keep in sync)
   // threatRedMid/Dim are derived quantization steps for trail fading.
   // droneIsr/Owa/Payload are semantic aliases for per-type drone body colors (legend + renderer use these).

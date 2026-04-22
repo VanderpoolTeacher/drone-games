@@ -498,3 +498,14 @@ export function toggleMute() {
 export function isMuted() {
   return muted;
 }
+
+// For sibling audio modules (e.g., music.js) that need to route through the
+// same AudioContext + masterGain so mute works uniformly.
+export function getAudioContext() {
+  return getCtx();
+}
+
+export function getMasterGain() {
+  getCtx();       // ensure masterGain exists
+  return masterGain;
+}
