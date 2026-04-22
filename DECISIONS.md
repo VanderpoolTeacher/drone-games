@@ -132,3 +132,15 @@ YYYY-MM-DD — Decision. Reason.
 2026-04-21 — Continuous SFX (laser, RF) tracked per-defense via boolean flags on the defense object (`laserFiring`, `rfJamming`). Start/stop transitions detected by comparing previous-frame flag to this-frame condition. Fade-out over 30 ms on stopSfx avoids click artifacts.
 
 2026-04-21 — SFX v1 out of scope: drone buzz (looped per drone — noise risk at swarm density), structure-hit per-contact (cluttered), wave-cleared chime (redundant with next waveStart), spatial panning, volume slider, music (issue #14).
+
+2026-04-21 — Background music via HTMLAudioElement streaming (not AudioBuffer decoded PCM). Mp3s total ~50MB → decoded would be ~500MB of memory; streaming keeps footprint tiny.
+
+2026-04-21 — 5 waves × prep+active = 10 unique tracks + win + lose = 12 of 13 mapped. Each wave has a distinct mood pair to make the escalation audible. Bench (unused): Fortress Static.
+
+2026-04-21 — Music routes through the same masterGain as SFX so the M-hotkey mute silences both together. No separate music mute / volume slider in v1.
+
+2026-04-21 — 500 ms linear crossfade on phase transitions. Subtle enough to not drag, long enough to not thud.
+
+2026-04-21 — Single `updateMusic(state)` driver called once per frame; derives the correct track key from wave.number + wave.phase + loseFlag + winFlag. No scattered triggers in wave/structures/main — playTrack no-ops if the key hasn't changed.
+
+2026-04-21 — 13 mp3s (~50 MB) committed directly to the repo. Acceptable for a prototype; revisit (LFS or CDN) before adding more audio assets.

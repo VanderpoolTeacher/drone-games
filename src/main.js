@@ -19,6 +19,7 @@ import { renderCRT } from './ui/crt.js';
 import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } from './ui/briefing.js';
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
 import { playSfx, toggleMute } from './audio/sfx.js';
+import { updateMusic } from './audio/music.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -45,6 +46,7 @@ function frame(tMs) {
   }
   updateStructures(gameState);
   updateExplosions(gameState, dt);
+  updateMusic(gameState);
 
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);

@@ -26,6 +26,7 @@ Running task list. Check things off, add as they come up. Scratchpad, not a proj
 
 - [ ] First external playtest (after step 7, before step 8 finishes)
 - [x] Sound effects — 11 synthesized SFX + mute toggle (issue #13)
+- [x] Background music — 12 tracks, phase-driven with crossfade (issue #14)
 - [ ] Class writeup draft
 - [ ] Record gameplay video for class submission
 - [x] Commander Warden briefings — pre-wave speech bubble + portraits, win/lose subtitles (issue #5)

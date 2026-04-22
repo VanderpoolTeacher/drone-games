@@ -28,6 +28,29 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-21 — solo (Background music)
+
+**Build:** feat/music — HTMLAudioElement + 500ms crossfade, 12-track mapping
+**Session length:** ~10 min full run
+**Result:** N/A (feature pass)
+
+### What happened
+- Full 5-wave run. Each prep/active pair played its mapped track. Crossfades smooth at phase transitions.
+- Lose state crossfaded to "Fallen Not Forgotten"; win to "Avenged".
+- M-mute silenced music + SFX together as intended.
+
+### What worked
+- 500 ms crossfade feels right — smooth without being soupy.
+- Wave 1 (Barbed Lullaby → Barricade Pulse) lands the calm-to-tension arc.
+- Wave 5 (Welded Bastion → Steel Hero) pays off the build.
+
+### What felt off
+- Active-track volume may need a small tuning pass — at 0.4 it sits nicely under SFX but can feel thin during quiet moments. Candidate for a per-track gain override in CONFIG later.
+- First track load occasionally has a ~200ms hitch before playback starts. Acceptable for a prep phase but noticeable on a fresh page.
+
+### Questions raised
+- Should the "win" track fade the full length of the CITY HELD overlay, or crossfade to silence once the player restarts? Current: continues until restart. Acceptable for v1.
+
 ## 2026-04-21 — solo (SFX pass)
 
 **Build:** feat/sfx — Web Audio synth; 11 sounds + mute
