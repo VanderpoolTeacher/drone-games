@@ -1,6 +1,26 @@
 import { CONFIG, applyMode } from '../config.js';
 import { MAP } from './map.js';
 
+const BACKDROP_KEY = 'droneDefense.backdropVisible';
+
+function loadBackdropFromStorage() {
+  try {
+    const v = localStorage.getItem(BACKDROP_KEY);
+    return v === null ? true : v === '1';
+  } catch (_e) {
+    return true;
+  }
+}
+
+export function toggleBackdrop(state) {
+  state.backdropVisible = !state.backdropVisible;
+  try {
+    localStorage.setItem(BACKDROP_KEY, state.backdropVisible ? '1' : '0');
+  } catch (_e) {
+    // private mode — ignore.
+  }
+}
+
 export function applyDelivery(state, waveIdx) {
   const delivery = CONFIG.deliveries?.[waveIdx];
   if (!delivery) return;
@@ -97,6 +117,7 @@ export const gameState = {
   winFlag: false,
   screenPhase: 'idle',
   mode: 'campaign',
+  backdropVisible: loadBackdropFromStorage(),
   tooltipKey: null,
   briefing: {
     phase: 'idle',

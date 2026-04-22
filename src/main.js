@@ -1,5 +1,5 @@
 import { CONFIG, applyMode } from './config.js';
-import { gameState, resetGameState, applyDelivery, updateTrucks } from './game/state.js';
+import { gameState, resetGameState, applyDelivery, updateTrucks, toggleBackdrop } from './game/state.js';
 import { MAP } from './game/map.js';
 import { renderMap, renderTrucks } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
@@ -169,6 +169,10 @@ window.addEventListener('touchstart', wakeAudio);
 window.addEventListener('keydown', e => {
   if (e.key === 'm' || e.key === 'M') {
     toggleMute();
+    return;
+  }
+  if (e.key === 'b' || e.key === 'B') {
+    toggleBackdrop(gameState);
     return;
   }
   if (gameState.screenPhase === 'idle') {

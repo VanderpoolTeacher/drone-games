@@ -5,10 +5,22 @@ const BACKDROP_IMG = new Image();
 BACKDROP_IMG.src = './src/images/manhattan.png';
 
 export function renderMap(ctx, tMs, state) {
-  drawBackdrop(ctx);
+  if (state.backdropVisible) {
+    drawBackdrop(ctx);
+  } else {
+    drawPlainMap(ctx);
+  }
   drawApartments(ctx, state);
   drawZones(ctx, tMs);
   drawStructures(ctx, state);
+}
+
+function drawPlainMap(ctx) {
+  const mapTop = CONFIG.topBarHeight + MAP.padTop;
+  const mapH = MAP.gridH * MAP.tileSize;
+  // Water wash. Apartments still render as overlays in drawApartments.
+  ctx.fillStyle = CONFIG.colors.bgMid;
+  ctx.fillRect(0, mapTop, CONFIG.virtualWidth, mapH);
 }
 
 function drawBackdrop(ctx) {
