@@ -8,12 +8,31 @@ export function renderMap(ctx, tMs, state) {
   // Always draw the plain map (water + grid + coord labels) as a base; then
   // overlay the image at state.backdropAlpha (1 = image hides grid fully).
   drawPlainMap(ctx);
+  drawBridgeMarkers(ctx, state);
   const alpha = state.backdropAlpha ?? 1;
   if (alpha > 0) drawBackdrop(ctx, alpha);
   drawApartments(ctx, state);
   drawBridgeDamage(ctx, state);
   drawZones(ctx, tMs);
   drawStructures(ctx, state);
+}
+
+// Small deck-and-rail glyph per bridge, drawn on the plain-map layer.
+// The image covers this when backdrop alpha = 1; it bleeds through when
+// the player lowers the alpha to inspect the grid.
+function drawBridgeMarkers(ctx, state) {
+  const { tileSize, padTop } = MAP;
+  for (const br of MAP.bridges) {
+    const hp = state.bridgeHp?.[br.id] ?? br.maxHp;
+    if (hp <= 0) continue;
+    const px = br.tile.x * tileSize;
+    const py = CONFIG.topBarHeight + padTop + br.tile.y * tileSize;
+    ctx.fillStyle = CONFIG.colors.gridLine;
+    ctx.fillRect(px + 2, py + 4, tileSize - 4, tileSize - 8);
+    ctx.fillStyle = CONFIG.colors.accentWhite;
+    ctx.fillRect(px + 2, py + 3, tileSize - 4, 1);
+    ctx.fillRect(px + 2, py + tileSize - 4, tileSize - 4, 1);
+  }
 }
 
 // Bridges are invisible on the map (the image shows them). We flash when
