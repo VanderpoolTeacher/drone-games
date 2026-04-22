@@ -16,11 +16,26 @@ export function renderMap(ctx, tMs, state) {
 }
 
 function drawPlainMap(ctx) {
-  const mapTop = CONFIG.topBarHeight + MAP.padTop;
-  const mapH = MAP.gridH * MAP.tileSize;
-  // Water wash. Apartments still render as overlays in drawApartments.
+  const { tileSize, gridW, gridH, padTop } = MAP;
+  const mapTop = CONFIG.topBarHeight + padTop;
+  const mapH = gridH * tileSize;
+
   ctx.fillStyle = CONFIG.colors.bgMid;
   ctx.fillRect(0, mapTop, CONFIG.virtualWidth, mapH);
+
+  // Tile grid for positional reference — subtle lines at every tile boundary.
+  ctx.strokeStyle = CONFIG.colors.gridLine;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x <= gridW; x++) {
+    ctx.moveTo(x * tileSize + 0.5, mapTop);
+    ctx.lineTo(x * tileSize + 0.5, mapTop + mapH);
+  }
+  for (let y = 0; y <= gridH; y++) {
+    ctx.moveTo(0, mapTop + y * tileSize + 0.5);
+    ctx.lineTo(CONFIG.virtualWidth, mapTop + y * tileSize + 0.5);
+  }
+  ctx.stroke();
 }
 
 function drawBackdrop(ctx) {
