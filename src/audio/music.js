@@ -76,6 +76,7 @@ function playTrack(key) {
 }
 
 function musicKeyForState(state) {
+  if (state.screenPhase === 'idle') return null;
   if (state.screenPhase === 'start') return CONFIG.music.title;
   if (state.loseFlag) return CONFIG.music.lose;
   if (state.winFlag) return CONFIG.music.win;

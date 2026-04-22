@@ -56,7 +56,8 @@ function drawHeadline(ctx, tMs) {
   ctx.fillText('INCOMING DRONE ATTACK', CONFIG.virtualWidth / 2, 24);
 }
 
-function drawScrollingBrief(ctx, tMs) {
+function drawScrollingBrief(ctx, tMs, state) {
+  if (state.screenPhase !== 'start') return;
   if (scrollStartMs === null) scrollStartMs = tMs;
 
   const totalTextH = BRIEF_LINES.length * LINE_HEIGHT;
@@ -97,11 +98,11 @@ function drawPrompt(ctx, tMs) {
 }
 
 export function renderStartScreen(ctx, state, tMs) {
-  if (state.screenPhase !== 'start') return;
+  if (state.screenPhase !== 'idle' && state.screenPhase !== 'start') return;
   ctx.save();
   drawBackdrop(ctx);
   drawHeadline(ctx, tMs);
-  drawScrollingBrief(ctx, tMs);
+  drawScrollingBrief(ctx, tMs, state);
   drawPrompt(ctx, tMs);
   ctx.restore();
 }

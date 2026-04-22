@@ -106,6 +106,10 @@ canvas.addEventListener('click', e => {
     return;
   }
 
+  if (gameState.screenPhase === 'idle') {
+    gameState.screenPhase = 'start';
+    return;
+  }
   if (gameState.screenPhase === 'start') {
     gameState.screenPhase = 'playing';
     return;
@@ -155,6 +159,10 @@ window.addEventListener('touchstart', wakeAudio);
 window.addEventListener('keydown', e => {
   if (e.key === 'm' || e.key === 'M') {
     toggleMute();
+    return;
+  }
+  if (gameState.screenPhase === 'idle') {
+    gameState.screenPhase = 'start';
     return;
   }
   if (gameState.screenPhase === 'start') {
