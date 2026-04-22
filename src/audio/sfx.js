@@ -4,8 +4,11 @@
 
 const MUTED_KEY = 'droneDefense.muted';
 
+const SFX_VOLUME = 0.45;           // sits under music/voice without squashing SFX
+
 let audioCtx = null;
 let masterGain = null;
+let sfxGain = null;
 let muted = loadMutedFromStorage();
 
 function loadMutedFromStorage() {
@@ -31,6 +34,9 @@ function getCtx() {
   masterGain = audioCtx.createGain();
   masterGain.gain.value = muted ? 0 : 1;
   masterGain.connect(audioCtx.destination);
+  sfxGain = audioCtx.createGain();
+  sfxGain.gain.value = SFX_VOLUME;
+  sfxGain.connect(masterGain);
   return audioCtx;
 }
 
@@ -57,7 +63,7 @@ function playUiClick() {
   gain.gain.linearRampToValueAtTime(0.3, t + 0.005);
   gain.gain.linearRampToValueAtTime(0, t + 0.05);
   osc.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(sfxGain);
   osc.start(t);
   osc.stop(t + 0.06);
 }
@@ -72,7 +78,7 @@ function playInterceptorLaunch() {
   nGain.gain.setValueAtTime(0.25, t);
   nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
   nSrc.connect(nGain);
-  nGain.connect(masterGain);
+  nGain.connect(sfxGain);
   nSrc.start(t);
   nSrc.stop(t + 0.06);
 
@@ -84,7 +90,7 @@ function playInterceptorLaunch() {
   oGain.gain.setValueAtTime(0.3, t);
   oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
   osc.connect(oGain);
-  oGain.connect(masterGain);
+  oGain.connect(sfxGain);
   osc.start(t);
   osc.stop(t + 0.16);
 }
@@ -99,7 +105,7 @@ function playDroneKill() {
   nGain.gain.setValueAtTime(0.35, t);
   nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
   nSrc.connect(nGain);
-  nGain.connect(masterGain);
+  nGain.connect(sfxGain);
   nSrc.start(t);
   nSrc.stop(t + 0.26);
 
@@ -110,7 +116,7 @@ function playDroneKill() {
   oGain.gain.setValueAtTime(0.45, t);
   oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
   osc.connect(oGain);
-  oGain.connect(masterGain);
+  oGain.connect(sfxGain);
   osc.start(t);
   osc.stop(t + 0.26);
 }
@@ -128,7 +134,7 @@ function playLaserOverheat() {
     g.gain.linearRampToValueAtTime(0.25, startAt + 0.005);
     g.gain.linearRampToValueAtTime(0, startAt + 0.04);
     osc.connect(g);
-    g.connect(masterGain);
+    g.connect(sfxGain);
     osc.start(startAt);
     osc.stop(startAt + 0.05);
   }
@@ -148,7 +154,7 @@ function playHpmPulse() {
   lowGain.gain.setValueAtTime(0.5, t);
   lowGain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
   low.connect(lowGain);
-  lowGain.connect(masterGain);
+  lowGain.connect(sfxGain);
   low.start(t);
   low.stop(t + 0.51);
 
@@ -159,7 +165,7 @@ function playHpmPulse() {
   midGain.gain.setValueAtTime(0.4, t);
   midGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
   mid.connect(midGain);
-  midGain.connect(masterGain);
+  midGain.connect(sfxGain);
   mid.start(t);
   mid.stop(t + 0.31);
 }
@@ -174,7 +180,7 @@ function playStructureDestroyed() {
   nGain.gain.setValueAtTime(0.5, t);
   nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
   nSrc.connect(nGain);
-  nGain.connect(masterGain);
+  nGain.connect(sfxGain);
   nSrc.start(t);
   nSrc.stop(t + 0.7);
 
@@ -185,7 +191,7 @@ function playStructureDestroyed() {
   subGain.gain.setValueAtTime(0.6, t);
   subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
   sub.connect(subGain);
-  subGain.connect(masterGain);
+  subGain.connect(sfxGain);
   sub.start(t);
   sub.stop(t + 0.61);
 
@@ -195,7 +201,7 @@ function playStructureDestroyed() {
   crackleGain.gain.setValueAtTime(0.2, t + 0.15);
   crackleGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
   crackle.connect(crackleGain);
-  crackleGain.connect(masterGain);
+  crackleGain.connect(sfxGain);
   crackle.start(t + 0.15);
   crackle.stop(t + 0.36);
 }
@@ -213,7 +219,7 @@ function playWaveStart() {
     g.gain.linearRampToValueAtTime(0.25, t0 + offsetSec + 0.01);
     g.gain.linearRampToValueAtTime(0, t0 + offsetSec + 0.08);
     osc.connect(g);
-    g.connect(masterGain);
+    g.connect(sfxGain);
     osc.start(t0 + offsetSec);
     osc.stop(t0 + offsetSec + 0.09);
   }
@@ -236,7 +242,7 @@ function playWin() {
     g.gain.linearRampToValueAtTime(0.25, t0 + offsetSec + 0.01);
     g.gain.linearRampToValueAtTime(0, t0 + offsetSec + 0.1);
     osc.connect(g);
-    g.connect(masterGain);
+    g.connect(sfxGain);
     osc.start(t0 + offsetSec);
     osc.stop(t0 + offsetSec + 0.11);
   }
@@ -259,7 +265,7 @@ function playLose() {
   g.gain.setValueAtTime(0.3, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
   osc.connect(g);
-  g.connect(masterGain);
+  g.connect(sfxGain);
   osc.start(t);
   osc.stop(t + 0.81);
 }
@@ -274,7 +280,7 @@ function playStructureHit() {
   nGain.gain.setValueAtTime(0.15, t);
   nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
   nSrc.connect(nGain);
-  nGain.connect(masterGain);
+  nGain.connect(sfxGain);
   nSrc.start(t);
   nSrc.stop(t + 0.09);
 
@@ -285,7 +291,7 @@ function playStructureHit() {
   oGain.gain.setValueAtTime(0.2, t);
   oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
   osc.connect(oGain);
-  oGain.connect(masterGain);
+  oGain.connect(sfxGain);
   osc.start(t);
   osc.stop(t + 0.13);
 }
@@ -300,7 +306,7 @@ function playStructureHitHeavy() {
   nGain.gain.setValueAtTime(0.35, t);
   nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
   nSrc.connect(nGain);
-  nGain.connect(masterGain);
+  nGain.connect(sfxGain);
   nSrc.start(t);
   nSrc.stop(t + 0.26);
 
@@ -311,7 +317,7 @@ function playStructureHitHeavy() {
   oGain.gain.setValueAtTime(0.5, t);
   oGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
   osc.connect(oGain);
-  oGain.connect(masterGain);
+  oGain.connect(sfxGain);
   osc.start(t);
   osc.stop(t + 0.31);
 }
@@ -348,7 +354,7 @@ function makeLaserFireNodes() {
 
   osc.connect(filter);
   filter.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(sfxGain);
   osc.start(t);
   lfo.start(t);
 
@@ -384,7 +390,7 @@ function makeRfJamNodes() {
 
   src.connect(bp);
   bp.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(sfxGain);
   src.start(t);
   lfo.start(t);
 
@@ -419,7 +425,7 @@ function makeStructuresAlarmNodes() {
 
   osc.connect(filter);
   filter.connect(gain);
-  gain.connect(masterGain);
+  gain.connect(sfxGain);
   osc.start(t);
   lfo.start(t);
 
