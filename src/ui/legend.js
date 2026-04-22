@@ -11,7 +11,7 @@ const SQUARE = 6;
 const GAP_ICON_LABEL = 3;
 const LABEL_CHAR_W = 6;
 const GAP_ITEM = 8;
-const RIGHT_PAD = 6;
+const LEFT_PAD = 6;
 
 export function renderLegend(ctx) {
   const barMidY = Math.floor(CONFIG.topBarHeight / 2);
@@ -19,8 +19,7 @@ export function renderLegend(ctx) {
   const textY = barMidY + 4;
 
   const itemWidths = ITEMS.map(it => SQUARE + GAP_ICON_LABEL + it.label.length * LABEL_CHAR_W);
-  const totalWidth = itemWidths.reduce((a, w) => a + w, 0) + GAP_ITEM * (ITEMS.length - 1);
-  let x = CONFIG.virtualWidth - RIGHT_PAD - totalWidth;
+  let x = LEFT_PAD;
 
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.textBaseline = 'alphabetic';
