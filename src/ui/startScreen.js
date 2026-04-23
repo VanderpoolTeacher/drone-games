@@ -8,6 +8,12 @@ const LOGO_IMG_PATH = './src/images/drone-defense-x.png';
 const logoImg = new Image();
 logoImg.src = LOGO_IMG_PATH;
 
+const MAP_IMG_PATH = './src/images/new-york.png';
+const mapImg = new Image();
+mapImg.src = MAP_IMG_PATH;
+
+const FADE_MS = 800;
+
 const BRIEF_LINES = [
   '>> BRIEFING FOLLOWS <<',
   '',
@@ -33,10 +39,43 @@ const TEXT_BAND_BOTTOM = 214;
 const TEXT_SIZE = 8;
 
 let scrollStartMs = null;
+let startPhaseEnterMs = null;
+let lastPhase = null;
 
-function drawBackdrop(ctx) {
+function drawBackdrop(ctx, state, tMs) {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
+
+  if (state.screenPhase !== 'start') return;
+  const fade = startPhaseEnterMs == null
+    ? 1
+    : Math.min(1, (tMs - startPhaseEnterMs) / FADE_MS);
+
+  // NY map — wide crop, low alpha, under everything.
+  if (mapImg.complete && mapImg.naturalWidth > 0) {
+    const srcW = mapImg.naturalWidth;
+    const srcH = mapImg.naturalHeight;
+    const destW = CONFIG.virtualWidth;
+    const destH = Math.round(destW * srcH / srcW);
+    const destY = Math.round((CONFIG.virtualHeight - destH) / 2);
+    ctx.save();
+    ctx.globalAlpha = 0.35 * fade;
+    ctx.drawImage(mapImg, 0, destY, destW, destH);
+    ctx.restore();
+  }
+
+  // Warden podium — full canvas, fades in with the map.
+  if (portrait.complete && portrait.naturalWidth > 0) {
+    const srcW = portrait.naturalWidth;
+    const srcH = portrait.naturalHeight;
+    const destH = CONFIG.virtualHeight;
+    const destW = Math.round(destH * srcW / srcH);
+    const destX = Math.round((CONFIG.virtualWidth - destW) / 2);
+    ctx.save();
+    ctx.globalAlpha = 0.55 * fade;
+    ctx.drawImage(portrait, destX, 0, destW, destH);
+    ctx.restore();
+  }
 }
 
 function drawHeadline(ctx, tMs) {
@@ -90,21 +129,38 @@ function drawPrompt(ctx, tMs) {
   ctx.fillText('PRESS 1 TRAINING  ·  2 CAMPAIGN  ·  ANY KEY CAMPAIGN', CONFIG.virtualWidth / 2, 252);
 }
 
-function drawLogo(ctx) {
+function drawLogo(ctx, state, tMs) {
   if (!logoImg.complete || logoImg.naturalWidth === 0) return;
+  let alpha = 1;
+  if (state.screenPhase === 'start' && startPhaseEnterMs != null) {
+    alpha = Math.max(0, 1 - (tMs - startPhaseEnterMs) / FADE_MS);
+  }
+  if (alpha <= 0) return;
   const size = 180;
   const x = Math.round((CONFIG.virtualWidth - size) / 2);
   const y = Math.round((CONFIG.virtualHeight - size) / 2);
+  ctx.save();
+  ctx.globalAlpha = alpha;
   ctx.drawImage(logoImg, x, y, size, size);
+  ctx.restore();
 }
 
 export function renderStartScreen(ctx, state, tMs) {
   if (state.screenPhase !== 'idle' && state.screenPhase !== 'start') return;
+
+  // Detect idle → start transition and stamp the fade clock.
+  if (state.screenPhase === 'start' && lastPhase !== 'start') {
+    startPhaseEnterMs = tMs;
+  }
+  lastPhase = state.screenPhase;
+
   ctx.save();
-  drawBackdrop(ctx);
-  drawLogo(ctx);
-  drawHeadline(ctx, tMs);
-  drawScrollingBrief(ctx, tMs, state);
+  drawBackdrop(ctx, state, tMs);
+  drawLogo(ctx, state, tMs);
+  if (state.screenPhase === 'start') {
+    drawHeadline(ctx, tMs);
+    drawScrollingBrief(ctx, tMs, state);
+  }
   drawPrompt(ctx, tMs);
   ctx.restore();
 }
