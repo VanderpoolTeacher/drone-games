@@ -26,7 +26,7 @@ const BRIDGES = [
   { id: 'br-I1', tile: { x: 8,  y: 0 }, maxHp: BRIDGE_MAX_HP },
   { id: 'br-M1', tile: { x: 12, y: 0 }, maxHp: BRIDGE_MAX_HP },
   { id: 'br-M2', tile: { x: 12, y: 1 }, maxHp: BRIDGE_MAX_HP },
-  { id: 'br-P2', tile: { x: 15, y: 1 }, maxHp: BRIDGE_MAX_HP },
+  { id: 'br-O2', tile: { x: 14, y: 1 }, maxHp: BRIDGE_MAX_HP },
   { id: 'br-R2', tile: { x: 17, y: 1 }, maxHp: BRIDGE_MAX_HP },
   { id: 'br-R3', tile: { x: 17, y: 2 }, maxHp: BRIDGE_MAX_HP },
   { id: 'br-Q4', tile: { x: 16, y: 3 }, maxHp: BRIDGE_MAX_HP },
@@ -93,7 +93,7 @@ export const MAP = {
       { waypoints: [{ x: 20, y: 5 }, { x: -1, y: 5 }], dropPoint: { x: 17, y: 5 } },
       // Bridge-attack corridors — drop points hit clusters of bridges
       { waypoints: [{ x: -1, y: 0 }, { x: 20, y: 0 }], dropPoint: { x: 12, y: 0 } },   // I1 + M1 cluster
-      { waypoints: [{ x: 20, y: 2 }, { x: -1, y: 2 }], dropPoint: { x: 16, y: 2 } },   // P2 + R2 + R3 + Q4 cluster
+      { waypoints: [{ x: 20, y: 2 }, { x: -1, y: 2 }], dropPoint: { x: 16, y: 2 } },   // R2 + R3 + Q4 cluster
     ],
   },
 };

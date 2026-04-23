@@ -106,7 +106,7 @@ function drawBackdrop(ctx, alpha) {
   // Rotate portrait Manhattan image 90° CCW and cover-fit to the map area.
   const rotW = BACKDROP_IMG.naturalHeight;
   const rotH = BACKDROP_IMG.naturalWidth;
-  const scale = Math.max(mapW / rotW, mapH / rotH);
+  const scale = Math.max(mapW / rotW, mapH / rotH) * 0.85;
   const drawW = rotW * scale;
   const drawH = rotH * scale;
   const dx = (mapW - drawW) / 2;
@@ -118,7 +118,7 @@ function drawBackdrop(ctx, alpha) {
   ctx.rect(0, mapTop, mapW, mapH);
   ctx.clip();
   ctx.translate(dx + drawW / 2, dy + drawH / 2);
-  ctx.rotate(-Math.PI / 2);
+  ctx.rotate(-Math.PI / 2 - 15 * Math.PI / 180);
   ctx.drawImage(BACKDROP_IMG, -drawH / 2, -drawW / 2, drawH, drawW);
   ctx.restore();
 }

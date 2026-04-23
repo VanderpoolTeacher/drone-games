@@ -51,16 +51,19 @@ function drawBackdrop(ctx, state, tMs) {
     ? 1
     : Math.min(1, (tMs - startPhaseEnterMs) / FADE_MS);
 
-  // NY map — wide crop, low alpha, under everything.
+  // NY map — wide crop, low alpha, slight tilt, under everything.
   if (mapImg.complete && mapImg.naturalWidth > 0) {
     const srcW = mapImg.naturalWidth;
     const srcH = mapImg.naturalHeight;
     const destW = CONFIG.virtualWidth;
     const destH = Math.round(destW * srcH / srcW);
-    const destY = Math.round((CONFIG.virtualHeight - destH) / 2);
+    const cx = CONFIG.virtualWidth / 2;
+    const cy = CONFIG.virtualHeight / 2;
     ctx.save();
     ctx.globalAlpha = 0.35 * fade;
-    ctx.drawImage(mapImg, 0, destY, destW, destH);
+    ctx.translate(cx, cy);
+    ctx.rotate(-10 * Math.PI / 180);
+    ctx.drawImage(mapImg, -destW / 2, -destH / 2, destW, destH);
     ctx.restore();
   }
 
