@@ -19,7 +19,7 @@ import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } fr
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
 import { renderCasualtyHud } from './ui/casualtyHud.js';
 import { playSfx, toggleMute, getAudioContext, startSfx, stopSfx } from './audio/sfx.js';
-import { startSim, stopSim, tickSim, listStrategies } from './game/simHarness.js';
+import { startSim, stopSim, tickSim, listStrategies, downloadSimData, clearSimData } from './game/simHarness.js';
 import { updateMusic } from './audio/music.js';
 import { renderStartScreen } from './ui/startScreen.js';
 import { updateTooltip, renderTooltip } from './ui/tooltip.js';
@@ -270,7 +270,14 @@ window.addEventListener('keydown', e => {
     runSoundTest();
     return;
   }
-  // T — toggle sim harness. Optional modifier: Shift cycles strategies.
+  // Shift+T — download accumulated sim runs as CSV.
+  // Ctrl/Meta+Shift+T — clear sim log.
+  if ((e.key === 'T' || e.key === 't') && e.shiftKey) {
+    if (e.ctrlKey || e.metaKey) clearSimData();
+    else downloadSimData();
+    return;
+  }
+  // T — toggle sim harness.
   if (e.key === 't' || e.key === 'T') {
     if (gameState.simMode) {
       stopSim(gameState, 'abort');

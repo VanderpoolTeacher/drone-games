@@ -35,6 +35,69 @@ const STRATEGIES = {
 
 export function listStrategies() { return Object.keys(STRATEGIES); }
 
+const SIM_LOG_KEY = 'droneDefense.simRuns';
+
+// Append one stats block to the persistent sim log in localStorage. Returns
+// the total number of recorded runs (for console feedback).
+function appendSimRun(stats) {
+  let log = [];
+  try {
+    const raw = localStorage.getItem(SIM_LOG_KEY);
+    if (raw) log = JSON.parse(raw);
+    if (!Array.isArray(log)) log = [];
+  } catch (_) { log = []; }
+  log.push({ ...stats, recordedAt: new Date().toISOString() });
+  try { localStorage.setItem(SIM_LOG_KEY, JSON.stringify(log)); }
+  catch (_) { /* quota / private mode — ignore */ }
+  return log.length;
+}
+
+// Export all recorded runs as a downloadable CSV file.
+export function downloadSimData() {
+  let log = [];
+  try {
+    const raw = localStorage.getItem(SIM_LOG_KEY);
+    if (raw) log = JSON.parse(raw);
+  } catch (_) { /* ignore */ }
+  if (!Array.isArray(log) || log.length === 0) {
+    console.warn('[sim] no recorded runs to export');
+    return;
+  }
+  const cols = [
+    'recordedAt', 'strategy', 'outcome', 'wavesSurvived', 'runMs',
+    'casualties', 'structuresLost', 'defensesLost',
+    'lastIntel', 'payloadPoolRemaining', 'bridgesLive',
+    'isrKills', 'owaKills', 'payloadKills',
+  ];
+  const rows = [cols.join(',')];
+  for (const r of log) {
+    rows.push(cols.map(c => {
+      if (c === 'isrKills') return r.droneKills?.isr ?? 0;
+      if (c === 'owaKills') return r.droneKills?.owa ?? 0;
+      if (c === 'payloadKills') return r.droneKills?.payloadDelivery ?? 0;
+      const v = r[c];
+      if (v == null) return '';
+      if (typeof v === 'string' && v.includes(',')) return '"' + v + '"';
+      return v;
+    }).join(','));
+  }
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'drone-defense-sim-' + Date.now() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  console.log('[sim] exported ' + log.length + ' runs → CSV');
+}
+
+export function clearSimData() {
+  try { localStorage.removeItem(SIM_LOG_KEY); } catch (_) { /* ignore */ }
+  console.log('[sim] cleared sim log');
+}
+
 export function startSim(state, { strategy = 'early-rf', speed = 10 } = {}) {
   if (state.simMode) return;
   state.simMode = true;
@@ -65,7 +128,8 @@ export function stopSim(state, outcome = 'abort') {
   s.bridgesLive = (state.bridgeHp)
     ? Object.values(state.bridgeHp).filter(h => h > 0).length
     : 0;
-  console.log('[sim] end', s);
+  const total = appendSimRun(s);
+  console.log('[sim] end — recorded run #' + total, s);
   console.table?.([{
     strategy: s.strategy,
     outcome: s.outcome,
