@@ -1,5 +1,5 @@
 import { CONFIG } from '../config.js';
-import { MAP } from '../game/map.js';
+import { MAP, isLand, STATS_COL_START } from '../game/map.js';
 import { tileToPixel } from '../game/drones.js';
 import { paletteHitTest } from './palette.js';
 import { legendHitTest } from './legend.js';
@@ -17,7 +17,11 @@ const DEFENSE_HIT_R = 12;
 const STRUCTURE_HIT_R = 16;
 
 function inPlaying(state) {
-  return state.screenPhase === 'playing' && !state.loseFlag && !state.winFlag;
+  if (state.screenPhase === 'mapStatic') return true;
+  if (state.loseFlag || state.winFlag) return false;
+  if (state.screenPhase !== 'playing') return false;
+  // Hide tooltips during active combat; keep them in prep between waves.
+  return state.wave?.phase !== 'active';
 }
 
 function hitDefense(state, vx, vy) {
@@ -49,6 +53,26 @@ function hitStructure(vx, vy) {
   return null;
 }
 
+function tileAt(vx, vy) {
+  const { tileSize, padTop, gridH } = MAP;
+  const mapTop = CONFIG.topBarHeight + padTop;
+  if (vy < mapTop || vy > mapTop + gridH * tileSize) return null;
+  // Cap at the playable area — stats sidebar tiles aren't real assets.
+  if (vx < 0 || vx >= STATS_COL_START * tileSize) return null;
+  return { x: Math.floor(vx / tileSize), y: Math.floor((vy - mapTop) / tileSize) };
+}
+
+function hitMapFeature(vx, vy) {
+  const t = tileAt(vx, vy);
+  if (!t) return null;
+  if (MAP.apartments.some(a => a.tile.x === t.x && a.tile.y === t.y)) return 'apartment';
+  if ((MAP.skyscrapers ?? []).some(s => s.tile.x === t.x && s.tile.y === t.y)) return 'skyscraper';
+  if (MAP.bridges.some(b => b.tile.x === t.x && b.tile.y === t.y)) return 'bridge';
+  if (MAP.inPark?.(t.x, t.y)) return 'park';
+  if (isLand(t.x, t.y)) return 'land';
+  return 'water';
+}
+
 export function updateTooltip(state, vx, vy) {
   if (!inPlaying(state)) {
     state.tooltipKey = null;
@@ -71,6 +95,7 @@ export function updateTooltip(state, vx, vy) {
     hitDefense(state, vx, vy) ||
     hitDrone(state, vx, vy) ||
     hitStructure(vx, vy) ||
+    hitMapFeature(vx, vy) ||
     null;
 }
 

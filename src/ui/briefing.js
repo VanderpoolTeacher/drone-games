@@ -1,15 +1,18 @@
 import { CONFIG } from '../config.js';
 
 const PORTRAIT_SIZE = 64;
-// Right-anchored: portrait hugs the right edge, bubble extends to its left.
-const PORTRAIT_X = CONFIG.virtualWidth - 4 - PORTRAIT_SIZE;       // 412
-const PORTRAIT_Y = CONFIG.virtualHeight - CONFIG.bottomPaletteHeight - 4 - PORTRAIT_SIZE;  // 170
 
-const BUBBLE_W = 320;
-const BUBBLE_H = 80;
-const BUBBLE_X = PORTRAIT_X - 8 - BUBBLE_W;                       // 84
-const BUBBLE_Y = CONFIG.virtualHeight - CONFIG.bottomPaletteHeight - 4 - BUBBLE_H;  // 154
-const BUBBLE_PAD = 4;
+// Briefing bubble now lives in the CENTER of the screen instead of the
+// palette footer — commander portrait is suppressed during gameplay.
+const BUBBLE_W = 380;
+const BUBBLE_H = 140;
+const BUBBLE_X = Math.round((CONFIG.virtualWidth - BUBBLE_W) / 2);
+const BUBBLE_Y = Math.round((CONFIG.virtualHeight - BUBBLE_H) / 2);
+const BUBBLE_PAD = 6;
+
+// Kept for the tab indicator below the bubble area.
+const PORTRAIT_X = CONFIG.virtualWidth - 4 - PORTRAIT_SIZE;
+const PORTRAIT_Y = CONFIG.virtualHeight - CONFIG.bottomPaletteHeight - 4 - PORTRAIT_SIZE;
 
 const TAB_SIZE = 16;
 const TAB_X = CONFIG.virtualWidth - 4 - TAB_SIZE;                 // 460
@@ -41,23 +44,58 @@ function currentPortraitKey(state) {
 function currentBriefingText(state) {
   const idx = state.briefing.activeBriefingIndex;
   if (idx < 0 || idx >= CONFIG.waves.length) return '';
-  return CONFIG.waves[idx].briefing || '';
+  const base = CONFIG.waves[idx].briefing || '';
+
+  // Branch on prior-wave situation: ISR intel leaked + defenses + criticals.
+  // Wave 1 uses defaultless prefix since there's no prior state.
+  if (idx <= 0) return base;
+
+  const intel = state.lastWaveIsrIntel ?? 0;
+  const defenseCount = state.defenses?.length ?? 0;
+  const criticalsDown = CONFIG?.waves && (state.stats?.structuresLost ?? 0);
+
+  let prefix = '';
+  if (intel > 45) {
+    prefix = 'They got a clean read on us. Expect EVERYTHING hitting at once. ';
+  } else if (intel > 20) {
+    prefix = 'Enough slipped through recon to paint our gaps. Heavier push incoming. ';
+  } else if (intel > 5) {
+    prefix = 'Recon mostly jammed — Red Cell is guessing. Standard pressure. ';
+  } else {
+    prefix = 'Zero intel got home. They are flying blind. ';
+  }
+
+  if (defenseCount === 0) {
+    prefix += 'AND you have NO defenses up. Drop something, anything, NOW. ';
+  } else if (defenseCount < 3) {
+    prefix += 'Coverage is thin — get more assets on the board. ';
+  }
+
+  if (criticalsDown > 0) {
+    prefix += 'We have already lost ' + criticalsDown + ' critical site(s). ';
+  }
+
+  return prefix + base;
 }
 
 function wrapLines(ctx, text, maxWidth) {
-  const words = text.split(/\s+/);
+  // Preserve explicit \n as hard breaks; wrap each paragraph independently.
   const lines = [];
-  let current = '';
-  for (const w of words) {
-    const candidate = current ? current + ' ' + w : w;
-    if (ctx.measureText(candidate).width > maxWidth && current) {
-      lines.push(current);
-      current = w;
-    } else {
-      current = candidate;
+  for (const para of text.split('\n')) {
+    if (para === '') { lines.push(''); continue; }
+    const words = para.split(/\s+/);
+    let current = '';
+    for (const w of words) {
+      const candidate = current ? current + ' ' + w : w;
+      if (ctx.measureText(candidate).width > maxWidth && current) {
+        lines.push(current);
+        current = w;
+      } else {
+        current = candidate;
+      }
     }
+    if (current) lines.push(current);
   }
-  if (current) lines.push(current);
   return lines;
 }
 
@@ -75,24 +113,20 @@ function drawPortrait(ctx, key, x, y, size) {
 }
 
 function drawBubble(ctx, state) {
-  ctx.globalAlpha = 0.55;
+  ctx.globalAlpha = 0.9;
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(BUBBLE_X, BUBBLE_Y, BUBBLE_W, BUBBLE_H);
   ctx.globalAlpha = 1.0;
-  ctx.strokeStyle = CONFIG.colors.gridLine;
+  ctx.strokeStyle = CONFIG.colors.friendlyCyan;
   ctx.lineWidth = 1;
   ctx.strokeRect(BUBBLE_X + 0.5, BUBBLE_Y + 0.5, BUBBLE_W - 1, BUBBLE_H - 1);
 
-  // Tail points RIGHT from the bubble toward the portrait, at head height.
-  const tailY = PORTRAIT_Y + 8;
-  const tailBase = BUBBLE_X + BUBBLE_W;
-  ctx.fillStyle = CONFIG.colors.bgDark;
-  ctx.beginPath();
-  ctx.moveTo(tailBase, tailY - 3);
-  ctx.lineTo(tailBase + 3, tailY);
-  ctx.lineTo(tailBase, tailY + 3);
-  ctx.closePath();
-  ctx.fill();
+  // Commander title bar
+  ctx.fillStyle = CONFIG.colors.alertAmber;
+  ctx.font = '8px "Press Start 2P", monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('COMMANDER WARDEN', BUBBLE_X + BUBBLE_PAD, BUBBLE_Y + BUBBLE_PAD);
 
   ctx.font = TEXT_SIZE + 'px "Press Start 2P", monospace';
   ctx.textAlign = 'left';
@@ -101,7 +135,7 @@ function drawBubble(ctx, state) {
 
   const innerW = BUBBLE_W - BUBBLE_PAD * 2;
   const lines = wrapLines(ctx, currentBriefingText(state), innerW);
-  let ty = BUBBLE_Y + BUBBLE_PAD;
+  let ty = BUBBLE_Y + BUBBLE_PAD + 14;   // offset below title bar
   for (const line of lines) {
     ctx.fillText(line, BUBBLE_X + BUBBLE_PAD, ty);
     ty += TEXT_LINE_HEIGHT;
@@ -164,7 +198,7 @@ export function renderBriefing(ctx, state, tMs) {
 
   ctx.save();
   if (state.briefing.phase === 'visible') {
-    drawPortrait(ctx, currentPortraitKey(state), PORTRAIT_X, PORTRAIT_Y, PORTRAIT_SIZE);
+    // Portrait removed during gameplay — text bubble carries the briefing.
     drawBubble(ctx, state);
   } else if (state.briefing.phase === 'tab') {
     drawTab(ctx, state, tMs);

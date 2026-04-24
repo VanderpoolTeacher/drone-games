@@ -59,9 +59,9 @@ export const CONFIG = {
     rfJammer: {
       displayName: 'RF Jammer',
       category: 'soft-kill',
-      hp: 1,
+      hp: 3,
       installMs: 3000,
-      range: 80,
+      range: 60,
       effect: 'slow',
       slowFactor: 0.5,               // multiplies drone speed while in range
       // Strong vs ISR (FPV, C2-dependent); weak vs OWA (preprogrammed) and Payload (armored comms)
@@ -72,10 +72,10 @@ export const CONFIG = {
     interceptor: {
       displayName: 'Interceptor',
       category: 'hard-kill kinetic',
-      hp: 2,
+      hp: 5,
       installMs: 5000,
       range: 100,
-      damage: 30,
+      damage: 15,                    // was 30 — ISR/OWA now take 2–3 hits
       cooldown: 1500,                // ms between shots
       projectileSpeed: 200,          // px/sec
       // Strong vs OWA and Payload; weak vs ISR (overkill, cooldown wasted)
@@ -86,7 +86,7 @@ export const CONFIG = {
     laser: {
       displayName: 'Directed Energy (Laser)',
       category: 'directed energy — HEL',
-      hp: 3,
+      hp: 6,
       installMs: 8000,
       range: 120,
       dps: 40,                       // damage per second while firing
@@ -101,7 +101,7 @@ export const CONFIG = {
     hpm: {
       displayName: 'HPM',
       category: 'directed energy — HPM',
-      hp: 3,
+      hp: 6,
       installMs: 12000,
       coneRange: 110,                // radial depth of the cone
       coneHalfAngleDeg: 35,          // total cone = 70°
@@ -118,46 +118,64 @@ export const CONFIG = {
   // Waves — designed to teach layered-defense thesis through escalation
   // See DESIGN.md "Wave progression" for the teaching arc
   waves: [
-    // Wave 1 — Probe (90s active). ISR only; longer cadence.
+    // Wave 1 — Probe + opening strike. ISR, OWA support, early payload on bridges.
     {
       drones: [
-        { type: 'isr', count: 15, spawnInterval: 5500, spawnDelayMs: 0 },
+        { type: 'isr', count: 35, spawnInterval: 2500, spawnDelayMs: 0 },
+        { type: 'owa', count: 6,  spawnInterval: 7000, spawnDelayMs: 8000 },
+        { type: 'payloadDelivery', count: 1, spawnInterval: 1, spawnDelayMs: 55000, targetBridges: true },
       ],
-      briefing: "First watch. ISR only — no teeth on 'em, just eyes. Get an RF jammer up north; that breaks their link. One more thing: watch the bridges. Every bridge that falls is a laser we don't get next shipment. Heads up: next run you'll see heavier volume, still ISR.",
+      briefing: "First watch. Here's the board you're defending:\n\n" +
+        "CRITICALS — destroy all and the city falls:\n" +
+        "  P Power Substation · C Comms Tower · M City Hall\n" +
+        "  U UN HQ · W Water Plant · R Federal Reserve\n" +
+        "Each takes ~3 OWA hits or 2 Payload drops to collapse.\n\n" +
+        "MID-TIER — not game-over, but each one hurts:\n" +
+        "  H Hospital — down: civilian casualties +50%\n" +
+        "  T Grand Central / Penn — both down: -25% supply\n" +
+        "  F Exchange / Bank — each: +500 cas. penalty\n" +
+        "  S Stock Exchange · E Fire · N Police · A Port Auth · V TV\n\n" +
+        "BRIDGES — supply lines. Lose them all → no trucks.\n\n" +
+        "APARTMENTS / SKYSCRAPERS — civilian casualties under AoE.\n\n" +
+        "THIS WAVE: ISR sweep + opening OWA + payload bridge runs. Priority: get an RF jammer covering the scan lanes so intel doesn't leak and buff next wave.",
       portrait: 'neutral',
     },
-    // Wave 2 — Pressure (95s). More ISR, tighter cadence.
+    // Wave 2 — Pressure. ISR + OWA, payload pressing bridges.
     {
       drones: [
-        { type: 'isr', count: 20, spawnInterval: 4500, spawnDelayMs: 0 },
+        { type: 'isr', count: 40, spawnInterval: 2200, spawnDelayMs: 0 },
+        { type: 'owa', count: 12, spawnInterval: 5500, spawnDelayMs: 5000 },
+        { type: 'payloadDelivery', count: 1, spawnInterval: 1, spawnDelayMs: 60000, targetBridges: true },
       ],
       briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges. Intel says Red Cell starts mixing OWA strikes next — keep something kinetic in reserve.",
       portrait: 'neutral',
     },
-    // Wave 3 — Strike (100s). ISR + OWA mix; OWA starts 10s in.
+    // Wave 3 — Strike. Sustained pressure with payload birds at the tail.
     {
       drones: [
-        { type: 'isr', count: 12, spawnInterval: 6000, spawnDelayMs: 0 },
-        { type: 'owa', count: 10, spawnInterval: 8000, spawnDelayMs: 10000 },
+        { type: 'isr', count: 28, spawnInterval: 2500, spawnDelayMs: 0 },
+        { type: 'owa', count: 28, spawnInterval: 3000, spawnDelayMs: 3000 },
+        { type: 'payloadDelivery', count: 5, spawnInterval: 9000, spawnDelayMs: 10000 },
       ],
       briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east. Next wave: Payload birds, armored. Laser is the answer — save the delivery.",
       portrait: 'stern',
     },
-    // Wave 4 — Heavy (110s). OWA first, Payload 20s in.
+    // Wave 4 — Heavy. OWA + payload barrage with ISR sweepers.
     {
       drones: [
-        { type: 'owa', count: 12, spawnInterval: 8000, spawnDelayMs: 0 },
-        { type: 'payloadDelivery', count: 6, spawnInterval: 15000, spawnDelayMs: 20000 },
+        { type: 'isr', count: 15, spawnInterval: 4000, spawnDelayMs: 0 },
+        { type: 'owa', count: 28, spawnInterval: 3500, spawnDelayMs: 0 },
+        { type: 'payloadDelivery', count: 14, spawnInterval: 7000, spawnDelayMs: 8000 },
       ],
       briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked. Next is the saturation run — all three types. HPM comes online in your next delivery. Don't sit on it.",
       portrait: 'stern',
     },
-    // Wave 5 — Saturation (120s). All three types; Payload waits 5s.
+    // Wave 5 — Saturation. Everything at once, minimal respite.
     {
       drones: [
-        { type: 'isr', count: 18, spawnInterval: 5000, spawnDelayMs: 0 },
-        { type: 'owa', count: 20, spawnInterval: 5000, spawnDelayMs: 0 },
-        { type: 'payloadDelivery', count: 7, spawnInterval: 12000, spawnDelayMs: 5000 },
+        { type: 'isr', count: 40, spawnInterval: 2500, spawnDelayMs: 0 },
+        { type: 'owa', count: 45, spawnInterval: 2500, spawnDelayMs: 0 },
+        { type: 'payloadDelivery', count: 18, spawnInterval: 5500, spawnDelayMs: 2000 },
       ],
       briefing: "All of it. Saturation run — ISR, OWA, Payload, everything. You need the full stack. HPM earns its keep here. One pulse, many drones. Good luck, Watchfloor.",
       portrait: 'angry',
@@ -166,7 +184,7 @@ export const CONFIG = {
   prepTimeBetweenWaves: 20000,       // ms — 20s prep window between waves
 
   combat: {
-    owaEngageRange: 60,
+    owaEngageRange: 110,
     isrDisableRange: 36,
     owaDefenseDamage: 1,
     payloadDefenseDamage: 2,
@@ -176,29 +194,83 @@ export const CONFIG = {
   },
 
   endScreens: {
-    win: {
+    // Perfect — no civilian losses, no structures lost, all bridges intact.
+    winPerfect: {
+      image: './src/images/statue-of-liberty.png',
+      headline: 'FLAWLESS HOLD',
+      headlineColor: 'successGreen',
+      body: [
+        "Zero casualties. Zero structures lost. Every bridge standing.",
+        "",
+        "Red Cell briefed on your name within the hour. Pentagon wants your wiring diagram.",
+        "",
+        "Textbook, watchfloor. Textbook.",
+      ],
+    },
+    // Decisive — won cleanly, light losses.
+    winDecisive: {
       image: './src/images/statue-of-liberty.png',
       headline: 'CITY HELD',
       headlineColor: 'successGreen',
       body: [
-        "City held. Against everything they threw, you kept the lights on.",
+        "City held. Some streets smoke, but the grid's up and the river's still ours.",
         "",
         "Red Cell will remember this name. The watchfloor never sleeps — get some rest.",
         "",
         "You earned it.",
       ],
     },
+    // Pyrrhic — survived but heavy casualties or multiple structures down.
+    winPyrrhic: {
+      image: './src/images/statue-of-liberty.png',
+      headline: 'HELD, AT A COST',
+      headlineColor: 'alertAmber',
+      body: [
+        "We held. Barely. Neighborhoods gone, landmarks scarred.",
+        "",
+        "Victory is cheap when somebody else pays the tab. Red Cell retreated, but the mayor's on the line already.",
+        "",
+        "Rebuild, retool, redeploy.",
+      ],
+    },
+    // Narrow defeat — held most of the way, fell in the last wave.
+    loseNarrow: {
+      image: './src/images/statue-of-liberty-post-attack.png',
+      headline: 'CITY FALLEN',
+      headlineColor: 'threatRed',
+      body: [
+        "Final wave broke through. You held longer than anyone expected.",
+        "",
+        "The line you drew bought time — relief columns rolling now because of it.",
+        "",
+        "Fall back, regroup. We go again.",
+      ],
+    },
+    // Total defeat — collapsed early.
+    loseTotal: {
+      image: './src/images/statue-of-liberty-post-attack.png',
+      headline: 'DEFENSE COLLAPSED',
+      headlineColor: 'threatRed',
+      body: [
+        "They walked in. Power, comms, municipal — all dark.",
+        "",
+        "The after-action will be thorough. Coverage gaps, layered-defense basics — review the book.",
+        "",
+        "Try again, Watchfloor.",
+      ],
+    },
+    // Legacy keys referenced by the image preloader + fallback paths.
+    win: {
+      image: './src/images/statue-of-liberty.png',
+      headline: 'CITY HELD',
+      headlineColor: 'successGreen',
+      body: ["City held."],
+    },
     lose: {
       image: './src/images/statue-of-liberty-post-attack.png',
       headline: 'DEFENSE FAILED',
       headlineColor: 'threatRed',
-      body: [
-        "They got through. Structures down, city dark.",
-        "",
-        "Debriefs hurt, but we learn — the ones who didn't come home taught us more than a hundred clean runs.",
-        "",
-        "Fall back, regroup. We go again.",
-      ],
+      body: ["They got through."],
     },
   },
 
@@ -292,6 +364,102 @@ export const CONFIG = {
     'structure-cityHall': {
       header: 'CITY HALL',
       body: ['Critical infrastructure'],
+    },
+    'structure-hospital': {
+      header: 'HOSPITAL',
+      body: ['Down: civilian', 'casualties +50%'],
+    },
+    'structure-transit-G': {
+      header: 'GRAND CENTRAL',
+      body: ['Transit hub', 'Both down: -25% supply'],
+    },
+    'structure-transit-P': {
+      header: 'PENN STATION',
+      body: ['Transit hub', 'Both down: -25% supply'],
+    },
+    'structure-fin-1': {
+      header: 'EXCHANGE',
+      body: ['Financial district', '+500 cas. penalty if lost'],
+    },
+    'structure-fin-2': {
+      header: 'BANK TOWER',
+      body: ['Financial district', '+500 cas. penalty if lost'],
+    },
+    'structure-un': {
+      header: 'UN HQ',
+      body: ['Critical infrastructure', 'International government'],
+    },
+    'structure-water': {
+      header: 'WATER PLANT',
+      body: ['Critical infrastructure', 'City water supply'],
+    },
+    'structure-fedReserve': {
+      header: 'FEDERAL RESERVE',
+      body: ['Critical infrastructure', 'Financial anchor'],
+    },
+    'structure-hospital': {
+      header: 'HOSPITAL',
+      body: ['Down: civilian', 'casualties +50%'],
+    },
+    'structure-transit-G': {
+      header: 'GRAND CENTRAL',
+      body: ['Transit hub', 'Both down: -25% supply'],
+    },
+    'structure-transit-P': {
+      header: 'PENN STATION',
+      body: ['Transit hub', 'Both down: -25% supply'],
+    },
+    'structure-fin-exchange': {
+      header: 'EXCHANGE',
+      body: ['Financial district', '+500 cas. penalty if lost'],
+    },
+    'structure-fin-bank': {
+      header: 'BANK TOWER',
+      body: ['Financial district', '+500 cas. penalty if lost'],
+    },
+    'structure-stock-floor': {
+      header: 'STOCK EXCHANGE',
+      body: ['Wall Street', 'Down: +10% defense cost'],
+    },
+    'structure-fire-station': {
+      header: 'FIRE STATION',
+      body: ['Emergency services', 'Down: payload fires spread'],
+    },
+    'structure-police-hq': {
+      header: 'POLICE HQ',
+      body: ['1 Police Plaza', 'Down: no wave intel'],
+    },
+    'structure-port-auth': {
+      header: 'PORT AUTHORITY',
+      body: ['Transit terminal', 'Down: -1 truck/wave'],
+    },
+    'structure-tv-broadcast': {
+      header: 'TV BROADCAST',
+      body: ['Network studios', 'Down: briefings cancelled'],
+    },
+    'apartment': {
+      header: 'APARTMENT',
+      body: ['Civilian housing', 'Drone hits = casualties'],
+    },
+    'skyscraper': {
+      header: 'OFFICE TOWER',
+      body: ['Collateral target', 'Minor casualties if hit'],
+    },
+    'bridge': {
+      header: 'BRIDGE',
+      body: ['Supply corridor', 'Supply scales with bridges'],
+    },
+    'park': {
+      header: 'CENTRAL PARK',
+      body: ['Non-buildable', 'Green space'],
+    },
+    'land': {
+      header: 'CITY BLOCK',
+      body: ['Buildable', 'Place defenses here'],
+    },
+    'water': {
+      header: 'WATER',
+      body: ['Outside the island', 'Not placeable'],
     },
   },
 
@@ -409,20 +577,20 @@ CONFIG.modes = {
   },
   campaign: {
     drones: {
-      isr:             { speed: 45,  hp: 20  },
-      owa:             { speed: 100, hp: 25  },
-      payloadDelivery: { speed: 25,  hp: 160 },
+      isr:             { speed: 55,  hp: 45  },   // another +50%
+      owa:             { speed: 120, hp: 55  },
+      payloadDelivery: { speed: 30,  hp: 320 },   // armored tank
     },
     structures: {
       maxHP: 120,
-      damageFromOWAStrike: 25,
-      damageFromPayloadDrop: 50,
+      damageFromOWAStrike: 40,      // was 25 — 3 hits kills a critical
+      damageFromPayloadDrop: 80,    // was 50 — 2 hits kills a critical
     },
-    prepTimeBetweenWaves: 20000,
+    prepTimeBetweenWaves: 12000,   // was 20s — less prep
     deliveries: [
-      { rfJammer: 2, interceptor: 1 },                 // Wave 1
+      { rfJammer: 1 },                                 // Wave 1 — one RF only
       { rfJammer: 1, interceptor: 1 },                 // Wave 2
-      {              interceptor: 1, laser: 1 },       // Wave 3
+      {              interceptor: 1 },                 // Wave 3
       {              interceptor: 1, laser: 1 },       // Wave 4
       {              interceptor: 1,            hpm: 1 }, // Wave 5
     ],

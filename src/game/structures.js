@@ -1,5 +1,8 @@
 import { CONFIG } from '../config.js';
+import { MAP } from './map.js';
 import { playSfx, startSfx, stopAllContinuous } from '../audio/sfx.js';
+
+const FINANCIAL_PENALTY_PER_TILE = 500;
 
 const HIT_HEAVY_FRAC = 0.25;   // hit ≥25% of maxHP → structureHitHeavy
 const ALARM_HP_FRAC = 0.5;     // any structure below 50% HP → alarm on
@@ -17,6 +20,10 @@ export function applyDamage(state, structureId, amount) {
   if (before > 0 && state.structureHp[structureId] <= 0) {
     playSfx('structureDestroyed');
     state.stats.structuresLost += 1;
+    const meta = MAP.structures.find(s => s.id === structureId);
+    if (meta?.type === 'financial') {
+      state.financialPenalty = (state.financialPenalty ?? 0) + FINANCIAL_PENALTY_PER_TILE;
+    }
   } else {
     playSfx('structureHit');
     if (amount >= CONFIG.structures.maxHP * HIT_HEAVY_FRAC) {
@@ -42,7 +49,11 @@ export function isDestroyed(state, id) {
 }
 
 export function isAllDestroyed(state) {
-  return Object.values(state.structureHp).every(hp => hp <= 0);
+  // Game-over only triggers when all CRITICAL structures are destroyed;
+  // hospital / transit / financial are gameplay modifiers, not lose conditions.
+  const criticals = MAP.structures.filter(s => s.critical);
+  if (criticals.length === 0) return false;   // no criticals → game can't end this way
+  return criticals.every(s => (state.structureHp[s.id] ?? 0) <= 0);
 }
 
 export function updateStructures(state) {
@@ -54,5 +65,8 @@ export function updateStructures(state) {
   }
   for (const k of Object.keys(state.bridgeFlash)) {
     if (state.bridgeFlash[k] > 0) state.bridgeFlash[k] -= 1;
+  }
+  for (const k of Object.keys(state.skyscraperFlash ?? {})) {
+    if (state.skyscraperFlash[k] > 0) state.skyscraperFlash[k] -= 1;
   }
 }

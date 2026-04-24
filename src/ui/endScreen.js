@@ -1,5 +1,7 @@
 import { CONFIG } from '../config.js';
+import { MAP } from '../game/map.js';
 import { totalCasualties } from './casualtyHud.js';
+import { liveBridgeCount, totalBridgeCount } from '../game/state.js';
 
 const TEXT_COL_X = 60;
 const TEXT_COL_W = 360;
@@ -40,7 +42,9 @@ function drawBackdrop(ctx, key) {
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 
-  const img = images[key];
+  // Map any win/lose tier to the shared win/lose backdrop image.
+  const imgKey = key.startsWith('win') ? 'win' : 'lose';
+  const img = images[imgKey];
   if (img && img.complete && img.naturalWidth > 0) {
     const destH = CONFIG.virtualHeight;
     const destW = Math.round(destH * img.naturalWidth / img.naturalHeight);
@@ -92,10 +96,26 @@ function drawPrompt(ctx, tMs) {
   ctx.fillText('PRESS ANY KEY TO RESTART', CONFIG.virtualWidth / 2, PROMPT_Y);
 }
 
+function pickEndingKey(state) {
+  if (state.winFlag) {
+    const casualties = totalCasualties(state) + (state.financialPenalty ?? 0);
+    const structsLost = state.stats?.structuresLost ?? 0;
+    const allBridges = liveBridgeCount(state) === totalBridgeCount();
+    if (casualties === 0 && structsLost === 0 && allBridges) return 'winPerfect';
+    if (casualties < 250 && structsLost <= 1) return 'winDecisive';
+    return 'winPyrrhic';
+  }
+  if (state.loseFlag) {
+    if ((state.wave?.number ?? 1) >= 4) return 'loseNarrow';
+    return 'loseTotal';
+  }
+  return null;
+}
+
 export function renderEndScreen(ctx, state, tMs) {
-  const key = state.winFlag ? 'win' : state.loseFlag ? 'lose' : null;
+  const key = pickEndingKey(state);
   if (!key) return;
-  const entry = CONFIG.endScreens[key];
+  const entry = CONFIG.endScreens[key] ?? CONFIG.endScreens[state.winFlag ? 'win' : 'lose'];
   if (!entry) return;
 
   const modeTag = state.mode ? state.mode.toUpperCase() : '';

@@ -12,7 +12,16 @@ const MAP_IMG_PATH = './src/images/new-york.png';
 const mapImg = new Image();
 mapImg.src = MAP_IMG_PATH;
 
-const FADE_MS = 800;
+// Staged start transition: logo fades to black → hold → commander slides in
+// from right + map fades up + music ramps (handled in audio/music.js) → brief
+// scrolls once buildup completes.
+const FADE_OUT_MS = 1200;
+const HOLD_MS = 300;
+const BUILDUP_MS = 1500;
+const BUILDUP_START = FADE_OUT_MS + HOLD_MS;
+const BUILDUP_END = BUILDUP_START + BUILDUP_MS;
+
+const smoothstep = (t) => t * t * (3 - 2 * t);
 
 const BRIEF_LINES = [
   '>> BRIEFING FOLLOWS <<',
@@ -47,36 +56,42 @@ function drawBackdrop(ctx, state, tMs) {
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
 
   if (state.screenPhase !== 'start') return;
-  const fade = startPhaseEnterMs == null
-    ? 1
-    : Math.min(1, (tMs - startPhaseEnterMs) / FADE_MS);
+  const elapsed = startPhaseEnterMs == null ? 0 : tMs - startPhaseEnterMs;
+  if (elapsed < BUILDUP_START) return;  // still fading logo / holding black
 
-  // NY map — wide crop, low alpha, slight tilt, under everything.
+  const buildT = Math.min(1, (elapsed - BUILDUP_START) / BUILDUP_MS);
+  const mapAlpha = smoothstep(buildT);
+  const commanderT = smoothstep(buildT);
+
+  // NY map — half-width on the LEFT, low alpha, slight tilt. Nudged inward.
   if (mapImg.complete && mapImg.naturalWidth > 0) {
     const srcW = mapImg.naturalWidth;
     const srcH = mapImg.naturalHeight;
-    const destW = CONFIG.virtualWidth;
+    const destW = Math.round(CONFIG.virtualWidth * 0.5);
     const destH = Math.round(destW * srcH / srcW);
-    const cx = CONFIG.virtualWidth / 2;
+    const inset = 24;
+    const cx = destW / 2 + inset;
     const cy = CONFIG.virtualHeight / 2;
     ctx.save();
-    ctx.globalAlpha = 0.35 * fade;
+    ctx.globalAlpha = 0.5 * mapAlpha;
     ctx.translate(cx, cy);
     ctx.rotate(-10 * Math.PI / 180);
     ctx.drawImage(mapImg, -destW / 2, -destH / 2, destW, destH);
     ctx.restore();
   }
 
-  // Warden podium — full canvas, fades in with the map.
+  // Warden podium — half-height on the RIGHT, slides in from off-right.
   if (portrait.complete && portrait.naturalWidth > 0) {
     const srcW = portrait.naturalWidth;
     const srcH = portrait.naturalHeight;
-    const destH = CONFIG.virtualHeight;
+    const destH = Math.round(CONFIG.virtualHeight * 0.5);
     const destW = Math.round(destH * srcW / srcH);
-    const destX = Math.round((CONFIG.virtualWidth - destW) / 2);
+    const restX = CONFIG.virtualWidth - destW - 24;
+    const restY = Math.round((CONFIG.virtualHeight - destH) / 2);
+    const slideX = Math.round(restX + (1 - commanderT) * CONFIG.virtualWidth);
     ctx.save();
-    ctx.globalAlpha = 0.55 * fade;
-    ctx.drawImage(portrait, destX, 0, destW, destH);
+    ctx.globalAlpha = 0.95 * commanderT;
+    ctx.drawImage(portrait, slideX, restY, destW, destH);
     ctx.restore();
   }
 }
@@ -93,6 +108,9 @@ function drawHeadline(ctx, tMs) {
 
 function drawScrollingBrief(ctx, tMs, state) {
   if (state.screenPhase !== 'start') return;
+  if (startPhaseEnterMs == null) return;
+  const elapsed = tMs - startPhaseEnterMs;
+  if (elapsed < BUILDUP_END) return;  // brief holds until buildup finishes
   if (scrollStartMs === null) scrollStartMs = tMs;
 
   const totalTextH = BRIEF_LINES.length * LINE_HEIGHT;
@@ -136,7 +154,7 @@ function drawLogo(ctx, state, tMs) {
   if (!logoImg.complete || logoImg.naturalWidth === 0) return;
   let alpha = 1;
   if (state.screenPhase === 'start' && startPhaseEnterMs != null) {
-    alpha = Math.max(0, 1 - (tMs - startPhaseEnterMs) / FADE_MS);
+    alpha = Math.max(0, 1 - (tMs - startPhaseEnterMs) / FADE_OUT_MS);
   }
   if (alpha <= 0) return;
   const size = 180;
@@ -160,7 +178,8 @@ export function renderStartScreen(ctx, state, tMs) {
   ctx.save();
   drawBackdrop(ctx, state, tMs);
   drawLogo(ctx, state, tMs);
-  if (state.screenPhase === 'start') {
+  if (state.screenPhase === 'start' && startPhaseEnterMs != null
+      && tMs - startPhaseEnterMs >= BUILDUP_END) {
     drawHeadline(ctx, tMs);
     drawScrollingBrief(ctx, tMs, state);
   }

@@ -1,8 +1,8 @@
 import { CONFIG } from '../config.js';
-import { MAP } from '../game/map.js';
+import { MAP, getTileType, isBuildableType } from '../game/map.js';
 import { tileToPixel } from '../game/drones.js';
 
-const DEFENSE_SIZE = 24;
+const DEFENSE_SIZE = 12;   // one grid cell
 
 export function pixelToTile(vx, vy) {
   const top = CONFIG.topBarHeight + MAP.padTop;
@@ -21,8 +21,9 @@ export function isValidZone(state, tile) {
   if (!state.placementMode) return false;
   const type = state.placementMode.type;
   if ((state.inventory?.[type] ?? 0) <= 0) return false;
-  const onZone = MAP.placementZones.some(z => z.x === tile.x && z.y === tile.y);
-  if (!onZone) return false;
+  // Any buildable tile-type accepts a defense overlay (road/apartment/sky).
+  // Bridges / structures / park are blocked.
+  if (!isBuildableType(getTileType(tile.x, tile.y))) return false;
   const occupied = state.defenses.some(d => d.tile.x === tile.x && d.tile.y === tile.y);
   return !occupied;
 }

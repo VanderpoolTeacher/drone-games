@@ -1,6 +1,7 @@
 import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 import { applyDamage } from './structures.js';
+import { isLand } from './map.js';
 import { playSfx } from '../audio/sfx.js';
 
 const DRONE_SIZE = 16;
@@ -14,15 +15,82 @@ const TRAIL_MAX_SAMPLES = 8;
 const TRAIL_MAX_AGE_S = 1.2;
 const PAYLOAD_AOE_RADIUS = 48;  // TODO(tuning): promote to CONFIG.structures.payloadAoeRadius
 
-export function spawnDrone(state, type) {
-  const corridors = MAP.corridors[type];
+export function spawnDrone(state, type, opts = {}) {
+  let corridors = MAP.corridors[type];
   if (!corridors || corridors.length === 0) return null;
 
-  const corridorIdx = Math.floor(Math.random() * corridors.length);
+  // When a payload spawn is flagged for bridge-only targeting, restrict the
+  // corridor pool to the bridge-attack corridors — early waves commit hard
+  // against bridges to soften supply lines.
+  if (type === 'payloadDelivery' && opts.targetBridges) {
+    const filtered = corridors.filter(c => c.isBridgeAttack);
+    if (filtered.length > 0) corridors = filtered;
+  }
+
+  // Intel-guided targeting: OWA drones prefer corridors whose targetStructureId
+  // was observed by ISR in the previous wave (if any). Falls back to all.
+  if (type === 'owa' && state.lastWaveObservedStructures?.size > 0) {
+    const filtered = corridors.filter(c => state.lastWaveObservedStructures.has(c.targetStructureId));
+    if (filtered.length > 0) corridors = filtered;
+  }
+
+  // Lane-weighted pick: OWA/payload favor corridors routed through the ISR
+  // lane that leaked the most intel last wave.
+  let corridorIdx;
+  const laneIntel = state.lastWaveLaneIntel;
+  if ((type === 'owa' || type === 'payloadDelivery') && laneIntel) {
+    const laneXs = [6, 16, 26];   // matches MAP.corridors.isr
+    const corrX = (c) => (c.dropPoint ?? c.waypoints?.[c.waypoints.length - 1])?.x ?? 0;
+    const weights = corridors.map(c => {
+      const cx = corrX(c);
+      let nearest = 0, minDx = Infinity;
+      for (let i = 0; i < laneXs.length; i++) {
+        const dx = Math.abs(laneXs[i] - cx);
+        if (dx < minDx) { minDx = dx; nearest = i; }
+      }
+      return Math.max(0.5, (laneIntel[nearest] ?? 0));   // floor so unseen lanes still possible
+    });
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    corridorIdx = 0;
+    for (let i = 0; i < weights.length; i++) {
+      r -= weights[i];
+      if (r <= 0) { corridorIdx = i; break; }
+    }
+  } else {
+    corridorIdx = Math.floor(Math.random() * corridors.length);
+  }
 
   const corridor = corridors[corridorIdx];
   const first = corridor.waypoints[0];
   const { x, y } = tileToPixel(first);
+
+  // Bridge-attack payloads pick a random live bridge tile each spawn so
+  // attacks spread across all surviving bridges rather than a fixed cluster.
+  let dropPoint = type === 'payloadDelivery' ? corridor.dropPoint : null;
+  let directFlight = false;
+  if (dropPoint && corridor.isBridgeAttack) {
+    const liveBridges = MAP.bridges.filter(b => (state.bridgeHp?.[b.id] ?? 0) > 0);
+    if (liveBridges.length > 0) {
+      const pick = liveBridges[Math.floor(Math.random() * liveBridges.length)];
+      dropPoint = { x: pick.tile.x, y: pick.tile.y };
+      directFlight = true;   // dropPoint y may differ from corridor path y
+    }
+  }
+  // Carpet-bomb payloads: random land tile across the whole map.
+  if (dropPoint && opts.carpetBomb) {
+    const landTiles = [];
+    for (let ty = 0; ty < MAP.gridH; ty++) {
+      for (let tx = 0; tx < MAP.gridW; tx++) {
+        if (isLand(tx, ty)) landTiles.push({ x: tx, y: ty });
+      }
+    }
+    // Fall back to MAP.structures[0] if no land mask (safe default).
+    const fallback = landTiles.length > 0
+      ? landTiles[Math.floor(Math.random() * landTiles.length)]
+      : MAP.structures[0]?.tile;
+    if (fallback) dropPoint = { x: fallback.x, y: fallback.y };
+  }
 
   const cfg = CONFIG.drones[type];
   const drone = {
@@ -37,7 +105,9 @@ export function spawnDrone(state, type) {
     wpIdx: 1,
     phase: 'cruise',
     targetId: type === 'owa' ? corridor.targetStructureId : null,
-    dropPoint: type === 'payloadDelivery' ? corridor.dropPoint : null,
+    dropPoint: dropPoint,
+    carpetBomb: opts.carpetBomb === true,
+    directFlight: directFlight || opts.carpetBomb === true,
     jitterOffset: type === 'isr' ? rollIsrJitter() : null,
     trail: type === 'isr' ? [] : null,
     trailSampleTimer: 0,
@@ -69,31 +139,98 @@ export function renderDrones(ctx, state) {
     }
   }
 
+  const tMs = performance.now();
   for (const d of state.drones) {
-    const left = Math.floor(d.x - DRONE_SIZE / 2);
-    const top = Math.floor(d.y - DRONE_SIZE / 2);
-
-    if (d.type === 'payloadDelivery' && payloadSprite.complete && payloadSprite.naturalWidth > 0) {
-      // Source sprite points "up" (nose = -Y). Rotate so nose tracks velocity.
-      const heading = Math.atan2(d.vy ?? 0, d.vx ?? 0);
-      ctx.save();
-      ctx.translate(Math.floor(d.x), Math.floor(d.y));
-      ctx.rotate(heading + Math.PI / 2);
-      ctx.drawImage(payloadSprite, -DRONE_SIZE / 2, -DRONE_SIZE / 2, DRONE_SIZE, DRONE_SIZE);
-      ctx.restore();
+    if (d.type === 'payloadDelivery') {
+      drawPayload(ctx, d);
       continue;
     }
+    if (d.type === 'isr') { drawIsr(ctx, d, tMs); continue; }
+    if (d.type === 'owa') { drawOwa(ctx, d); continue; }
 
+    // Unknown type fallback.
+    const left = Math.floor(d.x - DRONE_SIZE / 2);
+    const top = Math.floor(d.y - DRONE_SIZE / 2);
     ctx.fillStyle = bodyColorFor(d.type);
     ctx.fillRect(left, top, DRONE_SIZE, DRONE_SIZE);
-
-    const accent = accentFor(d.type);
-    if (accent) {
-      const { color, dx, dy } = accent;
-      ctx.fillStyle = color;
-      ctx.fillRect(Math.floor(d.x) + dx, Math.floor(d.y) + dy, 2, 2);
-    }
   }
+}
+
+// Payload = MQ-style reaper drone pixel art (inspired by the reference image):
+// slim fuselage, wide straight wings, V-tail, munitions on pylons.
+function drawPayload(ctx, d) {
+  const heading = Math.atan2(d.vy ?? 0, d.vx ?? 0);
+  ctx.save();
+  ctx.translate(Math.floor(d.x), Math.floor(d.y));
+  ctx.rotate(heading + Math.PI / 2);   // nose points up (−Y) before rotation
+  // Fuselage — long dark body along flight axis.
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(0, -5, 1, 10);
+  // Cockpit bulge near the nose — lighter highlight.
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillRect(0, -4, 1, 1);
+  // Main wings — 11-wide, 2 tall, centered above fuselage mid.
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(-5, -1, 11, 2);
+  // Wing tips — navigation lights (green left, red right).
+  ctx.fillStyle = CONFIG.colors.successGreen;
+  ctx.fillRect(-5, 0, 1, 1);
+  ctx.fillStyle = CONFIG.colors.threatRed;
+  ctx.fillRect(5, 0, 1, 1);
+  // Munition pylons — amber ordnance slung under each wing (2 per side).
+  ctx.fillStyle = CONFIG.colors.alertAmber;
+  ctx.fillRect(-3, 1, 1, 2);
+  ctx.fillRect(-2, 1, 1, 2);
+  ctx.fillRect(2,  1, 1, 2);
+  ctx.fillRect(3,  1, 1, 2);
+  // V-tail fins at the rear — two angled pixels reading as stabilisers.
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(-2, 4, 1, 1);
+  ctx.fillRect( 1, 4, 1, 1);
+  ctx.fillRect(-1, 5, 3, 1);
+  ctx.restore();
+}
+
+// ISR = quadcopter: cyan central body + 4 rotor tips that flicker to animate.
+function drawIsr(ctx, d, tMs) {
+  const heading = Math.atan2(d.vy ?? 0, d.vx ?? 0);
+  const flicker = (Math.floor(tMs / 60) & 1) === 0;
+  ctx.save();
+  ctx.translate(Math.floor(d.x), Math.floor(d.y));
+  ctx.rotate(heading + Math.PI / 2);
+  // Body + cross arms.
+  ctx.fillStyle = CONFIG.colors.droneIsr;
+  ctx.fillRect(-1, -1, 2, 2);
+  ctx.fillRect(-3, 0, 2, 1);
+  ctx.fillRect(2, 0, 2, 1);
+  ctx.fillRect(0, -3, 1, 2);
+  ctx.fillRect(0, 2, 1, 2);
+  // Rotor tips (white flicker shows spin).
+  ctx.fillStyle = flicker ? CONFIG.colors.accentWhite : CONFIG.colors.friendlyCyan;
+  ctx.fillRect(-4, -1, 1, 1);
+  ctx.fillRect(3, 1, 1, 1);
+  ctx.fillRect(1, -4, 1, 1);
+  ctx.fillRect(-1, 3, 1, 1);
+  ctx.restore();
+}
+
+// OWA = one-way attack chevron: triangular warhead pointing in flight dir.
+function drawOwa(ctx, d) {
+  const heading = Math.atan2(d.vy ?? 0, d.vx ?? 0);
+  ctx.save();
+  ctx.translate(Math.floor(d.x), Math.floor(d.y));
+  ctx.rotate(heading + Math.PI / 2);
+  ctx.fillStyle = CONFIG.colors.droneOwa;
+  ctx.beginPath();
+  ctx.moveTo(0, -4);     // nose (forward)
+  ctx.lineTo(3, 3);      // rear right
+  ctx.lineTo(0, 2);      // rear notch
+  ctx.lineTo(-3, 3);     // rear left
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = CONFIG.colors.threatRed;
+  ctx.fillRect(-1, -3, 2, 2);   // red tip
+  ctx.restore();
 }
 
 export function bodyColorFor(type) {
@@ -122,7 +259,7 @@ export function updateDrones(state, dt) {
   runDevSpawner(state, dt);
 
   for (const d of state.drones) {
-    if (d.type === 'isr') updateIsr(d, dt);
+    if (d.type === 'isr') { updateIsr(d, dt); accumulateIntel(d, dt, state); }
     else if (d.type === 'owa') updateOwa(d, dt, state);
     else if (d.type === 'payloadDelivery') updatePayload(d, dt, state);
   }
@@ -132,11 +269,35 @@ export function updateDrones(state, dt) {
       state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
       playSfx('droneKill');
       state.stats.droneKills[d.type] = (state.stats.droneKills[d.type] ?? 0) + 1;
+      // Payload drones ALWAYS drop — even when shot down before arrival.
+      if (d.type === 'payloadDelivery' && !d.dropped) {
+        executePayloadDrop(d, state, d.x, d.y);
+      }
       d.phase = 'done';
     }
   }
 
-  state.drones = state.drones.filter(d => d.phase !== 'done' && !isOffGrid(d));
+  // Track ISR recon completions: if an ISR drone exits the map alive, it
+  // successfully scanned the city and will boost next wave's force size.
+  state.drones = state.drones.filter(d => {
+    if (d.phase === 'done') return false;
+    if (isOffGrid(d)) {
+      if (d.type === 'isr' && d.hp > 0) {
+        state.isrEscapedThisWave = (state.isrEscapedThisWave ?? 0) + 1;
+        state.isrIntelThisWave = (state.isrIntelThisWave ?? 0) + (d.intel ?? 0);
+        if (!state.observedStructuresThisWave) state.observedStructuresThisWave = new Set();
+        for (const id of (d.observedStructures ?? [])) {
+          state.observedStructuresThisWave.add(id);
+        }
+      }
+      // Payload exiting without dropping → drop on the way out.
+      if (d.type === 'payloadDelivery' && !d.dropped) {
+        executePayloadDrop(d, state, d.x, d.y);
+      }
+      return false;
+    }
+    return true;
+  });
 }
 
 function advanceCruise(d, dt) {
@@ -169,6 +330,48 @@ function advanceCruise(d, dt) {
   d.vy = (dy / dist) * speed;
   d.x += d.vx * dt;
   d.y += d.vy * dt;
+}
+
+// ISR drones earn intel points proportional to time alive — but only while
+// OUTSIDE any active RF-jammer bubble. Inside an RF field, the drone flies
+// home blind (no intel). Intel lands on escape (see filter below).
+function accumulateIntel(d, dt, state) {
+  if (!d.intel) d.intel = 0;
+  if (!d.observedStructures) d.observedStructures = new Set();
+  const rfCfg = CONFIG.defenses?.rfJammer;
+  const rfRange = rfCfg?.range ?? 0;
+  let jammed = false;
+  if (rfRange > 0) {
+    for (const def of state.defenses) {
+      if (def.type !== 'rfJammer') continue;
+      if (def.installMsRemaining > 0) continue;
+      const dx = def.x - d.x, dy = def.y - d.y;
+      if (dx * dx + dy * dy <= rfRange * rfRange) { jammed = true; break; }
+    }
+  }
+  if (jammed) return;   // can't see through jamming — no intel banked
+  d.intel += dt;        // 1 pt/sec scanning unobstructed
+  // Accumulate intel by ISR lane so the next wave can pick the "safest" one.
+  if (!state.laneIntelThisWave) state.laneIntelThisWave = {};
+  const laneIdx = d.corridorIdx ?? 0;
+  state.laneIntelThisWave[laneIdx] = (state.laneIntelThisWave[laneIdx] ?? 0) + dt;
+  // Log any structure within ~60 px of this ISR — "photographed" for next wave.
+  for (const s of MAP.structures) {
+    const p = tileToPixel(s.tile);
+    const dx = p.x - d.x, dy = p.y - d.y;
+    if (dx * dx + dy * dy <= 60 * 60) d.observedStructures.add(s.id);
+  }
+  // Count defense types within ~60 px — fuels counter-meta for next wave.
+  if (!state.observedDefenseTypesThisWave) {
+    state.observedDefenseTypesThisWave = { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 };
+  }
+  for (const def of state.defenses) {
+    const dxD = def.x - d.x, dyD = def.y - d.y;
+    if (dxD * dxD + dyD * dyD <= 60 * 60) {
+      state.observedDefenseTypesThisWave[def.type] =
+        (state.observedDefenseTypesThisWave[def.type] ?? 0) + dt;
+    }
+  }
 }
 
 function isOffGrid(d) {
@@ -278,6 +481,14 @@ function updateOwa(d, dt, state) {
   if (d.commitLineFrame > 0) d.commitLineFrame -= 1;
 
   if (d.phase === 'cruise') {
+    // Don't waste a drone on rubble — if the assigned target is destroyed,
+    // retarget to the nearest live critical (or exit if none remain).
+    if ((state.structureHp[d.targetId] ?? 0) <= 0) {
+      const newId = pickClosestLiveStructureId(d, state);
+      if (!newId) { d.phase = 'exiting'; return; }
+      d.targetId = newId;
+    }
+
     const def = findClosestDefenseInRange(state, d, CONFIG.combat.owaEngageRange);
     if (def) {
       d.targetDefenseId = def.id;
@@ -398,44 +609,94 @@ function structurePixelPos(id) {
 const PAYLOAD_DROP_PX = 8;
 
 function updatePayload(d, dt, state) {
-  advanceCruise(d, dt);
+  // Direct-flight payloads (bridge-attack with per-spawn target OR carpet
+  // bombs) fly straight to their dropPoint regardless of corridor waypoints.
+  if (d.directFlight && d.dropPoint) {
+    const drop = tileToPixel(d.dropPoint);
+    const dxC = drop.x - d.x, dyC = drop.y - d.y;
+    const distC = Math.hypot(dxC, dyC);
+    const speed = CONFIG.drones.payloadDelivery.speed * (d.speedMultiplier ?? 1);
+    const step = speed * dt;
+    if (distC > PAYLOAD_DROP_PX && step < distC) {
+      d.vx = (dxC / distC) * speed;
+      d.vy = (dyC / distC) * speed;
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      return;
+    }
+    // fall through to drop logic below
+  } else {
+    advanceCruise(d, dt);
+    // Corridor payload reached the exit without a drop trigger — release now.
+    if (d.phase === 'exiting' && !d.dropped && d.dropPoint) {
+      executePayloadDrop(d, state, d.x, d.y);
+      d.phase = 'done';
+      return;
+    }
+  }
 
-  if (!d.dropPoint) return;
+  if (!d.dropPoint || d.phase === 'done' || d.dropped) return;
   const drop = tileToPixel(d.dropPoint);
   const dx = drop.x - d.x;
   const dy = drop.y - d.y;
   if (Math.hypot(dx, dy) <= PAYLOAD_DROP_PX) {
-    state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
-    for (const s of MAP.structures) {
-      const sp = tileToPixel(s.tile);
-      if (Math.hypot(sp.x - drop.x, sp.y - drop.y) <= PAYLOAD_AOE_RADIUS) {
-        applyDamage(state, s.id, CONFIG.structures.damageFromPayloadDrop);
-      }
-    }
-    for (const def of state.defenses) {
-      if (Math.hypot(def.x - drop.x, def.y - drop.y) <= PAYLOAD_AOE_RADIUS) {
-        def.hp -= CONFIG.combat.payloadDefenseDamage;
-      }
-    }
-    for (const apt of MAP.apartments) {
-      const p = tileToPixel(apt.tile);
-      const dist = Math.hypot(p.x - drop.x, p.y - drop.y);
-      if (dist > PAYLOAD_AOE_RADIUS) continue;
-      const key = apt.tile.x + ',' + apt.tile.y;
-      const cur = state.apartmentPop[key] ?? 0;
-      if (cur <= 0) continue;
-      const lethality = 1 - dist / PAYLOAD_AOE_RADIUS;
-      const losses = Math.min(cur, Math.ceil(cur * lethality));
-      state.apartmentPop[key] = cur - losses;
-      state.apartmentFlash[key] = 2;
-    }
-    for (const br of MAP.bridges) {
-      const p = tileToPixel(br.tile);
-      if (Math.hypot(p.x - drop.x, p.y - drop.y) > PAYLOAD_AOE_RADIUS) continue;
-      if ((state.bridgeHp[br.id] ?? 0) <= 0) continue;
-      state.bridgeHp[br.id] = Math.max(0, state.bridgeHp[br.id] - 1);
-      state.bridgeFlash[br.id] = 2;
-    }
+    executePayloadDrop(d, state, drop.x, drop.y);
     d.phase = 'done';
+  }
+}
+
+// Shared payload-drop AoE — callable from normal arrival at dropPoint AND
+// from the kill-in-flight path so a shot-down payload still rains ordnance.
+function executePayloadDrop(d, state, cx, cy) {
+  if (d.dropped) return;
+  d.dropped = true;
+  state.explosions.push({ x: cx, y: cy, frame: 0, frameTimer: 0 });
+  for (const s of MAP.structures) {
+    const sp = tileToPixel(s.tile);
+    if (Math.hypot(sp.x - cx, sp.y - cy) <= PAYLOAD_AOE_RADIUS) {
+      applyDamage(state, s.id, CONFIG.structures.damageFromPayloadDrop);
+    }
+  }
+  for (const def of state.defenses) {
+    if (Math.hypot(def.x - cx, def.y - cy) <= PAYLOAD_AOE_RADIUS) {
+      def.hp -= CONFIG.combat.payloadDefenseDamage;
+    }
+  }
+  const hospital = MAP.structures.find(s => s.type === 'hospital');
+  const hospitalDown = hospital && (state.structureHp[hospital.id] ?? 0) <= 0;
+  const casualtyMult = hospitalDown ? 1.5 : 1;
+  for (const apt of MAP.apartments) {
+    const p = tileToPixel(apt.tile);
+    const dist = Math.hypot(p.x - cx, p.y - cy);
+    if (dist > PAYLOAD_AOE_RADIUS) continue;
+    const key = apt.tile.x + ',' + apt.tile.y;
+    const cur = state.apartmentPop[key] ?? 0;
+    if (cur <= 0) continue;
+    const lethality = (1 - dist / PAYLOAD_AOE_RADIUS) * casualtyMult;
+    const losses = Math.min(cur, Math.ceil(cur * lethality));
+    state.apartmentPop[key] = cur - losses;
+    state.apartmentFlash[key] = 2;
+  }
+  // Only the CLOSEST live bridge in AoE takes a hit — one drop = one bridge.
+  let nearest = null, nearestDist = Infinity;
+  for (const br of MAP.bridges) {
+    if ((state.bridgeHp[br.id] ?? 0) <= 0) continue;
+    const p = tileToPixel(br.tile);
+    const dist = Math.hypot(p.x - cx, p.y - cy);
+    if (dist > PAYLOAD_AOE_RADIUS) continue;
+    if (dist < nearestDist) { nearest = br; nearestDist = dist; }
+  }
+  if (nearest) {
+    state.bridgeHp[nearest.id] = Math.max(0, state.bridgeHp[nearest.id] - 1);
+    state.bridgeFlash[nearest.id] = 2;
+  }
+  for (const sky of (MAP.skyscrapers ?? [])) {
+    const p = tileToPixel(sky.tile);
+    if (Math.hypot(p.x - cx, p.y - cy) > PAYLOAD_AOE_RADIUS) continue;
+    const key = sky.tile.x + ',' + sky.tile.y;
+    const cur = state.skyscraperHp?.[key] ?? 0;
+    if (cur <= 0) continue;
+    state.skyscraperHp[key] = Math.max(0, cur - 1);
+    state.skyscraperFlash[key] = 2;
   }
 }

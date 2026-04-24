@@ -148,8 +148,13 @@ export function updateDefenses(state, dt) {
   state.defenses = state.defenses.filter(d => d.hp > 0);
 }
 
+// Higher priority = engaged first. Payload hits are the most dangerous
+// (AoE + heavy structure damage), OWA is next, ISR last.
+const TYPE_PRIORITY = { payloadDelivery: 3, owa: 2, isr: 1 };
+
 function pickClosestToStructureTarget(state, d, range) {
   let best = null;
+  let bestPrio = -Infinity;
   let bestDist = Infinity;
   let bestId = Infinity;
   for (const dr of state.drones) {
@@ -157,9 +162,13 @@ function pickClosestToStructureTarget(state, d, range) {
     const dx = dr.x - d.x;
     const dy = dr.y - d.y;
     if (Math.hypot(dx, dy) > range) continue;
+    const prio = TYPE_PRIORITY[dr.type] ?? 0;
     const minStructDist = minDistanceToAnyStructure(dr);
-    if (minStructDist < bestDist || (minStructDist === bestDist && dr.id < bestId)) {
+    if (prio > bestPrio
+        || (prio === bestPrio && minStructDist < bestDist)
+        || (prio === bestPrio && minStructDist === bestDist && dr.id < bestId)) {
       best = dr;
+      bestPrio = prio;
       bestDist = minStructDist;
       bestId = dr.id;
     }
@@ -194,7 +203,7 @@ function fireInterceptor(state, defense, target) {
   });
 }
 
-const DEFENSE_SIZE = 24;
+const DEFENSE_SIZE = 12;   // one grid cell
 
 export function renderDefenses(ctx, state) {
   for (const d of state.defenses) {

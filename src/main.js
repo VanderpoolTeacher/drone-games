@@ -1,7 +1,7 @@
 import { CONFIG, applyMode } from './config.js';
 import { gameState, resetGameState, applyDelivery, updateTrucks, toggleBackdrop } from './game/state.js';
 import { MAP } from './game/map.js';
-import { renderMap, renderTrucks } from './game/mapRenderer.js';
+import { renderMap, renderTrucks, renderStatsColumn } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
 import { renderLegend } from './ui/legend.js';
 import { renderPlacement, pixelToTile, mapHitTest, isValidZone } from './ui/placement.js';
@@ -62,6 +62,7 @@ function frame(tMs) {
   renderBeams(ctx, gameState);
   renderProjectiles(ctx, gameState);
   renderExplosions(ctx, gameState);
+  renderStatsColumn(ctx, gameState);
   renderChrome(ctx);
   renderMuteIcon(ctx);
   renderCasualtyHud(ctx, gameState);
@@ -73,6 +74,26 @@ function frame(tMs) {
   renderWaveTelegraph(ctx, gameState, tMs);
   renderEndScreen(ctx, gameState, tMs);
   renderStartScreen(ctx, gameState, tMs);
+  if (gameState.screenPhase === 'mapStatic') {
+    ctx.save();
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = CONFIG.colors.alertAmber;
+    ctx.fillText('MAP PREVIEW  ·  B: BACKDROP  ·  ESC: BACK', 4, 4);
+    const t = gameState.hoverTile;
+    if (t && t.x >= 0 && t.x < MAP.gridW && t.y >= 0 && t.y < MAP.gridH) {
+      const col = t.x < 26
+        ? String.fromCharCode(65 + t.x)
+        : 'A' + String.fromCharCode(65 + t.x - 26);
+      ctx.fillStyle = CONFIG.colors.friendlyCyan;
+      ctx.textAlign = 'right';
+      ctx.fillText(col + (t.y + 1) + '  [' + t.x + ',' + t.y + ']',
+        CONFIG.virtualWidth - 4, 4);
+    }
+    ctx.restore();
+  }
+  if (gameState.helpVisible) renderHelp(ctx);
   renderCRT(ctx);
 
   requestAnimationFrame(frame);
@@ -112,6 +133,9 @@ canvas.addEventListener('click', e => {
     return;
   }
 
+  if (gameState.screenPhase === 'mapStatic') {
+    return;  // clicks don't advance to gameplay in preview mode
+  }
   if (gameState.screenPhase === 'idle') {
     gameState.screenPhase = 'start';
     return;
@@ -166,7 +190,51 @@ window.addEventListener('click', wakeAudio);
 window.addEventListener('keydown', wakeAudio);
 window.addEventListener('touchstart', wakeAudio);
 
+// Secret "MAP" code on the home screen — typing M-A-P (case-insensitive)
+// within 2 s switches to a static map preview (no gameplay). Escape exits.
+let mapCodeBuffer = '';
+let mapCodeTimer = 0;
+function pushMapCodeKey(k) {
+  mapCodeBuffer = (mapCodeBuffer + k).slice(-3);
+  clearTimeout(mapCodeTimer);
+  mapCodeTimer = setTimeout(() => { mapCodeBuffer = ''; }, 2000);
+}
+
 window.addEventListener('keydown', e => {
+  // H toggles the help overlay at any time.
+  if (e.key === 'h' || e.key === 'H') {
+    gameState.helpVisible = !gameState.helpVisible;
+    return;
+  }
+
+  // Track letters toward the MAP code before the short-circuiting handlers
+  // below consume the keystroke (m-for-mute would otherwise break it).
+  if (gameState.screenPhase === 'idle' || gameState.screenPhase === 'start') {
+    const single = e.key.length === 1 ? e.key.toUpperCase() : '';
+    if (/^[A-Z]$/.test(single)) pushMapCodeKey(single);
+    if (mapCodeBuffer === 'MAP') {
+      mapCodeBuffer = '';
+      gameState.screenPhase = 'mapStatic';
+      return;
+    }
+  }
+
+  if (gameState.screenPhase === 'mapStatic') {
+    if (e.key === 'Escape') {
+      gameState.screenPhase = 'start';
+      return;
+    }
+    if (e.key === 'b' || e.key === 'B') {
+      toggleBackdrop(gameState);
+      return;
+    }
+    if (e.key === 'm' || e.key === 'M') {
+      toggleMute();
+      return;
+    }
+    return;  // swallow other keys — don't drop into gameplay
+  }
+
   if (e.key === 'm' || e.key === 'M') {
     toggleMute();
     return;
@@ -194,3 +262,58 @@ window.addEventListener('keydown', e => {
     e.preventDefault();
   }
 });
+
+function renderHelp(ctx) {
+  const W = 340, H = 200;
+  const x = Math.round((CONFIG.virtualWidth - W) / 2);
+  const y = Math.round((CONFIG.virtualHeight - H) / 2);
+  ctx.save();
+  ctx.fillStyle = CONFIG.colors.bgDark;
+  ctx.globalAlpha = 0.92;
+  ctx.fillRect(x, y, W, H);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = CONFIG.colors.friendlyCyan;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, y + 0.5, W - 1, H - 1);
+
+  ctx.font = '10px "Press Start 2P", monospace';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = CONFIG.colors.alertAmber;
+  ctx.fillText('HELP · CONTROLS', x + W / 2, y + 8);
+
+  ctx.font = '6px "Press Start 2P", monospace';
+  ctx.textAlign = 'left';
+  const lines = [
+    '',
+    'MOUSE',
+    '  Left-click palette icon  select defense',
+    '  Left-click map tile      place selected defense',
+    '  Right-click              cancel placement',
+    '',
+    'KEYBOARD',
+    '  1 / 2                    start mode (Training / Campaign)',
+    '  B                        cycle backdrop opacity',
+    '  M                        toggle mute',
+    '  H                        toggle this help',
+    '  ESC                      cancel placement / exit preview',
+    '  type M-A-P at title      open static map preview',
+    '',
+    'GOAL',
+    '  Hold 6 critical sites through 5 waves.',
+    '  Lose all 6 criticals = game over.',
+  ];
+  let ly = y + 24;
+  for (const ln of lines) {
+    ctx.fillStyle = ln.trim().match(/^[A-Z ]+$/) && ln.trim().length > 0 && !ln.startsWith(' ')
+      ? CONFIG.colors.friendlyCyan
+      : CONFIG.colors.accentWhite;
+    ctx.fillText(ln, x + 12, ly);
+    ly += 9;
+  }
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = CONFIG.colors.alertAmber;
+  ctx.fillText('PRESS H TO CLOSE', x + W / 2, y + H - 12);
+  ctx.restore();
+}

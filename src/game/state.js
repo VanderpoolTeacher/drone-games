@@ -37,15 +37,19 @@ export function applyDelivery(state, waveIdx) {
   const delivery = CONFIG.deliveries?.[waveIdx];
   if (!delivery) return;
 
-  // Delivery scales with bridge status: each live bridge contributes 1/N
-  // of the authored supply. Lose bridges → lose supply.
-  const total = totalBridgeCount();
+  // Supplies flow as long as ANY bridge survives. All bridges down → 0 supply.
   const live = liveBridgeCount(state);
-  const frac = total > 0 ? live / total : 1;
+  const frac = live > 0 ? 1 : 0;
+
+  // Transit modifier: if BOTH transit hubs are down, delivery ×0.75.
+  const transits = MAP.structures.filter(s => s.type === 'transit');
+  const transitsDown = transits.length > 0
+    && transits.every(s => (state.structureHp[s.id] ?? 0) <= 0);
+  const transitMult = transitsDown ? 0.75 : 1;
 
   const scaled = {};
   for (const type of Object.keys(delivery)) {
-    const effective = Math.round(delivery[type] * frac);
+    const effective = Math.round(delivery[type] * frac * transitMult);
     if (effective <= 0) continue;
     state.inventory[type] = (state.inventory[type] ?? 0) + effective;
     scaled[type] = effective;
@@ -101,6 +105,23 @@ export function updateTrucks(state, dt) {
     if (t.y >= t.targetY) t.phase = 'done';
   }
   state.trucks = state.trucks.filter(t => t.phase !== 'done');
+
+  // Supplies flow whenever bridges live — faster during prep (to stage a
+  // loadout), slower during combat (to reinforce without trivialising).
+  if (state.screenPhase !== 'playing') return;
+  if (liveBridgeCount(state) === 0) return;
+  state.supplyTrickleMs = (state.supplyTrickleMs ?? 0) + dtMs;
+  const TRICKLE_MS = state.wave?.phase === 'active' ? 30000 : 10000;
+  while (state.supplyTrickleMs >= TRICKLE_MS) {
+    state.supplyTrickleMs -= TRICKLE_MS;
+    const r = Math.random();
+    const type = r < 0.4 ? 'rfJammer'
+      : r < 0.7 ? 'interceptor'
+      : r < 0.92 ? 'laser'
+      : 'hpm';
+    state.inventory[type] = (state.inventory[type] ?? 0) + 1;
+    spawnSupplyTrucks(state, { [type]: 1 });
+  }
 }
 
 function makeStructureMap(initial) {
@@ -123,16 +144,63 @@ function makeBridgeMap() {
   return out;
 }
 
+const SKYSCRAPER_HP = 2;
+function makeSkyscraperMap(initial) {
+  const out = {};
+  for (const s of (MAP.skyscrapers ?? [])) {
+    out[s.tile.x + ',' + s.tile.y] = initial;
+  }
+  return out;
+}
+
+// Connected bridge pieces (adjacent or stacked tiles) count as ONE bridge.
+// Cached on first use since MAP.bridges is static per session.
+let _bridgeClusters = null;
+function getBridgeClusters() {
+  if (_bridgeClusters) return _bridgeClusters;
+  const parent = new Map();
+  const find = (a) => {
+    while (parent.get(a) !== a) {
+      parent.set(a, parent.get(parent.get(a)));
+      a = parent.get(a);
+    }
+    return a;
+  };
+  const union = (a, b) => {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  };
+  for (const b of MAP.bridges) parent.set(b.id, b.id);
+  for (let i = 0; i < MAP.bridges.length; i++) {
+    for (let j = i + 1; j < MAP.bridges.length; j++) {
+      const a = MAP.bridges[i], c = MAP.bridges[j];
+      const dx = Math.abs(a.tile.x - c.tile.x);
+      const dy = Math.abs(a.tile.y - c.tile.y);
+      // Same tile, edge-adjacent, OR diagonal all count as the same bridge
+      // (covers real bridge footprints spanning multiple cells + ramps).
+      if (Math.max(dx, dy) <= 1) union(a.id, c.id);
+    }
+  }
+  const groups = new Map();
+  for (const b of MAP.bridges) {
+    const root = find(b.id);
+    if (!groups.has(root)) groups.set(root, []);
+    groups.get(root).push(b.id);
+  }
+  _bridgeClusters = Array.from(groups.values());
+  return _bridgeClusters;
+}
+
 export function liveBridgeCount(state) {
   let live = 0;
-  for (const b of MAP.bridges) {
-    if ((state.bridgeHp?.[b.id] ?? 0) > 0) live += 1;
+  for (const cluster of getBridgeClusters()) {
+    if (cluster.some(id => (state.bridgeHp?.[id] ?? 0) > 0)) live += 1;
   }
   return live;
 }
 
 export function totalBridgeCount() {
-  return MAP.bridges.length;
+  return getBridgeClusters().length;
 }
 
 export const gameState = {
@@ -154,6 +222,20 @@ export const gameState = {
   apartmentFlash: {},
   bridgeHp: makeBridgeMap(),
   bridgeFlash: {},
+  skyscraperHp: makeSkyscraperMap(SKYSCRAPER_HP),
+  skyscraperFlash: {},
+  financialPenalty: 0,
+  // ISR recon: drones that escape alive hand enemy intel → next-wave boost.
+  isrEscapedThisWave: 0,
+  lastWaveIsrEscaped: 0,
+  isrIntelThisWave: 0,
+  lastWaveIsrIntel: 0,
+  observedStructuresThisWave: new Set(),
+  lastWaveObservedStructures: new Set(),
+  laneIntelThisWave: {},
+  lastWaveLaneIntel: {},
+  observedDefenseTypesThisWave: { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 },
+  lastWaveObservedDefenseTypes: { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 },
   stats: {
     droneKills: { isr: 0, owa: 0, payloadDelivery: 0 },
     defensesLost: 0,
@@ -173,6 +255,7 @@ export const gameState = {
   mode: 'campaign',
   backdropAlpha: loadBackdropFromStorage(),
   tooltipKey: null,
+  helpVisible: false,
   briefing: {
     phase: 'idle',
     visibleMs: 0,
@@ -212,6 +295,17 @@ export function resetGameState() {
   for (const k of Object.keys(gameState.apartmentFlash)) delete gameState.apartmentFlash[k];
   for (const b of MAP.bridges) gameState.bridgeHp[b.id] = b.maxHp;
   for (const k of Object.keys(gameState.bridgeFlash)) delete gameState.bridgeFlash[k];
+  for (const s of (MAP.skyscrapers ?? [])) {
+    gameState.skyscraperHp[s.tile.x + ',' + s.tile.y] = SKYSCRAPER_HP;
+  }
+  for (const k of Object.keys(gameState.skyscraperFlash)) delete gameState.skyscraperFlash[k];
+  gameState.financialPenalty = 0;
+  gameState.isrEscapedThisWave = 0;
+  gameState.lastWaveIsrEscaped = 0;
+  gameState.isrIntelThisWave = 0;
+  gameState.lastWaveIsrIntel = 0;
+  gameState.observedStructuresThisWave?.clear();
+  gameState.lastWaveObservedStructures?.clear();
   gameState.stats.droneKills.isr = 0;
   gameState.stats.droneKills.owa = 0;
   gameState.stats.droneKills.payloadDelivery = 0;
