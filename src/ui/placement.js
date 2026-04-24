@@ -21,9 +21,22 @@ export function isValidZone(state, tile) {
   if (!state.placementMode) return false;
   const type = state.placementMode.type;
   if ((state.inventory?.[type] ?? 0) <= 0) return false;
-  // Any buildable tile-type accepts a defense overlay (road/apartment/sky).
-  // Bridges / structures / park are blocked.
-  if (!isBuildableType(getTileType(tile.x, tile.y))) return false;
+  // Only healthy or lightly-cracked (>= 66% HP) apartments/skyscrapers can
+  // mount a defense. Smoking / burning / destroyed cells block placement.
+  const tileType = getTileType(tile.x, tile.y);
+  if (!isBuildableType(tileType)) return false;
+  const key = tile.x + ',' + tile.y;
+  if (tileType === 'apartment') {
+    const apt = MAP.apartments.find(a => a.tile.x === tile.x && a.tile.y === tile.y);
+    if (apt) {
+      const frac = (state.apartmentPop?.[key] ?? apt.maxPop) / apt.maxPop;
+      if (frac < 0.66) return false;
+    }
+  }
+  if (tileType === 'skyscraper') {
+    const frac = (state.skyscraperHp?.[key] ?? 2) / 2;
+    if (frac < 0.66) return false;
+  }
   const occupied = state.defenses.some(d => d.tile.x === tile.x && d.tile.y === tile.y);
   return !occupied;
 }
@@ -34,7 +47,9 @@ export function renderPlacement(ctx, state) {
 }
 
 function drawGhostAndRange(ctx, state) {
-  const tile = state.hoverTile;
+  // HPM after first click: ghost locks to the pinned tile while the cursor
+  // picks direction. Everything else follows the hover tile.
+  const tile = state.placementMode.pinTile ?? state.hoverTile;
   if (!tile) return;
   const { x: cx, y: cy } = tileToPixel(tile);
   const type = state.placementMode.type;

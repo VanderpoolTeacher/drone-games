@@ -21,7 +21,6 @@ export function renderMap(ctx, tMs, state) {
   const alpha = state.backdropAlpha ?? 1;
   if (alpha > 0) drawBackdrop(ctx, alpha);
 
-  drawMapLabels(ctx);
   drawBridgeDamage(ctx, state);   // damage X always over the image
   drawDamagePhases(ctx, state, tMs);
 }
@@ -38,12 +37,15 @@ function damagePhase(frac) {
 function drawDamagePhases(ctx, state, tMs) {
   const { tileSize, padTop } = MAP;
   const mapTop = CONFIG.topBarHeight + padTop;
-  const flickA = (Math.floor(tMs / 90)  & 1) === 0;
-  const flickB = (Math.floor(tMs / 130) & 1) === 0;
-  const flickC = (Math.floor(tMs / 170) & 1) === 0;
-  const smokeOffset = ((tMs / 80) | 0) % 3;   // 0,1,2 px rise cycle
 
-  function drawPhase(px, py, phase) {
+  function drawPhase(px, py, phase, tx, ty) {
+    // Per-tile seed so each fire/smoke flickers on its own schedule —
+    // stops the whole city from pulsing in lockstep.
+    const seed = tx * 7919 + ty * 6151;
+    const flickA = (Math.floor((tMs + seed) / 90)  & 1) === 0;
+    const flickB = (Math.floor((tMs + seed * 3) / 130) & 1) === 0;
+    const flickC = (Math.floor((tMs + seed * 5) / 170) & 1) === 0;
+    const smokeOffset = (((tMs + seed) / 80) | 0) % 3;
     if (phase === 'pristine') return;
     if (phase === 'cracked') {
       // Two thin diagonal cracks across the tile face.
@@ -94,20 +96,20 @@ function drawDamagePhases(ctx, state, tMs) {
     const key = apt.tile.x + ',' + apt.tile.y;
     const cur = state.apartmentPop?.[key] ?? apt.maxPop;
     drawPhase(apt.tile.x * tileSize, mapTop + apt.tile.y * tileSize,
-              damagePhase(cur / apt.maxPop));
+              damagePhase(cur / apt.maxPop), apt.tile.x, apt.tile.y);
   }
   const skyMax = 2;
   for (const s of (MAP.skyscrapers ?? [])) {
     const key = s.tile.x + ',' + s.tile.y;
     const cur = state.skyscraperHp?.[key] ?? skyMax;
     drawPhase(s.tile.x * tileSize, mapTop + s.tile.y * tileSize,
-              damagePhase(cur / skyMax));
+              damagePhase(cur / skyMax), s.tile.x, s.tile.y);
   }
   const strMax = CONFIG.structures.maxHP;
   for (const s of MAP.structures) {
     const cur = state.structureHp?.[s.id] ?? strMax;
     drawPhase(s.tile.x * tileSize, mapTop + s.tile.y * tileSize,
-              damagePhase(cur / strMax));
+              damagePhase(cur / strMax), s.tile.x, s.tile.y);
   }
 }
 

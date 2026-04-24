@@ -1,5 +1,6 @@
 import { CONFIG, applyMode } from '../config.js';
 import { MAP } from './map.js';
+import { playSfx } from '../audio/sfx.js';
 
 const BACKDROP_KEY = 'droneDefense.backdropAlpha';
 const BACKDROP_CYCLE = [1, 0.66, 0.33, 0];   // B key cycles through these
@@ -74,6 +75,7 @@ function spawnSupplyTrucks(state, delivery) {
   if (liveBridges.length === 0) return;
 
   let staggerMs = 0;
+  let anySpawned = false;
   for (const type of Object.keys(delivery)) {
     for (let i = 0; i < delivery[type]; i++) {
       const bridge = liveBridges[Math.floor(Math.random() * liveBridges.length)];
@@ -87,8 +89,10 @@ function spawnSupplyTrucks(state, delivery) {
         phase: 'waiting',
       });
       staggerMs += 350;
+      anySpawned = true;
     }
   }
+  if (anySpawned) playSfx('truckDelivery');
 }
 
 export function updateTrucks(state, dt) {
@@ -107,20 +111,38 @@ export function updateTrucks(state, dt) {
   state.trucks = state.trucks.filter(t => t.phase !== 'done');
 
   // Supplies flow whenever bridges live — faster during prep (to stage a
-  // loadout), slower during combat (to reinforce without trivialising).
+  // loadout), slower during combat. Paused while commander briefing is open.
   if (state.screenPhase !== 'playing') return;
+  if (state.briefing?.phase === 'visible') return;
   if (liveBridgeCount(state) === 0) return;
   state.supplyTrickleMs = (state.supplyTrickleMs ?? 0) + dtMs;
-  const TRICKLE_MS = state.wave?.phase === 'active' ? 30000 : 10000;
+  const TRICKLE_MS = 15000;   // every 15 s during prep AND combat
   while (state.supplyTrickleMs >= TRICKLE_MS) {
     state.supplyTrickleMs -= TRICKLE_MS;
-    const r = Math.random();
-    const type = r < 0.4 ? 'rfJammer'
-      : r < 0.7 ? 'interceptor'
-      : r < 0.92 ? 'laser'
-      : 'hpm';
-    state.inventory[type] = (state.inventory[type] ?? 0) + 1;
-    spawnSupplyTrucks(state, { [type]: 1 });
+    // More live bridges = more trucks per delivery — 1 truck per 3 bridges.
+    const live = liveBridgeCount(state);
+    const count = Math.max(1, Math.ceil(live / 3));
+    // Each type caps at 5 in stockpile — once full, that type is skipped.
+    // Forces the player to actually place defenses instead of hoarding them.
+    const CAP = 5;
+    const available = () => ['rfJammer', 'interceptor', 'laser', 'hpm']
+      .filter(t => (state.inventory?.[t] ?? 0) < CAP);
+    for (let i = 0; i < count; i++) {
+      const pool = available();
+      if (pool.length === 0) break;   // nothing to deliver — full up
+      // Same weighting (40/30/22/8) but filtered through what's not capped.
+      const weights = { rfJammer: 0.4, interceptor: 0.3, laser: 0.22, hpm: 0.08 };
+      let total = 0;
+      for (const t of pool) total += weights[t];
+      let r = Math.random() * total;
+      let type = pool[pool.length - 1];
+      for (const t of pool) {
+        r -= weights[t];
+        if (r <= 0) { type = t; break; }
+      }
+      state.inventory[type] = (state.inventory[type] ?? 0) + 1;
+      spawnSupplyTrucks(state, { [type]: 1 });
+    }
   }
 }
 
@@ -232,6 +254,7 @@ export const gameState = {
   lastWaveIsrIntel: 0,
   observedStructuresThisWave: new Set(),
   lastWaveObservedStructures: new Set(),
+  payloadPool: 60,   // finite enemy payload stockpile per run
   laneIntelThisWave: {},
   lastWaveLaneIntel: {},
   observedDefenseTypesThisWave: { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 },
@@ -261,6 +284,7 @@ export const gameState = {
     visibleMs: 0,
     expandedOnce: false,
     activeBriefingIndex: -1,
+    pageIdx: 0,
   },
 };
 
@@ -306,6 +330,7 @@ export function resetGameState() {
   gameState.lastWaveIsrIntel = 0;
   gameState.observedStructuresThisWave?.clear();
   gameState.lastWaveObservedStructures?.clear();
+  gameState.payloadPool = 60;
   gameState.stats.droneKills.isr = 0;
   gameState.stats.droneKills.owa = 0;
   gameState.stats.droneKills.payloadDelivery = 0;
@@ -323,5 +348,6 @@ export function resetGameState() {
   gameState.briefing.visibleMs = 0;
   gameState.briefing.expandedOnce = false;
   gameState.briefing.activeBriefingIndex = -1;
+  gameState.briefing.pageIdx = 0;
   gameState.tooltipKey = null;
 }

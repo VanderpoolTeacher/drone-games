@@ -207,25 +207,12 @@ const DEFENSE_SIZE = 12;   // one grid cell
 
 export function renderDefenses(ctx, state) {
   for (const d of state.defenses) {
-    ctx.fillStyle = CONFIG.colors.friendlyCyan;
-    ctx.fillRect(Math.floor(d.x - DEFENSE_SIZE / 2), Math.floor(d.y - DEFENSE_SIZE / 2), DEFENSE_SIZE, DEFENSE_SIZE);
-
-    if (d.type === 'interceptor') {
-      ctx.fillStyle = CONFIG.colors.alertAmber;
-      ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y - DEFENSE_SIZE / 2) + 1, 2, 2);
-    } else if (d.type === 'rfJammer') {
-      ctx.fillStyle = CONFIG.colors.accentWhite;
-      ctx.fillRect(Math.floor(d.x) - 2, Math.floor(d.y - DEFENSE_SIZE / 2) - 1, 4, 2);
-    } else if (d.type === 'laser') {
-      ctx.fillStyle = d.overheated ? CONFIG.colors.alertAmber : CONFIG.colors.accentWhite;
-      ctx.fillRect(Math.floor(d.x) - 1, Math.floor(d.y - DEFENSE_SIZE / 2) + 1, 2, 2);
-    } else if (d.type === 'hpm') {
+    if (d.type === 'rfJammer')      drawRfJammer(ctx, d);
+    else if (d.type === 'interceptor') drawInterceptor(ctx, d);
+    else if (d.type === 'laser')     drawLaser(ctx, d);
+    if (d.type === 'hpm') {
       const cfg = CONFIG.defenses.hpm;
-
-      const wedgeX = Math.floor(d.x + Math.cos(d.facingRad) * (DEFENSE_SIZE / 2 - 2)) - 1;
-      const wedgeY = Math.floor(d.y + Math.sin(d.facingRad) * (DEFENSE_SIZE / 2 - 2)) - 1;
-      ctx.fillStyle = CONFIG.colors.accentWhite;
-      ctx.fillRect(wedgeX, wedgeY, 2, 2);
+      drawHpm(ctx, d);
 
       const chargeFrac = 1 - Math.min(1, d.cooldownMs / cfg.pulseCooldown);
       const barLen = Math.floor(chargeFrac * (DEFENSE_SIZE - 2));
@@ -369,4 +356,91 @@ function findDronesInCone(state, defense, range, halfAngleRad) {
     if (Math.abs(diff) <= halfAngleRad) victims.push(dr);
   }
   return victims;
+}
+
+// --- Defense pixel-art renderers (12 px tile, realistic C-UAS silhouettes). ---
+
+function drawRfJammer(ctx, d) {
+  // RJ-a: fixed antenna tower — cyan vertical pole, two cross-dish arms,
+  //       blinking red nav light at the tip.
+  const x = Math.floor(d.x), y = Math.floor(d.y);
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  // Base plinth (2 tall × 4 wide)
+  ctx.fillRect(x - 2, y + 3, 4, 2);
+  // Mast — 6 tall cyan pole
+  ctx.fillStyle = CONFIG.colors.friendlyCyan;
+  ctx.fillRect(x, y - 3, 1, 7);
+  // Upper dish arms (horizontal cross)
+  ctx.fillRect(x - 2, y - 2, 5, 1);
+  // Lower dish arms (wider)
+  ctx.fillRect(x - 3, y + 1, 7, 1);
+  // Nav light at the tip — blinking red
+  if ((Math.floor(performance.now() / 500) & 1) === 0) {
+    ctx.fillStyle = CONFIG.colors.threatRed;
+    ctx.fillRect(x, y - 4, 1, 1);
+  }
+}
+
+function drawInterceptor(ctx, d) {
+  // IN-a: SAM battery — amber square base, 3 upright missile pips on top,
+  //       small swivel dot centered so the barrel reads as rotatable.
+  const x = Math.floor(d.x), y = Math.floor(d.y);
+  ctx.fillStyle = CONFIG.colors.alertAmber;
+  // Base box (5×4)
+  ctx.fillRect(x - 2, y - 1, 5, 4);
+  // Missile pips — 3 upright tubes
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillRect(x - 2, y - 4, 1, 3);
+  ctx.fillRect(x,     y - 5, 1, 4);
+  ctx.fillRect(x + 2, y - 4, 1, 3);
+  // Warhead tips
+  ctx.fillStyle = CONFIG.colors.threatRed;
+  ctx.fillRect(x - 2, y - 4, 1, 1);
+  ctx.fillRect(x,     y - 5, 1, 1);
+  ctx.fillRect(x + 2, y - 4, 1, 1);
+  // Swivel dot
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(x, y + 1, 1, 1);
+}
+
+function drawLaser(ctx, d) {
+  // LA-b: vertical beam director — white tube on a narrow pedestal, red
+  //       muzzle glow that flares while firing / dims when overheated.
+  const x = Math.floor(d.x), y = Math.floor(d.y);
+  // Pedestal base
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(x - 2, y + 3, 4, 2);
+  ctx.fillRect(x - 1, y + 1, 2, 2);
+  // Beam tube (white, 5 tall × 2 wide)
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillRect(x - 1, y - 4, 2, 6);
+  // Collimator ring near the middle
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(x - 1, y - 1, 2, 1);
+  // Muzzle glow
+  const firing = d.firingMs > 0 && !d.overheated;
+  ctx.fillStyle = d.overheated ? CONFIG.colors.alertAmber
+    : firing ? CONFIG.colors.accentWhite : CONFIG.colors.threatRed;
+  ctx.fillRect(x - 1, y - 5, 2, 1);
+}
+
+function drawHpm(ctx, d) {
+  // HP-a: flared horn emitter — grey trumpet widening toward facing. Rotates
+  //       to match d.facingRad so the wide end points at the kill cone.
+  const x = Math.floor(d.x), y = Math.floor(d.y);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate((d.facingRad ?? 0) + Math.PI / 2);   // horn points "up" pre-rotate
+  // Base body
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(-2, 1, 5, 3);
+  // Neck
+  ctx.fillRect(-1, -1, 3, 2);
+  // Flared horn (widens toward forward = -Y)
+  ctx.fillRect(-2, -3, 5, 2);
+  ctx.fillRect(-3, -5, 7, 2);
+  // Hot dot at the aperture
+  ctx.fillStyle = CONFIG.colors.threatRed;
+  ctx.fillRect(0, -5, 1, 1);
+  ctx.restore();
 }

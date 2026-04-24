@@ -2,10 +2,10 @@ import { CONFIG } from '../config.js';
 
 const PORTRAIT_SIZE = 64;
 
-// Briefing bubble now lives in the CENTER of the screen instead of the
-// palette footer — commander portrait is suppressed during gameplay.
-const BUBBLE_W = 380;
-const BUBBLE_H = 140;
+// Briefing bubble centred; generously sized to hold the full asset primer.
+const BUBBLE_W = 440;
+const BUBBLE_H = 230;
+const BUBBLE_PAD_INNER = 18;   // breathing room around text content
 const BUBBLE_X = Math.round((CONFIG.virtualWidth - BUBBLE_W) / 2);
 const BUBBLE_Y = Math.round((CONFIG.virtualHeight - BUBBLE_H) / 2);
 const BUBBLE_PAD = 6;
@@ -41,42 +41,56 @@ function currentPortraitKey(state) {
   return CONFIG.waves[idx].portrait || 'neutral';
 }
 
-function currentBriefingText(state) {
+function briefingPages(state) {
   const idx = state.briefing.activeBriefingIndex;
-  if (idx < 0 || idx >= CONFIG.waves.length) return '';
-  const base = CONFIG.waves[idx].briefing || '';
+  if (idx < 0 || idx >= CONFIG.waves.length) return [''];
+  const raw = CONFIG.waves[idx].briefing;
+  const pages = Array.isArray(raw) ? raw.slice() : [raw || ''];
 
-  // Branch on prior-wave situation: ISR intel leaked + defenses + criticals.
-  // Wave 1 uses defaultless prefix since there's no prior state.
-  if (idx <= 0) return base;
+  // Branch only applies to waves 2+ — prepend the dynamic prefix to page 0.
+  if (idx > 0) {
+    pages[0] = buildBriefingPrefix(state) + pages[0];
+  }
+  return pages;
+}
 
+function buildBriefingPrefix(state) {
   const intel = state.lastWaveIsrIntel ?? 0;
   const defenseCount = state.defenses?.length ?? 0;
-  const criticalsDown = CONFIG?.waves && (state.stats?.structuresLost ?? 0);
-
+  const criticalsDown = state.stats?.structuresLost ?? 0;
   let prefix = '';
   if (intel > 45) {
-    prefix = 'They got a clean read on us. Expect EVERYTHING hitting at once. ';
+    prefix = 'They got a clean read on us. Expect EVERYTHING at once. ';
   } else if (intel > 20) {
-    prefix = 'Enough slipped through recon to paint our gaps. Heavier push incoming. ';
+    prefix = 'Enough slipped through recon to paint our gaps. Heavier push. ';
   } else if (intel > 5) {
     prefix = 'Recon mostly jammed — Red Cell is guessing. Standard pressure. ';
   } else {
     prefix = 'Zero intel got home. They are flying blind. ';
   }
-
   if (defenseCount === 0) {
     prefix += 'AND you have NO defenses up. Drop something, anything, NOW. ';
   } else if (defenseCount < 3) {
     prefix += 'Coverage is thin — get more assets on the board. ';
   }
-
   if (criticalsDown > 0) {
-    prefix += 'We have already lost ' + criticalsDown + ' critical site(s). ';
+    prefix += 'We already lost ' + criticalsDown + ' critical site(s). ';
   }
-
-  return prefix + base;
+  return prefix + '\n\n';
 }
+
+function currentBriefingText(state) {
+  const pages = briefingPages(state);
+  const pageIdx = Math.min(state.briefing.pageIdx ?? 0, pages.length - 1);
+  return pages[pageIdx];
+}
+
+function currentBriefingMeta(state) {
+  const pages = briefingPages(state);
+  const pageIdx = Math.min(state.briefing.pageIdx ?? 0, pages.length - 1);
+  return { pageIdx, pageCount: pages.length };
+}
+
 
 function wrapLines(ctx, text, maxWidth) {
   // Preserve explicit \n as hard breaks; wrap each paragraph independently.
@@ -121,25 +135,40 @@ function drawBubble(ctx, state) {
   ctx.lineWidth = 1;
   ctx.strokeRect(BUBBLE_X + 0.5, BUBBLE_Y + 0.5, BUBBLE_W - 1, BUBBLE_H - 1);
 
-  // Commander title bar
+  // Commander title bar (padded)
   ctx.fillStyle = CONFIG.colors.alertAmber;
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText('COMMANDER WARDEN', BUBBLE_X + BUBBLE_PAD, BUBBLE_Y + BUBBLE_PAD);
+  ctx.fillText('COMMANDER WARDEN', BUBBLE_X + BUBBLE_PAD_INNER, BUBBLE_Y + BUBBLE_PAD_INNER);
 
   ctx.font = TEXT_SIZE + 'px "Press Start 2P", monospace';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   ctx.fillStyle = CONFIG.colors.accentWhite;
 
-  const innerW = BUBBLE_W - BUBBLE_PAD * 2;
+  const innerW = BUBBLE_W - BUBBLE_PAD_INNER * 2;
   const lines = wrapLines(ctx, currentBriefingText(state), innerW);
-  let ty = BUBBLE_Y + BUBBLE_PAD + 14;   // offset below title bar
+  let ty = BUBBLE_Y + BUBBLE_PAD + 22;   // extra padding below title
+  ctx.fillStyle = CONFIG.colors.accentWhite;
   for (const line of lines) {
-    ctx.fillText(line, BUBBLE_X + BUBBLE_PAD, ty);
+    ctx.fillText(line, BUBBLE_X + BUBBLE_PAD_INNER, ty);
     ty += TEXT_LINE_HEIGHT;
-    if (ty > BUBBLE_Y + BUBBLE_H - TEXT_SIZE) break;
+    if (ty > BUBBLE_Y + BUBBLE_H - TEXT_SIZE - 18) break;
+  }
+
+  // Dismiss / next-page hint footer
+  const meta = currentBriefingMeta(state);
+  const more = meta.pageIdx < meta.pageCount - 1;
+  ctx.fillStyle = CONFIG.colors.alertAmber;
+  ctx.textAlign = 'center';
+  ctx.fillText(more ? 'PRESS ANY KEY — NEXT' : 'PRESS ANY KEY TO CONTINUE',
+    BUBBLE_X + BUBBLE_W / 2, BUBBLE_Y + BUBBLE_H - TEXT_SIZE - 4);
+  if (meta.pageCount > 1) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = CONFIG.colors.gridLine;
+    ctx.fillText((meta.pageIdx + 1) + '/' + meta.pageCount,
+      BUBBLE_X + BUBBLE_W - BUBBLE_PAD, BUBBLE_Y + BUBBLE_PAD);
   }
 }
 
@@ -182,13 +211,12 @@ export function updateBriefing(state, dt) {
     state.briefing.visibleMs = 0;
     state.briefing.expandedOnce = false;
     state.briefing.activeBriefingIndex = waveIdx;
+    state.briefing.pageIdx = 0;
     return;
   }
   if (state.briefing.phase === 'visible') {
     state.briefing.visibleMs += dt * 1000;
-    if (state.briefing.visibleMs >= CONFIG.warden.autoCollapseMs) {
-      state.briefing.phase = 'tab';
-    }
+    // No auto-collapse — commander text stays until the player dismisses it.
   }
 }
 
@@ -200,9 +228,8 @@ export function renderBriefing(ctx, state, tMs) {
   if (state.briefing.phase === 'visible') {
     // Portrait removed during gameplay — text bubble carries the briefing.
     drawBubble(ctx, state);
-  } else if (state.briefing.phase === 'tab') {
-    drawTab(ctx, state, tMs);
   }
+  // Tab suppressed entirely — commander head no longer hovers on the map.
   ctx.restore();
 }
 
@@ -235,8 +262,13 @@ export function briefingClickHit(state, vx, vy) {
 // the palette click path so picking a defense type gets the briefing out of
 // the way immediately.
 export function collapseBriefing(state) {
-  if (state.briefing.phase === 'visible') {
-    state.briefing.phase = 'tab';
-    state.briefing.expandedOnce = true;
+  if (state.briefing.phase !== 'visible') return;
+  const meta = currentBriefingMeta(state);
+  if ((state.briefing.pageIdx ?? 0) < meta.pageCount - 1) {
+    // Advance to the next page rather than dismissing.
+    state.briefing.pageIdx = (state.briefing.pageIdx ?? 0) + 1;
+    return;
   }
+  state.briefing.phase = 'idle';   // last page reached → dismiss
+  state.briefing.expandedOnce = true;
 }

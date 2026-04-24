@@ -331,34 +331,52 @@ function makeLaserFireNodes() {
   const ctx = getCtx();
   const t = ctx.currentTime;
 
+  // Tech-burst laser: high square carrier gated by a fast square LFO so
+  // you hear rapid staccato pulses, plus a slight chirp via freq-mod LFO.
   const osc = ctx.createOscillator();
-  osc.type = 'sawtooth';
-  osc.frequency.value = 220;
+  osc.type = 'square';
+  osc.frequency.value = 1600;
+
+  // Subtle chirp on the carrier — keeps it from sounding like a flat tone.
+  const chirp = ctx.createOscillator();
+  chirp.type = 'sine';
+  chirp.frequency.value = 24;
+  const chirpAmp = ctx.createGain();
+  chirpAmp.gain.value = 80;   // ±80 Hz freq wobble
+  chirp.connect(chirpAmp);
+  chirpAmp.connect(osc.frequency);
 
   const filter = ctx.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.value = 2000;
+  filter.type = 'bandpass';
+  filter.frequency.value = 1600;
+  filter.Q.value = 4;
 
+  // Master gain fades in quickly so turning the sound on isn't abrupt.
   const gain = ctx.createGain();
   gain.gain.value = 0;
-  gain.gain.setTargetAtTime(0.2, t, 0.02);    // 20ms fade-in
+  gain.gain.setTargetAtTime(0.14, t, 0.02);   // quieter — was 0.22
 
-  // LFO on gain for subtle amp wobble at 8 Hz.
+  // Burst gate — square LFO at 9 Hz flips amplitude between 0 and 1 (≈56 ms
+  // on / 56 ms off). With the chirp this reads as quick tech pulses.
+  const gate = ctx.createGain();
+  gate.gain.value = 1;
   const lfo = ctx.createOscillator();
-  lfo.type = 'sine';
-  lfo.frequency.value = 8;
+  lfo.type = 'square';
+  lfo.frequency.value = 9;
   const lfoAmp = ctx.createGain();
-  lfoAmp.gain.value = 0.03;       // ±3% wobble
+  lfoAmp.gain.value = 0.5;    // ±0.5 → gate.gain oscillates between 0 and 1
   lfo.connect(lfoAmp);
-  lfoAmp.connect(gain.gain);
+  lfoAmp.connect(gate.gain);
 
   osc.connect(filter);
-  filter.connect(gain);
+  filter.connect(gate);
+  gate.connect(gain);
   gain.connect(sfxGain);
   osc.start(t);
   lfo.start(t);
+  chirp.start(t);
 
-  return { osc, lfo, gain };
+  return { osc, lfo, chirp, gain };
 }
 
 function makeRfJamNodes() {
@@ -432,6 +450,79 @@ function makeStructuresAlarmNodes() {
   return { osc, lfo, gain };
 }
 
+// Attack one-shots --------------------------------------------------------
+
+// OWA commit dive: downward whine into a thud — drone has chosen its target.
+function playOwaCommit() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(900, t);
+  osc.frequency.exponentialRampToValueAtTime(120, t + 0.45);
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 1800;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.28, t + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+  osc.connect(filter); filter.connect(gain); gain.connect(sfxGain);
+  osc.start(t);
+  osc.stop(t + 0.51);
+}
+
+// Truck delivery: two short horn blats — classic "supplies arriving" cue.
+function playTruckDelivery() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  for (let i = 0; i < 2; i++) {
+    const off = i * 0.14;
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = 340;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, t + off);
+    gain.gain.linearRampToValueAtTime(0.14, t + off + 0.01);
+    gain.gain.setValueAtTime(0.14, t + off + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + off + 0.12);
+    osc.connect(gain); gain.connect(sfxGain);
+    osc.start(t + off);
+    osc.stop(t + off + 0.13);
+  }
+}
+
+// Payload drop: bomb-release whistle + low release thump.
+function playPayloadDrop() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+
+  // Whistle — sine falling pitch, short tail.
+  const whistle = ctx.createOscillator();
+  whistle.type = 'sine';
+  whistle.frequency.setValueAtTime(1800, t);
+  whistle.frequency.exponentialRampToValueAtTime(180, t + 0.55);
+  const wg = ctx.createGain();
+  wg.gain.setValueAtTime(0, t);
+  wg.gain.linearRampToValueAtTime(0.18, t + 0.02);
+  wg.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+  whistle.connect(wg); wg.connect(sfxGain);
+  whistle.start(t);
+  whistle.stop(t + 0.61);
+
+  // Low release thump at the start.
+  const sub = ctx.createOscillator();
+  sub.type = 'triangle';
+  sub.frequency.setValueAtTime(140, t);
+  sub.frequency.exponentialRampToValueAtTime(60, t + 0.2);
+  const sg = ctx.createGain();
+  sg.gain.setValueAtTime(0.25, t);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+  sub.connect(sg); sg.connect(sfxGain);
+  sub.start(t);
+  sub.stop(t + 0.22);
+}
+
 const CONTINUOUS_FACTORIES = {
   laserFire: makeLaserFireNodes,
   rfJam: makeRfJamNodes,
@@ -464,6 +555,7 @@ export function stopSfx(id) {
   if (entry.osc) entry.osc.stop(stopAt);
   if (entry.src) entry.src.stop(stopAt);
   if (entry.lfo) entry.lfo.stop(stopAt);
+  if (entry.chirp) entry.chirp.stop(stopAt);
 }
 
 export function stopAllContinuous() {
@@ -484,6 +576,9 @@ const ONE_SHOTS = {
   waveStart: playWaveStart,
   win: playWin,
   lose: playLose,
+  owaCommit: playOwaCommit,
+  payloadDrop: playPayloadDrop,
+  truckDelivery: playTruckDelivery,
 };
 
 export function playSfx(name) {

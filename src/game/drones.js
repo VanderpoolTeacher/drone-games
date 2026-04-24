@@ -19,6 +19,13 @@ export function spawnDrone(state, type, opts = {}) {
   let corridors = MAP.corridors[type];
   if (!corridors || corridors.length === 0) return null;
 
+  // Enemy runs on a finite payload stockpile — once drained, no more payload
+  // drones spawn. Each spawn consumes one from the pool.
+  if (type === 'payloadDelivery') {
+    if ((state.payloadPool ?? 0) <= 0) return null;
+    state.payloadPool -= 1;
+  }
+
   // When a payload spawn is flagged for bridge-only targeting, restrict the
   // corridor pool to the bridge-attack corridors — early waves commit hard
   // against bridges to soften supply lines.
@@ -269,10 +276,7 @@ export function updateDrones(state, dt) {
       state.explosions.push({ x: d.x, y: d.y, frame: 0, frameTimer: 0 });
       playSfx('droneKill');
       state.stats.droneKills[d.type] = (state.stats.droneKills[d.type] ?? 0) + 1;
-      // Payload drones ALWAYS drop — even when shot down before arrival.
-      if (d.type === 'payloadDelivery' && !d.dropped) {
-        executePayloadDrop(d, state, d.x, d.y);
-      }
+      // Payload shot down before releasing → ordnance is lost with the drone.
       d.phase = 'done';
     }
   }
@@ -289,10 +293,6 @@ export function updateDrones(state, dt) {
         for (const id of (d.observedStructures ?? [])) {
           state.observedStructuresThisWave.add(id);
         }
-      }
-      // Payload exiting without dropping → drop on the way out.
-      if (d.type === 'payloadDelivery' && !d.dropped) {
-        executePayloadDrop(d, state, d.x, d.y);
       }
       return false;
     }
@@ -501,6 +501,7 @@ function updateOwa(d, dt, state) {
     if (d.wpIdx >= corridor.waypoints.length) {
       d.phase = 'terminal';
       d.commitLineFrame = 1;
+      playSfx('owaCommit');
       return;
     }
     advanceCruise(d, dt);
@@ -512,6 +513,7 @@ function updateOwa(d, dt, state) {
     if (!def) {
       d.targetDefenseId = null;
       d.phase = 'terminal';
+      playSfx('owaCommit');
       return;
     }
 
@@ -611,11 +613,20 @@ const PAYLOAD_DROP_PX = 8;
 function updatePayload(d, dt, state) {
   // Direct-flight payloads (bridge-attack with per-spawn target OR carpet
   // bombs) fly straight to their dropPoint regardless of corridor waypoints.
+  // After dropping, they COAST along their last heading until off-grid so the
+  // drone visibly flies away instead of stopping on the drop point.
   if (d.directFlight && d.dropPoint) {
+    const speed = CONFIG.drones.payloadDelivery.speed * (d.speedMultiplier ?? 1);
+    if (d.dropped) {
+      // Coast: keep last vx/vy heading, or fall back to a rightward exit.
+      if (!d.vx && !d.vy) { d.vx = speed; d.vy = 0; }
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      return;
+    }
     const drop = tileToPixel(d.dropPoint);
     const dxC = drop.x - d.x, dyC = drop.y - d.y;
     const distC = Math.hypot(dxC, dyC);
-    const speed = CONFIG.drones.payloadDelivery.speed * (d.speedMultiplier ?? 1);
     const step = speed * dt;
     if (distC > PAYLOAD_DROP_PX && step < distC) {
       d.vx = (dxC / distC) * speed;
@@ -627,12 +638,6 @@ function updatePayload(d, dt, state) {
     // fall through to drop logic below
   } else {
     advanceCruise(d, dt);
-    // Corridor payload reached the exit without a drop trigger — release now.
-    if (d.phase === 'exiting' && !d.dropped && d.dropPoint) {
-      executePayloadDrop(d, state, d.x, d.y);
-      d.phase = 'done';
-      return;
-    }
   }
 
   if (!d.dropPoint || d.phase === 'done' || d.dropped) return;
@@ -641,7 +646,7 @@ function updatePayload(d, dt, state) {
   const dy = drop.y - d.y;
   if (Math.hypot(dx, dy) <= PAYLOAD_DROP_PX) {
     executePayloadDrop(d, state, drop.x, drop.y);
-    d.phase = 'done';
+    // Drone keeps flying after release — exits the map normally.
   }
 }
 
@@ -650,6 +655,7 @@ function updatePayload(d, dt, state) {
 function executePayloadDrop(d, state, cx, cy) {
   if (d.dropped) return;
   d.dropped = true;
+  playSfx('payloadDrop');
   state.explosions.push({ x: cx, y: cy, frame: 0, frameTimer: 0 });
   for (const s of MAP.structures) {
     const sp = tileToPixel(s.tile);

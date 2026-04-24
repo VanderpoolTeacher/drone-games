@@ -96,13 +96,11 @@ export function paletteHitTest(vx, vy) {
 
   const totalWidth = BUTTONS.length * BUTTON_W + (BUTTONS.length - 1) * BUTTON_GAP;
   let x = Math.floor((CONFIG.virtualWidth - totalWidth) / 2);
-  const y = paletteY + Math.floor((CONFIG.bottomPaletteHeight - BUTTON_H) / 2);
 
+  // Full palette-row column is clickable — label + initials + button body.
   for (const btn of BUTTONS) {
     if (!btn.enabled) { x += BUTTON_W + BUTTON_GAP; continue; }
-    if (vx >= x && vx < x + BUTTON_W && vy >= y && vy < y + BUTTON_H) {
-      return { type: btn.type };
-    }
+    if (vx >= x && vx < x + BUTTON_W) return { type: btn.type };
     x += BUTTON_W + BUTTON_GAP;
   }
   return null;

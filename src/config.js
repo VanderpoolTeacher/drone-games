@@ -59,7 +59,7 @@ export const CONFIG = {
     rfJammer: {
       displayName: 'RF Jammer',
       category: 'soft-kill',
-      hp: 3,
+      hp: 3,   // all defenses capped at 3 HP
       installMs: 3000,
       range: 60,
       effect: 'slow',
@@ -72,7 +72,7 @@ export const CONFIG = {
     interceptor: {
       displayName: 'Interceptor',
       category: 'hard-kill kinetic',
-      hp: 5,
+      hp: 3,
       installMs: 5000,
       range: 100,
       damage: 15,                    // was 30 — ISR/OWA now take 2–3 hits
@@ -86,7 +86,7 @@ export const CONFIG = {
     laser: {
       displayName: 'Directed Energy (Laser)',
       category: 'directed energy — HEL',
-      hp: 6,
+      hp: 3,
       installMs: 8000,
       range: 120,
       dps: 40,                       // damage per second while firing
@@ -101,7 +101,7 @@ export const CONFIG = {
     hpm: {
       displayName: 'HPM',
       category: 'directed energy — HPM',
-      hp: 6,
+      hp: 3,
       installMs: 12000,
       coneRange: 110,                // radial depth of the cone
       coneHalfAngleDeg: 35,          // total cone = 70°
@@ -118,64 +118,63 @@ export const CONFIG = {
   // Waves — designed to teach layered-defense thesis through escalation
   // See DESIGN.md "Wave progression" for the teaching arc
   waves: [
-    // Wave 1 — Probe + opening strike. ISR, OWA support, early payload on bridges.
+    // Wave 1 — Probe + opening strike. Target ~90s total.
     {
       drones: [
-        { type: 'isr', count: 35, spawnInterval: 2500, spawnDelayMs: 0 },
-        { type: 'owa', count: 6,  spawnInterval: 7000, spawnDelayMs: 8000 },
-        { type: 'payloadDelivery', count: 1, spawnInterval: 1, spawnDelayMs: 55000, targetBridges: true },
+        { type: 'isr', count: 24, spawnInterval: 2000, spawnDelayMs: 0 },
+        { type: 'owa', count: 6,  spawnInterval: 4500, spawnDelayMs: 4000 },
+        { type: 'payloadDelivery', count: 1, spawnInterval: 1, spawnDelayMs: 30000, targetBridges: true },
       ],
-      briefing: "First watch. Here's the board you're defending:\n\n" +
-        "CRITICALS — destroy all and the city falls:\n" +
-        "  P Power Substation · C Comms Tower · M City Hall\n" +
-        "  U UN HQ · W Water Plant · R Federal Reserve\n" +
-        "Each takes ~3 OWA hits or 2 Payload drops to collapse.\n\n" +
-        "MID-TIER — not game-over, but each one hurts:\n" +
-        "  H Hospital — down: civilian casualties +50%\n" +
-        "  T Grand Central / Penn — both down: -25% supply\n" +
-        "  F Exchange / Bank — each: +500 cas. penalty\n" +
-        "  S Stock Exchange · E Fire · N Police · A Port Auth · V TV\n\n" +
-        "BRIDGES — supply lines. Lose them all → no trucks.\n\n" +
-        "APARTMENTS / SKYSCRAPERS — civilian casualties under AoE.\n\n" +
-        "THIS WAVE: ISR sweep + opening OWA + payload bridge runs. Priority: get an RF jammer covering the scan lanes so intel doesn't leak and buff next wave.",
+      briefing: [
+        "06:14 LOCAL.\n\n" +
+        "The border lit up eight minutes ago. Red Cell drones are already over the water. No warning, no ultimatum — they hit us cold.\n\n" +
+        "That's OUR city out there. Eight million people, the financial spine of the country, the hospitals, the grid, the government. All of it, and you.\n\n" +
+        "You hold the line.",
+
+        "What's at stake, Watchfloor:\n\n" +
+        "The people. Apartments from Harlem to the Battery. Families still in bed when the sirens went.\n\n" +
+        "The organs of the city. Power. Water. Hospitals. The bridges and tunnels that feed us all.\n\n" +
+        "If those go, we go.\n\n" +
+        "Stand up your defenses. Don't let them through.",
+      ],
       portrait: 'neutral',
     },
-    // Wave 2 — Pressure. ISR + OWA, payload pressing bridges.
+    // Wave 2 — Pressure. Target ~90s total.
     {
       drones: [
-        { type: 'isr', count: 40, spawnInterval: 2200, spawnDelayMs: 0 },
-        { type: 'owa', count: 12, spawnInterval: 5500, spawnDelayMs: 5000 },
-        { type: 'payloadDelivery', count: 1, spawnInterval: 1, spawnDelayMs: 60000, targetBridges: true },
+        { type: 'isr', count: 24, spawnInterval: 2200, spawnDelayMs: 0 },
+        { type: 'owa', count: 8,  spawnInterval: 5000, spawnDelayMs: 5000 },
+        { type: 'payloadDelivery', count: 3, spawnInterval: 9000, spawnDelayMs: 15000, targetBridges: true },
       ],
       briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges. Intel says Red Cell starts mixing OWA strikes next — keep something kinetic in reserve.",
       portrait: 'neutral',
     },
-    // Wave 3 — Strike. Sustained pressure with payload birds at the tail.
+    // Wave 3 — Strike.
     {
       drones: [
-        { type: 'isr', count: 28, spawnInterval: 2500, spawnDelayMs: 0 },
-        { type: 'owa', count: 28, spawnInterval: 3000, spawnDelayMs: 3000 },
-        { type: 'payloadDelivery', count: 5, spawnInterval: 9000, spawnDelayMs: 10000 },
+        { type: 'isr', count: 20, spawnInterval: 2500, spawnDelayMs: 0 },
+        { type: 'owa', count: 20, spawnInterval: 3000, spawnDelayMs: 3000 },
+        { type: 'payloadDelivery', count: 4, spawnInterval: 9000, spawnDelayMs: 10000 },
       ],
       briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east. Next wave: Payload birds, armored. Laser is the answer — save the delivery.",
       portrait: 'stern',
     },
-    // Wave 4 — Heavy. OWA + payload barrage with ISR sweepers.
+    // Wave 4 — Heavy.
     {
       drones: [
-        { type: 'isr', count: 15, spawnInterval: 4000, spawnDelayMs: 0 },
-        { type: 'owa', count: 28, spawnInterval: 3500, spawnDelayMs: 0 },
-        { type: 'payloadDelivery', count: 14, spawnInterval: 7000, spawnDelayMs: 8000 },
+        { type: 'isr', count: 10, spawnInterval: 4000, spawnDelayMs: 0 },
+        { type: 'owa', count: 20, spawnInterval: 3500, spawnDelayMs: 0 },
+        { type: 'payloadDelivery', count: 10, spawnInterval: 7000, spawnDelayMs: 8000 },
       ],
       briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked. Next is the saturation run — all three types. HPM comes online in your next delivery. Don't sit on it.",
       portrait: 'stern',
     },
-    // Wave 5 — Saturation. Everything at once, minimal respite.
+    // Wave 5 — Saturation.
     {
       drones: [
-        { type: 'isr', count: 40, spawnInterval: 2500, spawnDelayMs: 0 },
-        { type: 'owa', count: 45, spawnInterval: 2500, spawnDelayMs: 0 },
-        { type: 'payloadDelivery', count: 18, spawnInterval: 5500, spawnDelayMs: 2000 },
+        { type: 'isr', count: 28, spawnInterval: 2500, spawnDelayMs: 0 },
+        { type: 'owa', count: 32, spawnInterval: 2500, spawnDelayMs: 0 },
+        { type: 'payloadDelivery', count: 12, spawnInterval: 5500, spawnDelayMs: 2000 },
       ],
       briefing: "All of it. Saturation run — ISR, OWA, Payload, everything. You need the full stack. HPM earns its keep here. One pulse, many drones. Good luck, Watchfloor.",
       portrait: 'angry',
@@ -577,7 +576,7 @@ CONFIG.modes = {
   },
   campaign: {
     drones: {
-      isr:             { speed: 55,  hp: 45  },   // another +50%
+      isr:             { speed: 55,  hp: 20  },   // back to glass cannon
       owa:             { speed: 120, hp: 55  },
       payloadDelivery: { speed: 30,  hp: 320 },   // armored tank
     },
@@ -589,8 +588,8 @@ CONFIG.modes = {
     prepTimeBetweenWaves: 12000,   // was 20s — less prep
     deliveries: [
       { rfJammer: 1 },                                 // Wave 1 — one RF only
-      { rfJammer: 1, interceptor: 1 },                 // Wave 2
-      {              interceptor: 1 },                 // Wave 3
+      { laser: 1 },                                    // Wave 2 — laser as promised
+      { rfJammer: 1, interceptor: 1 },                 // Wave 3
       {              interceptor: 1, laser: 1 },       // Wave 4
       {              interceptor: 1,            hpm: 1 }, // Wave 5
     ],

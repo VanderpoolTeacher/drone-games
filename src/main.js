@@ -18,7 +18,7 @@ import { renderCRT } from './ui/crt.js';
 import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } from './ui/briefing.js';
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
 import { renderCasualtyHud } from './ui/casualtyHud.js';
-import { playSfx, toggleMute, getAudioContext } from './audio/sfx.js';
+import { playSfx, toggleMute, getAudioContext, startSfx, stopSfx } from './audio/sfx.js';
 import { updateMusic } from './audio/music.js';
 import { renderStartScreen } from './ui/startScreen.js';
 import { updateTooltip, renderTooltip } from './ui/tooltip.js';
@@ -38,7 +38,8 @@ function frame(tMs) {
   const dt = Math.min(dtRaw, 0.1);
   prevMs = tMs;
 
-  if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag) {
+  if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
+      && !gameState.helpVisible) {
     applyJamEffects(gameState);
     updateDrones(gameState, dt);
     updateDefenses(gameState, dt);
@@ -93,6 +94,16 @@ function frame(tMs) {
     }
     ctx.restore();
   }
+  if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
+      && !gameState.helpVisible) {
+    ctx.save();
+    ctx.font = '6px "Press Start 2P", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = CONFIG.colors.friendlyCyan;
+    ctx.fillText('H = HELP', 4, CONFIG.virtualHeight - 2);
+    ctx.restore();
+  }
   if (gameState.helpVisible) renderHelp(ctx);
   renderCRT(ctx);
 
@@ -112,10 +123,15 @@ function toVirtual(e) {
 canvas.addEventListener('mousemove', e => {
   const [vx, vy] = toVirtual(e);
   gameState.hoverTile = pixelToTile(vx, vy);
-  if (gameState.placementMode?.type === 'hpm' && gameState.hoverTile) {
-    const cx = gameState.hoverTile.x * MAP.tileSize + MAP.tileSize / 2;
-    const cy = CONFIG.topBarHeight + MAP.padTop + gameState.hoverTile.y * MAP.tileSize + MAP.tileSize / 2;
-    gameState.placementMode.facingRad = Math.atan2(vy - cy, vx - cx);
+  // HPM aim preview: if we've pinned a tile (awaiting direction), draw aim
+  // FROM the pinned tile toward the cursor. Otherwise preview from hover.
+  if (gameState.placementMode?.type === 'hpm') {
+    const pin = gameState.placementMode.pinTile ?? gameState.hoverTile;
+    if (pin) {
+      const cx = pin.x * MAP.tileSize + MAP.tileSize / 2;
+      const cy = CONFIG.topBarHeight + MAP.padTop + pin.y * MAP.tileSize + MAP.tileSize / 2;
+      gameState.placementMode.facingRad = Math.atan2(vy - cy, vx - cx);
+    }
   }
   updateTooltip(gameState, vx, vy);
 });
@@ -165,6 +181,28 @@ canvas.addEventListener('click', e => {
   }
 
   if (!gameState.placementMode) return;
+
+  // HPM is a two-click placement: first click pins the tile, second click
+  // sets the cone direction (aim from pinned tile → click point).
+  if (gameState.placementMode.type === 'hpm') {
+    if (!gameState.placementMode.pinTile) {
+      const tile = mapHitTest(vx, vy);
+      if (!tile || !isValidZone(gameState, tile)) return;
+      gameState.placementMode.pinTile = tile;
+      playSfx('uiClick');
+      return;
+    }
+    // Second click → compute facing from pin to click and commit.
+    const pin = gameState.placementMode.pinTile;
+    const cx = pin.x * MAP.tileSize + MAP.tileSize / 2;
+    const cy = CONFIG.topBarHeight + MAP.padTop + pin.y * MAP.tileSize + MAP.tileSize / 2;
+    const facing = Math.atan2(vy - cy, vx - cx);
+    placeDefense(gameState, 'hpm', pin, facing);
+    gameState.placementMode = null;
+    playSfx('uiClick');
+    return;
+  }
+
   const tile = mapHitTest(vx, vy);
   if (!tile || !isValidZone(gameState, tile)) return;
   placeDefense(gameState, gameState.placementMode.type, tile, gameState.placementMode.facingRad ?? 0);
@@ -206,6 +244,36 @@ window.addEventListener('keydown', e => {
     gameState.helpVisible = !gameState.helpVisible;
     return;
   }
+  // S — run the audio test suite (one-shot every 400 ms, continuous blocks
+  // kicked off for 1 s each at the end).
+  if (e.key === 's' || e.key === 'S') {
+    runSoundTest();
+    return;
+  }
+  // Any key dismisses the commander briefing and releases the prep timer.
+  if (gameState.briefing?.phase === 'visible' && gameState.screenPhase === 'playing') {
+    collapseBriefing(gameState);
+    return;
+  }
+
+  // QWER / 1-4 during play → select defense from palette without clicking.
+  if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag) {
+    const key = e.key.toLowerCase();
+    const map = { q: 'rfJammer', '1': 'rfJammer',
+                  w: 'interceptor', '2': 'interceptor',
+                  e: 'laser',       '3': 'laser',
+                  r: 'hpm',         '4': 'hpm' };
+    if (map[key]) {
+      const type = map[key];
+      const same = gameState.placementMode?.type === type;
+      gameState.placementMode = same
+        ? null
+        : type === 'hpm'
+          ? { type: 'hpm', facingRad: -Math.PI / 2 }
+          : { type };
+      return;
+    }
+  }
 
   // Track letters toward the MAP code before the short-circuiting handlers
   // below consume the keystroke (m-for-mute would otherwise break it).
@@ -243,10 +311,12 @@ window.addEventListener('keydown', e => {
     toggleBackdrop(gameState);
     return;
   }
+  // Idle → any key starts the music + transitions to the mode-select title.
   if (gameState.screenPhase === 'idle') {
     gameState.screenPhase = 'start';
     return;
   }
+  // Mode-select title → 1/2 picks training/campaign; any other key = campaign.
   if (gameState.screenPhase === 'start') {
     const mode = (e.key === '1') ? 'training' : 'campaign';
     gameState.mode = mode;
@@ -264,7 +334,7 @@ window.addEventListener('keydown', e => {
 });
 
 function renderHelp(ctx) {
-  const W = 340, H = 200;
+  const W = 440, H = 240;
   const x = Math.round((CONFIG.virtualWidth - W) / 2);
   const y = Math.round((CONFIG.virtualHeight - H) / 2);
   ctx.save();
@@ -292,12 +362,13 @@ function renderHelp(ctx) {
     '  Right-click              cancel placement',
     '',
     'KEYBOARD',
-    '  1 / 2                    start mode (Training / Campaign)',
-    '  B                        cycle backdrop opacity',
-    '  M                        toggle mute',
-    '  H                        toggle this help',
-    '  ESC                      cancel placement / exit preview',
-    '  type M-A-P at title      open static map preview',
+    '  Q or 1 / W or 2 / E or 3 / R or 4   select defense',
+    '     (RF Jammer / Interceptor / Laser / HPM)',
+    '  B        cycle backdrop opacity',
+    '  M        toggle mute',
+    '  H        toggle this help',
+    '  ESC      cancel placement / exit preview',
+    '  type M-A-P at title  open static map preview',
     '',
     'GOAL',
     '  Hold 6 critical sites through 5 waves.',
@@ -316,4 +387,40 @@ function renderHelp(ctx) {
   ctx.fillStyle = CONFIG.colors.alertAmber;
   ctx.fillText('PRESS H TO CLOSE', x + W / 2, y + H - 12);
   ctx.restore();
+}
+
+// Press S → cycle through every SFX so the player can audit them. Each
+// one-shot fires 400 ms after the previous; continuous sounds run for 1 s.
+function runSoundTest() {
+  if (runSoundTest.running) return;
+  runSoundTest.running = true;
+
+  const oneShots = [
+    'uiClick', 'interceptorLaunch', 'droneKill',
+    'structureHit', 'structureHitHeavy', 'structureDestroyed',
+    'owaCommit', 'payloadDrop', 'truckDelivery',
+    'laserOverheat', 'hpmPulse',
+    'waveStart', 'win', 'lose',
+  ];
+  const continuous = [
+    { name: 'laserFire',       id: 'test-laser' },
+    { name: 'rfJam',           id: 'test-rf' },
+    { name: 'structuresAlarm', id: 'test-alarm' },
+  ];
+
+  console.log('[sfx-test] starting audio audit — watch the console for each cue');
+  let delay = 0;
+  for (const name of oneShots) {
+    setTimeout(() => { console.log('[sfx-test] ' + name); playSfx(name); }, delay);
+    delay += 400;
+  }
+  for (const c of continuous) {
+    setTimeout(() => { console.log('[sfx-test] start ' + c.name); startSfx(c.name, c.id); }, delay);
+    setTimeout(() => { stopSfx(c.id); }, delay + 1000);
+    delay += 1200;
+  }
+  setTimeout(() => {
+    runSoundTest.running = false;
+    console.log('[sfx-test] done');
+  }, delay);
 }

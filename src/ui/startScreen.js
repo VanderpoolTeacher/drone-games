@@ -57,30 +57,15 @@ function drawBackdrop(ctx, state, tMs) {
 
   if (state.screenPhase !== 'start') return;
   const elapsed = startPhaseEnterMs == null ? 0 : tMs - startPhaseEnterMs;
-  if (elapsed < BUILDUP_START) return;  // still fading logo / holding black
+  if (elapsed < BUILDUP_START) return;
 
+  // Commander first, map second — split the buildup window 0..0.55 = commander,
+  // 0.45..1.0 = map (slight overlap for a smooth fade).
   const buildT = Math.min(1, (elapsed - BUILDUP_START) / BUILDUP_MS);
-  const mapAlpha = smoothstep(buildT);
-  const commanderT = smoothstep(buildT);
+  const commanderT = smoothstep(Math.min(1, buildT / 0.55));
+  const mapT = smoothstep(Math.max(0, (buildT - 0.45) / 0.55));
 
-  // NY map — half-width on the LEFT, low alpha, slight tilt. Nudged inward.
-  if (mapImg.complete && mapImg.naturalWidth > 0) {
-    const srcW = mapImg.naturalWidth;
-    const srcH = mapImg.naturalHeight;
-    const destW = Math.round(CONFIG.virtualWidth * 0.5);
-    const destH = Math.round(destW * srcH / srcW);
-    const inset = 24;
-    const cx = destW / 2 + inset;
-    const cy = CONFIG.virtualHeight / 2;
-    ctx.save();
-    ctx.globalAlpha = 0.5 * mapAlpha;
-    ctx.translate(cx, cy);
-    ctx.rotate(-10 * Math.PI / 180);
-    ctx.drawImage(mapImg, -destW / 2, -destH / 2, destW, destH);
-    ctx.restore();
-  }
-
-  // Warden podium — half-height on the RIGHT, slides in from off-right.
+  // Warden portrait arrives FIRST — slides in from off-right.
   if (portrait.complete && portrait.naturalWidth > 0) {
     const srcW = portrait.naturalWidth;
     const srcH = portrait.naturalHeight;
@@ -92,6 +77,22 @@ function drawBackdrop(ctx, state, tMs) {
     ctx.save();
     ctx.globalAlpha = 0.95 * commanderT;
     ctx.drawImage(portrait, slideX, restY, destW, destH);
+    ctx.restore();
+  }
+
+  // NY map fades in AFTER — half-width on the LEFT, low alpha, slight tilt.
+  if (mapT > 0 && mapImg.complete && mapImg.naturalWidth > 0) {
+    const srcW = mapImg.naturalWidth;
+    const srcH = mapImg.naturalHeight;
+    const destW = Math.round(CONFIG.virtualWidth * 0.5);
+    const destH = Math.round(destW * srcH / srcW);
+    const cx = destW / 2 + 24;
+    const cy = CONFIG.virtualHeight / 2;
+    ctx.save();
+    ctx.globalAlpha = 0.5 * mapT;
+    ctx.translate(cx, cy);
+    ctx.rotate(-10 * Math.PI / 180);
+    ctx.drawImage(mapImg, -destW / 2, -destH / 2, destW, destH);
     ctx.restore();
   }
 }
@@ -140,14 +141,18 @@ function drawScrollingBrief(ctx, tMs, state) {
   ctx.restore();
 }
 
-function drawPrompt(ctx, tMs) {
+function drawPrompt(ctx, state, tMs) {
   const blink = tMs % 1000 < 750;
   if (!blink) return;
   ctx.font = '8px "Press Start 2P", monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillStyle = CONFIG.colors.alertAmber;
-  ctx.fillText('PRESS 1 TRAINING  ·  2 CAMPAIGN  ·  ANY KEY CAMPAIGN', CONFIG.virtualWidth / 2, 252);
+  // Idle: press-any-key prompt. Start: mode-select prompt.
+  const msg = state.screenPhase === 'idle'
+    ? 'PRESS ANY BUTTON TO BEGIN'
+    : 'PRESS 1 TRAINING  ·  2 EVENT  ·  ANY KEY EVENT';
+  ctx.fillText(msg, CONFIG.virtualWidth / 2, 252);
 }
 
 function drawLogo(ctx, state, tMs) {
@@ -183,6 +188,17 @@ export function renderStartScreen(ctx, state, tMs) {
     drawHeadline(ctx, tMs);
     drawScrollingBrief(ctx, tMs, state);
   }
-  drawPrompt(ctx, tMs);
+  drawPrompt(ctx, state, tMs);
+  drawVersion(ctx);
+  ctx.restore();
+}
+
+function drawVersion(ctx) {
+  ctx.save();
+  ctx.font = '6px "Press Start 2P", monospace';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillText('v0.1.0', CONFIG.virtualWidth - 4, CONFIG.virtualHeight - 2);
   ctx.restore();
 }

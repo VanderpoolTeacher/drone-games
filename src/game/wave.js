@@ -21,13 +21,30 @@ function intelMultiplier(intelPoints) {
   return 1.75;   // overwhelming — massive attack
 }
 
+// The more defenses the player has on the board, the more committed the
+// enemy response. Dynamic difficulty: player investment → enemy intensity.
+function defenseMultiplier(defenseCount) {
+  if (defenseCount <= 2)  return 1.0;
+  if (defenseCount <= 5)  return 1.30;
+  if (defenseCount <= 9)  return 1.70;
+  if (defenseCount <= 14) return 2.20;
+  if (defenseCount <= 19) return 2.70;
+  return 3.20;   // fortress — overwhelm with mass
+}
+
 export function updateWave(state, dt) {
   if (state.wave.phase === 'prep') {
+    // Hold the inbound timer while the commander briefing is still on screen
+    // so the player always gets to read it fully before drones start spawning.
+    if (state.briefing?.phase === 'visible') return;
     state.wave.prepMs -= dt * 1000;
     if (state.wave.prepMs <= 0) {
       state.wave.phase = 'active';
-      const mult = intelMultiplier(state.lastWaveIsrIntel ?? 0);
-      state.wave.intelMult = mult;
+      const intelMult = intelMultiplier(state.lastWaveIsrIntel ?? 0);
+      const defMult   = defenseMultiplier(state.defenses?.length ?? 0);
+      const mult = intelMult * defMult;
+      state.wave.intelMult = intelMult;
+      state.wave.defenseMult = defMult;
       state.wave.spawnProgress = CONFIG.waves[state.wave.number - 1].drones.map(d => ({
         type: d.type,
         count: Math.round(jitterCount(d.count) * mult),
@@ -93,6 +110,7 @@ export function updateWave(state, dt) {
       state.isrEscapedThisWave = 0;
       state.isrIntelThisWave = 0;
       state.wave.activeElapsedMs = 0;
+      state.wave.activeStartWallMs = Date.now();   // wall-clock anchor
       state.wave.annihilationFired = false;
       state.wave.carpetBombFired = false;
       state.wave.bridgesLostFired = false;
@@ -123,7 +141,10 @@ export function updateWave(state, dt) {
 
     // Annihilation trigger: if the player has placed NOTHING by ~45 s into
     // an active wave, enemy commits a devastating OWA swarm. Fires once.
-    state.wave.activeElapsedMs = (state.wave.activeElapsedMs ?? 0) + dt * 1000;
+    // Use wall-clock elapsed (Date.now) so lag / dt-capping doesn't drift.
+    state.wave.activeElapsedMs = state.wave.activeStartWallMs
+      ? Date.now() - state.wave.activeStartWallMs
+      : (state.wave.activeElapsedMs ?? 0) + dt * 1000;
     const noDefenses = (state.defenses?.length ?? 0) === 0;
     if (!state.wave.annihilationFired
         && state.wave.activeElapsedMs >= 45000
