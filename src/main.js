@@ -19,6 +19,7 @@ import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } fr
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
 import { renderCasualtyHud } from './ui/casualtyHud.js';
 import { playSfx, toggleMute, getAudioContext, startSfx, stopSfx } from './audio/sfx.js';
+import { startSim, stopSim, tickSim, listStrategies } from './game/simHarness.js';
 import { updateMusic } from './audio/music.js';
 import { renderStartScreen } from './ui/startScreen.js';
 import { updateTooltip, renderTooltip } from './ui/tooltip.js';
@@ -32,6 +33,7 @@ canvas.height = CONFIG.virtualHeight;
 ctx.imageSmoothingEnabled = false;
 
 let prevMs = 0;
+let simStrategyIdx = 0;
 
 function frame(tMs) {
   const dtRaw = prevMs ? (tMs - prevMs) / 1000 : 0;
@@ -40,12 +42,19 @@ function frame(tMs) {
 
   if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
       && !gameState.helpVisible) {
-    applyJamEffects(gameState);
-    updateDrones(gameState, dt);
-    updateDefenses(gameState, dt);
-    updateProjectiles(gameState, dt);
-    updateWave(gameState, dt);
-    updateBriefing(gameState, dt);
+    // Sim mode: run the update pipeline N extra times per frame to fast-
+    // forward. Scripted placements are executed via tickSim() each pass.
+    const reps = gameState.simMode ? Math.max(1, gameState.simSpeed ?? 10) : 1;
+    for (let i = 0; i < reps; i++) {
+      applyJamEffects(gameState);
+      updateDrones(gameState, dt);
+      updateDefenses(gameState, dt);
+      updateProjectiles(gameState, dt);
+      updateWave(gameState, dt);
+      updateBriefing(gameState, dt);
+      tickSim(gameState);
+      if (gameState.winFlag || gameState.loseFlag) break;
+    }
   }
   updateStructures(gameState);
   updateExplosions(gameState, dt);
@@ -105,6 +114,17 @@ function frame(tMs) {
     ctx.restore();
   }
   if (gameState.helpVisible) renderHelp(ctx);
+  if (gameState.simMode) {
+    ctx.save();
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = CONFIG.colors.alertAmber;
+    ctx.fillText('SIM ' + gameState.simSpeed + 'x — ' +
+      (gameState.simStats?.strategy ?? '?') + '  (T to stop)',
+      CONFIG.virtualWidth / 2, 4);
+    ctx.restore();
+  }
   renderCRT(ctx);
 
   requestAnimationFrame(frame);
@@ -248,6 +268,25 @@ window.addEventListener('keydown', e => {
   // kicked off for 1 s each at the end).
   if (e.key === 's' || e.key === 'S') {
     runSoundTest();
+    return;
+  }
+  // T — toggle sim harness. Optional modifier: Shift cycles strategies.
+  if (e.key === 't' || e.key === 'T') {
+    if (gameState.simMode) {
+      stopSim(gameState, 'abort');
+    } else {
+      // Kick off a fresh run from scratch at the start of a campaign.
+      if (gameState.screenPhase !== 'playing') {
+        gameState.mode = 'campaign';
+        applyMode('campaign');
+        applyDelivery(gameState, 0);
+        gameState.stats.runStartMs = Date.now();
+        gameState.screenPhase = 'playing';
+      }
+      const strategies = listStrategies();
+      const pick = strategies[(simStrategyIdx++) % strategies.length];
+      startSim(gameState, { strategy: pick, speed: 10 });
+    }
     return;
   }
   // Any key dismisses the commander briefing and releases the prep timer.
