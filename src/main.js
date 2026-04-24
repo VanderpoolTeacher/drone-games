@@ -94,8 +94,18 @@ function frame(tMs) {
       CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 4);
     ctx.font = '6px "Press Start 2P", monospace';
     ctx.fillStyle = CONFIG.colors.accentWhite;
-    ctx.fillText('T to stop  ·  Shift+T to export CSV',
+    const steps = gameState.simStrategy ?? [];
+    const placed = steps.filter(s => s.done).length;
+    ctx.fillText('defenses placed ' + placed + ' / ' + steps.length +
+      '  ·  on board ' + gameState.defenses.length,
       CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 20);
+    ctx.fillText('inv: RF ' + (gameState.inventory.rfJammer ?? 0) +
+      '  INT ' + (gameState.inventory.interceptor ?? 0) +
+      '  LAS ' + (gameState.inventory.laser ?? 0) +
+      '  HPM ' + (gameState.inventory.hpm ?? 0),
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 32);
+    ctx.fillText('T to stop  ·  Shift+T to export CSV',
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 48);
     ctx.restore();
     requestAnimationFrame(frame);
     return;

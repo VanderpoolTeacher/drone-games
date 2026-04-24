@@ -164,7 +164,10 @@ export function tickSim(state) {
     const stock = state.inventory?.[step.type] ?? 0;
     if (stock <= 0) continue;   // wait for supply
     const d = placeDefense(state, step.type, step.tile, step.facingRad ?? 0);
-    if (d) step.done = true;
+    if (d) {
+      step.done = true;
+      console.log('[sim] placed ' + step.type + ' @ (' + step.tile.x + ',' + step.tile.y + ') W' + wn);
+    }
   }
   // Detect terminal states for reporting.
   if (state.winFlag) stopSim(state, 'win');
