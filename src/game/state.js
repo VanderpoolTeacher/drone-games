@@ -282,7 +282,8 @@ export const gameState = {
   // Sim harness — when true, main loop fast-forwards and auto-places defenses
   // per a scripted strategy. See tools/sim-runner.js + main.js frame loop.
   simMode: false,
-  simSpeed: 10,             // updates per render frame while simming
+  simSpeed: 60,             // updates per render frame while simming (60 ≈ 1 s sim per frame)
+  simSkipRender: true,      // skip full frame draw while simming
   simStats: null,           // collected per-wave counters + final summary
   briefing: {
     phase: 'idle',

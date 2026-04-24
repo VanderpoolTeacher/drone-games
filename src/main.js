@@ -42,24 +42,64 @@ function frame(tMs) {
 
   if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
       && !gameState.helpVisible) {
-    // Sim mode: run the update pipeline N extra times per frame to fast-
-    // forward. Scripted placements are executed via tickSim() each pass.
-    const reps = gameState.simMode ? Math.max(1, gameState.simSpeed ?? 10) : 1;
-    for (let i = 0; i < reps; i++) {
+    if (gameState.simMode) {
+      // Fixed-dt reps let the sim run much faster than real-time. Budget
+      // ~8 ms of wall time per frame so the tab stays responsive.
+      const reps = Math.max(1, gameState.simSpeed ?? 60);
+      const fixedDt = 1 / 30;          // 33 ms simulated per rep
+      const budgetMs = 8;
+      const t0 = performance.now();
+      for (let i = 0; i < reps; i++) {
+        applyJamEffects(gameState);
+        updateDrones(gameState, fixedDt);
+        updateDefenses(gameState, fixedDt);
+        updateProjectiles(gameState, fixedDt);
+        updateWave(gameState, fixedDt);
+        updateBriefing(gameState, fixedDt);
+        tickSim(gameState);
+        if (gameState.winFlag || gameState.loseFlag) break;
+        if (performance.now() - t0 > budgetMs) break;
+      }
+    } else {
       applyJamEffects(gameState);
       updateDrones(gameState, dt);
       updateDefenses(gameState, dt);
       updateProjectiles(gameState, dt);
       updateWave(gameState, dt);
       updateBriefing(gameState, dt);
-      tickSim(gameState);
-      if (gameState.winFlag || gameState.loseFlag) break;
     }
   }
   updateStructures(gameState);
   updateExplosions(gameState, dt);
   updateTrucks(gameState, dt);
   updateMusic(gameState);
+
+  // Render skip for sim mode — draw only a minimal banner so the sim can
+  // use the full frame budget on updates. Toggle with state.simSkipRender.
+  if (gameState.simMode && gameState.simSkipRender) {
+    ctx.fillStyle = CONFIG.colors.bgDark;
+    ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
+    ctx.save();
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = CONFIG.colors.alertAmber;
+    const w = gameState.wave?.number ?? 1;
+    const phase = gameState.wave?.phase ?? 'prep';
+    ctx.fillText('SIM RUNNING',
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 - 12);
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.fillStyle = CONFIG.colors.friendlyCyan;
+    ctx.fillText((gameState.simStats?.strategy ?? '?') + '  ·  W' + w + ' ' + phase,
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 4);
+    ctx.font = '6px "Press Start 2P", monospace';
+    ctx.fillStyle = CONFIG.colors.accentWhite;
+    ctx.fillText('T to stop  ·  Shift+T to export CSV',
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 20);
+    ctx.restore();
+    requestAnimationFrame(frame);
+    return;
+  }
 
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
