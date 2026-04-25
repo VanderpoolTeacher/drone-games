@@ -27,11 +27,28 @@ export function toggleBackdrop(state) {
   }
   const next = BACKDROP_CYCLE[(idx + 1) % BACKDROP_CYCLE.length];
   state.backdropAlpha = next;
+  // Manual press wins until the wave phase next changes.
+  if (state.backdropAuto) state.backdropAuto.manualOverride = true;
   try {
     localStorage.setItem(BACKDROP_KEY, String(next));
   } catch (_e) {
     // private mode — ignore.
   }
+}
+
+// Auto-toggle backdrop based on wave phase. Prep = grid (0), active = image
+// (1). Other phases (won/lost) are left alone. Cleared override on every
+// phase transition so the auto value wins when waves change.
+export function applyBackdropAutoForPhase(state) {
+  if (state.screenPhase !== 'playing') return;
+  const phase = state.wave?.phase;
+  const auto = state.backdropAuto;
+  if (!auto) return;
+  if (phase === auto.lastPhase) return;
+  auto.lastPhase = phase;
+  auto.manualOverride = false;
+  if (phase === 'prep') state.backdropAlpha = 0;
+  else if (phase === 'active') state.backdropAlpha = 1;
 }
 
 export function applyDelivery(state, waveIdx) {
@@ -277,6 +294,13 @@ export const gameState = {
   screenPhase: 'idle',
   mode: 'campaign',
   backdropAlpha: loadBackdropFromStorage(),
+  // Phase-driven backdrop auto-toggle (issue #45). Auto sets grid during prep
+  // and the city image during attack. A manual B-key toggle wins for the
+  // current phase only; the next phase change clears the override.
+  backdropAuto: {
+    lastPhase: null,
+    manualOverride: false,
+  },
   tooltipKey: null,
   helpVisible: false,
   // Sim harness — when true, main loop fast-forwards and auto-places defenses
@@ -368,4 +392,6 @@ export function resetGameState() {
   gameState.briefing.activeBriefingIndex = -1;
   gameState.briefing.pageIdx = 0;
   gameState.tooltipKey = null;
+  gameState.backdropAuto.lastPhase = null;
+  gameState.backdropAuto.manualOverride = false;
 }
