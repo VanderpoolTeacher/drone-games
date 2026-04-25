@@ -157,6 +157,9 @@ export function renderStatsColumn(ctx, state) {
 }
 
 function drawStatsColumn(ctx, state) {
+  // When the sim is running, the sidebar shows the event log instead of
+  // the normal stats readout — useful for watching multiple runs scroll by.
+  if (state.simMode) { drawSimLog(ctx, state); return; }
   const { tileSize, gridW, gridH, padTop } = MAP;
   const mapTop = CONFIG.topBarHeight + padTop;
   const x0 = STATS_COL_START * tileSize;
@@ -231,6 +234,65 @@ function drawStatsColumn(ctx, state) {
   ctx.fillText('HPM ' + (inv.hpm ?? 0), lx, ly); ly += 8;
 
   ctx.restore();
+}
+
+// Sim-mode sidebar: replaces the stats column while the harness runs. Shows
+// a rolling event log (run dividers, wave transitions, placements, end lines)
+// so the observer can see what the strategy is doing without reading console.
+function drawSimLog(ctx, state) {
+  const { tileSize, gridW, gridH, padTop } = MAP;
+  const mapTop = CONFIG.topBarHeight + padTop;
+  const x0 = STATS_COL_START * tileSize;
+  const w = (gridW - STATS_COL_START) * tileSize;
+  const h = gridH * tileSize;
+
+  ctx.save();
+  ctx.fillStyle = CONFIG.colors.bgDark;
+  ctx.fillRect(x0, mapTop, w, h);
+  ctx.strokeStyle = CONFIG.colors.gridLine;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x0 + 0.5, mapTop + 0.5, w - 1, h - 1);
+
+  ctx.font = '6px "Press Start 2P", monospace';
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+
+  const lx = x0 + 4;
+  let ly = mapTop + 4;
+
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillText('SIM LOG', lx, ly); ly += 9;
+  ctx.fillStyle = CONFIG.colors.alertAmber;
+  ctx.fillText((state.simStats?.strategy ?? '?').slice(0, 16), lx, ly); ly += 9;
+  ctx.fillStyle = CONFIG.colors.friendlyCyan;
+  ctx.fillText(
+    (state.simSpeed ?? 10) + 'x  run ' + (state._simRuns ?? 1),
+    lx, ly);
+  ly += 11;
+
+  const lineH = 8;
+  const bottomLimit = mapTop + h - 4;
+  const maxLines = Math.max(0, Math.floor((bottomLimit - ly) / lineH));
+  const log = state.simLog ?? [];
+  const start = Math.max(0, log.length - maxLines);
+  for (let i = start; i < log.length; i++) {
+    const msg = log[i];
+    ctx.fillStyle = colorForLogLine(msg);
+    ctx.fillText(msg.slice(0, 18), lx, ly);
+    ly += lineH;
+  }
+
+  ctx.restore();
+}
+
+function colorForLogLine(msg) {
+  if (msg.startsWith('--')) return CONFIG.colors.accentWhite;
+  if (msg.startsWith('end ')) {
+    return msg.includes('win') ? CONFIG.colors.successGreen : CONFIG.colors.threatRed;
+  }
+  if (msg.startsWith('+')) return CONFIG.colors.friendlyCyan;
+  if (msg.startsWith('W')) return CONFIG.colors.alertAmber;
+  return CONFIG.colors.accentWhite;
 }
 
 // Small deck-and-rail glyph per bridge, drawn on the plain-map layer.

@@ -279,6 +279,24 @@ export const gameState = {
   backdropAlpha: loadBackdropFromStorage(),
   tooltipKey: null,
   helpVisible: false,
+  // Sim harness — when true, main loop fast-forwards and auto-places defenses
+  // per a scripted strategy. See tools/sim-runner.js + main.js frame loop.
+  simMode: false,
+  simSpeed: 10,             // updates per render frame while simming
+  simSkipRender: false,     // keep rendering so the sim is visible
+  simStats: null,           // collected per-wave counters + final summary
+  simLog: [],               // rolling event log shown in the sidebar
+  batch: {                  // batch mode — N runs back-to-back, no render
+    active: false,
+    total: 0,
+    done: 0,
+    wins: 0,
+    strategy: null,
+    abort: false,
+    _runStarted: false,
+    _prevSpeed: 10,
+    _prevSkip: false,
+  },
   briefing: {
     phase: 'idle',
     visibleMs: 0,

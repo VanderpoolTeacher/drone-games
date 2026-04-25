@@ -19,6 +19,8 @@ import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } fr
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
 import { renderCasualtyHud } from './ui/casualtyHud.js';
 import { playSfx, toggleMute, getAudioContext, startSfx, stopSfx } from './audio/sfx.js';
+import { startSim, stopSim, tickSim, listStrategies, downloadSimData, clearSimData,
+         startBatch, abortBatch, tickBatch } from './game/simHarness.js';
 import { updateMusic } from './audio/music.js';
 import { renderStartScreen } from './ui/startScreen.js';
 import { updateTooltip, renderTooltip } from './ui/tooltip.js';
@@ -32,6 +34,7 @@ canvas.height = CONFIG.virtualHeight;
 ctx.imageSmoothingEnabled = false;
 
 let prevMs = 0;
+let simStrategyIdx = 0;
 
 function frame(tMs) {
   const dtRaw = prevMs ? (tMs - prevMs) / 1000 : 0;
@@ -40,17 +43,89 @@ function frame(tMs) {
 
   if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
       && !gameState.helpVisible) {
-    applyJamEffects(gameState);
-    updateDrones(gameState, dt);
-    updateDefenses(gameState, dt);
-    updateProjectiles(gameState, dt);
-    updateWave(gameState, dt);
-    updateBriefing(gameState, dt);
+    if (gameState.simMode) {
+      // Fixed-dt reps let the sim run much faster than real-time. Budget
+      // ~8 ms of wall time per frame so the tab stays responsive.
+      const reps = Math.max(1, gameState.simSpeed ?? 60);
+      const fixedDt = 1 / 30;          // 33 ms simulated per rep
+      const budgetMs = 8;
+      const t0 = performance.now();
+      for (let i = 0; i < reps; i++) {
+        applyJamEffects(gameState);
+        updateDrones(gameState, fixedDt);
+        updateDefenses(gameState, fixedDt);
+        updateProjectiles(gameState, fixedDt);
+        updateWave(gameState, fixedDt);
+        updateBriefing(gameState, fixedDt);
+        tickSim(gameState);
+        if (gameState.winFlag || gameState.loseFlag) break;
+        if (performance.now() - t0 > budgetMs) break;
+      }
+    } else {
+      applyJamEffects(gameState);
+      updateDrones(gameState, dt);
+      updateDefenses(gameState, dt);
+      updateProjectiles(gameState, dt);
+      updateWave(gameState, dt);
+      updateBriefing(gameState, dt);
+    }
   }
   updateStructures(gameState);
   updateExplosions(gameState, dt);
   updateTrucks(gameState, dt);
   updateMusic(gameState);
+  tickBatch(gameState);
+
+  // Render skip for sim mode — draw only a minimal banner so the sim can
+  // use the full frame budget on updates. Toggle with state.simSkipRender.
+  if (gameState.simMode && gameState.simSkipRender) {
+    ctx.fillStyle = CONFIG.colors.bgDark;
+    ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
+    ctx.save();
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = CONFIG.colors.alertAmber;
+    const w = gameState.wave?.number ?? 1;
+    const phase = gameState.wave?.phase ?? 'prep';
+    const inBatch = gameState.batch?.active;
+    const headline = inBatch
+      ? 'BATCH ' + (gameState.batch.done + 1) + '/' + gameState.batch.total
+      : 'SIM RUNNING';
+    ctx.fillText(headline,
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 - 12);
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.fillStyle = CONFIG.colors.friendlyCyan;
+    ctx.fillText((gameState.simStats?.strategy ?? '?') + '  ·  W' + w + ' ' + phase,
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 4);
+    ctx.font = '6px "Press Start 2P", monospace';
+    ctx.fillStyle = CONFIG.colors.accentWhite;
+    const steps = gameState.simStrategy ?? [];
+    const placed = steps.filter(s => s.done).length;
+    ctx.fillText('defenses placed ' + placed + ' / ' + steps.length +
+      '  ·  on board ' + gameState.defenses.length,
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 20);
+    ctx.fillText('inv: RF ' + (gameState.inventory.rfJammer ?? 0) +
+      '  INT ' + (gameState.inventory.interceptor ?? 0) +
+      '  LAS ' + (gameState.inventory.laser ?? 0) +
+      '  HPM ' + (gameState.inventory.hpm ?? 0),
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 32);
+    if (inBatch) {
+      ctx.fillStyle = CONFIG.colors.successGreen;
+      ctx.fillText('wins ' + gameState.batch.wins + ' / ' + gameState.batch.done +
+        '   (run ' + (gameState.batch.done + 1) + ' of ' + gameState.batch.total + ')',
+        CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 48);
+      ctx.fillStyle = CONFIG.colors.accentWhite;
+      ctx.fillText('Esc to abort  ·  Shift+T to export CSV',
+        CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 60);
+    } else {
+      ctx.fillText('T to stop  ·  Shift+T to export CSV',
+        CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 48);
+    }
+    ctx.restore();
+    requestAnimationFrame(frame);
+    return;
+  }
 
   ctx.fillStyle = CONFIG.colors.bgDark;
   ctx.fillRect(0, 0, CONFIG.virtualWidth, CONFIG.virtualHeight);
@@ -105,6 +180,17 @@ function frame(tMs) {
     ctx.restore();
   }
   if (gameState.helpVisible) renderHelp(ctx);
+  if (gameState.simMode) {
+    ctx.save();
+    ctx.font = '8px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = CONFIG.colors.alertAmber;
+    ctx.fillText('SIM ' + gameState.simSpeed + 'x — ' +
+      (gameState.simStats?.strategy ?? '?') + '  (T to stop)',
+      CONFIG.virtualWidth / 2, 4);
+    ctx.restore();
+  }
   renderCRT(ctx);
 
   requestAnimationFrame(frame);
@@ -113,10 +199,29 @@ function frame(tMs) {
 requestAnimationFrame(frame);
 
 function toVirtual(e) {
+  // The canvas uses object-fit: contain, so when the window aspect doesn't
+  // match the virtual aspect (480:270), the rendered image is letterboxed
+  // inside the canvas element. We back out the letterbox offset before
+  // scaling, otherwise clicks near the bottom of the visible image land
+  // hundreds of virtual pixels above where the user aimed.
   const rect = canvas.getBoundingClientRect();
+  const vAspect = CONFIG.virtualWidth / CONFIG.virtualHeight;
+  const eAspect = rect.width / rect.height;
+  let renderedW, renderedH, offsetX, offsetY;
+  if (eAspect > vAspect) {
+    renderedH = rect.height;
+    renderedW = rect.height * vAspect;
+    offsetX = (rect.width - renderedW) / 2;
+    offsetY = 0;
+  } else {
+    renderedW = rect.width;
+    renderedH = rect.width / vAspect;
+    offsetX = 0;
+    offsetY = (rect.height - renderedH) / 2;
+  }
   return [
-    (e.clientX - rect.left) * (CONFIG.virtualWidth / rect.width),
-    (e.clientY - rect.top) * (CONFIG.virtualHeight / rect.height),
+    (e.clientX - rect.left - offsetX) * (CONFIG.virtualWidth / renderedW),
+    (e.clientY - rect.top  - offsetY) * (CONFIG.virtualHeight / renderedH),
   ];
 }
 
@@ -248,6 +353,52 @@ window.addEventListener('keydown', e => {
   // kicked off for 1 s each at the end).
   if (e.key === 's' || e.key === 'S') {
     runSoundTest();
+    return;
+  }
+  // Shift+T — download accumulated sim runs as CSV.
+  // Ctrl/Meta+Shift+T — clear sim log.
+  if ((e.key === 'T' || e.key === 't') && e.shiftKey) {
+    if (e.ctrlKey || e.metaKey) clearSimData();
+    else downloadSimData();
+    return;
+  }
+  // Shift+B — start a batch of 10 sim runs (current strategy index, no render).
+  // Escape during batch = abort.
+  if ((e.key === 'B' || e.key === 'b') && e.shiftKey) {
+    if (gameState.batch?.active) { abortBatch(gameState); return; }
+    if (gameState.screenPhase !== 'playing') {
+      gameState.mode = 'campaign';
+      applyMode('campaign');
+      applyDelivery(gameState, 0);
+      gameState.stats.runStartMs = Date.now();
+      gameState.screenPhase = 'playing';
+    }
+    const strategies = listStrategies();
+    const pick = strategies[(simStrategyIdx++) % strategies.length];
+    startBatch(gameState, { strategy: pick, total: 10, speed: 60 });
+    return;
+  }
+  if (e.key === 'Escape' && gameState.batch?.active) {
+    abortBatch(gameState);
+    return;
+  }
+  // T — toggle sim harness.
+  if (e.key === 't' || e.key === 'T') {
+    if (gameState.simMode) {
+      stopSim(gameState, 'abort');
+    } else {
+      // Kick off a fresh run from scratch at the start of a campaign.
+      if (gameState.screenPhase !== 'playing') {
+        gameState.mode = 'campaign';
+        applyMode('campaign');
+        applyDelivery(gameState, 0);
+        gameState.stats.runStartMs = Date.now();
+        gameState.screenPhase = 'playing';
+      }
+      const strategies = listStrategies();
+      const pick = strategies[(simStrategyIdx++) % strategies.length];
+      startSim(gameState, { strategy: pick, speed: 10 });
+    }
     return;
   }
   // Any key dismisses the commander briefing and releases the prep timer.
