@@ -199,10 +199,29 @@ function frame(tMs) {
 requestAnimationFrame(frame);
 
 function toVirtual(e) {
+  // The canvas uses object-fit: contain, so when the window aspect doesn't
+  // match the virtual aspect (480:270), the rendered image is letterboxed
+  // inside the canvas element. We back out the letterbox offset before
+  // scaling, otherwise clicks near the bottom of the visible image land
+  // hundreds of virtual pixels above where the user aimed.
   const rect = canvas.getBoundingClientRect();
+  const vAspect = CONFIG.virtualWidth / CONFIG.virtualHeight;
+  const eAspect = rect.width / rect.height;
+  let renderedW, renderedH, offsetX, offsetY;
+  if (eAspect > vAspect) {
+    renderedH = rect.height;
+    renderedW = rect.height * vAspect;
+    offsetX = (rect.width - renderedW) / 2;
+    offsetY = 0;
+  } else {
+    renderedW = rect.width;
+    renderedH = rect.width / vAspect;
+    offsetX = 0;
+    offsetY = (rect.height - renderedH) / 2;
+  }
   return [
-    (e.clientX - rect.left) * (CONFIG.virtualWidth / rect.width),
-    (e.clientY - rect.top) * (CONFIG.virtualHeight / rect.height),
+    (e.clientX - rect.left - offsetX) * (CONFIG.virtualWidth / renderedW),
+    (e.clientY - rect.top  - offsetY) * (CONFIG.virtualHeight / renderedH),
   ];
 }
 
