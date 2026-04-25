@@ -19,7 +19,8 @@ import { updateBriefing, renderBriefing, briefingClickHit, collapseBriefing } fr
 import { renderMuteIcon, muteIconClickHit } from './ui/muteIcon.js';
 import { renderCasualtyHud } from './ui/casualtyHud.js';
 import { playSfx, toggleMute, getAudioContext, startSfx, stopSfx } from './audio/sfx.js';
-import { startSim, stopSim, tickSim, listStrategies, downloadSimData, clearSimData } from './game/simHarness.js';
+import { startSim, stopSim, tickSim, listStrategies, downloadSimData, clearSimData,
+         startBatch, abortBatch, tickBatch } from './game/simHarness.js';
 import { updateMusic } from './audio/music.js';
 import { renderStartScreen } from './ui/startScreen.js';
 import { updateTooltip, renderTooltip } from './ui/tooltip.js';
@@ -73,6 +74,7 @@ function frame(tMs) {
   updateExplosions(gameState, dt);
   updateTrucks(gameState, dt);
   updateMusic(gameState);
+  tickBatch(gameState);
 
   // Render skip for sim mode — draw only a minimal banner so the sim can
   // use the full frame budget on updates. Toggle with state.simSkipRender.
@@ -86,7 +88,11 @@ function frame(tMs) {
     ctx.fillStyle = CONFIG.colors.alertAmber;
     const w = gameState.wave?.number ?? 1;
     const phase = gameState.wave?.phase ?? 'prep';
-    ctx.fillText('SIM RUNNING',
+    const inBatch = gameState.batch?.active;
+    const headline = inBatch
+      ? 'BATCH ' + (gameState.batch.done + 1) + '/' + gameState.batch.total
+      : 'SIM RUNNING';
+    ctx.fillText(headline,
       CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 - 12);
     ctx.font = '8px "Press Start 2P", monospace';
     ctx.fillStyle = CONFIG.colors.friendlyCyan;
@@ -104,8 +110,18 @@ function frame(tMs) {
       '  LAS ' + (gameState.inventory.laser ?? 0) +
       '  HPM ' + (gameState.inventory.hpm ?? 0),
       CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 32);
-    ctx.fillText('T to stop  ·  Shift+T to export CSV',
-      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 48);
+    if (inBatch) {
+      ctx.fillStyle = CONFIG.colors.successGreen;
+      ctx.fillText('wins ' + gameState.batch.wins + ' / ' + gameState.batch.done +
+        '   (run ' + (gameState.batch.done + 1) + ' of ' + gameState.batch.total + ')',
+        CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 48);
+      ctx.fillStyle = CONFIG.colors.accentWhite;
+      ctx.fillText('Esc to abort  ·  Shift+T to export CSV',
+        CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 60);
+    } else {
+      ctx.fillText('T to stop  ·  Shift+T to export CSV',
+        CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2 + 48);
+    }
     ctx.restore();
     requestAnimationFrame(frame);
     return;
@@ -325,6 +341,26 @@ window.addEventListener('keydown', e => {
   if ((e.key === 'T' || e.key === 't') && e.shiftKey) {
     if (e.ctrlKey || e.metaKey) clearSimData();
     else downloadSimData();
+    return;
+  }
+  // Shift+B — start a batch of 10 sim runs (current strategy index, no render).
+  // Escape during batch = abort.
+  if ((e.key === 'B' || e.key === 'b') && e.shiftKey) {
+    if (gameState.batch?.active) { abortBatch(gameState); return; }
+    if (gameState.screenPhase !== 'playing') {
+      gameState.mode = 'campaign';
+      applyMode('campaign');
+      applyDelivery(gameState, 0);
+      gameState.stats.runStartMs = Date.now();
+      gameState.screenPhase = 'playing';
+    }
+    const strategies = listStrategies();
+    const pick = strategies[(simStrategyIdx++) % strategies.length];
+    startBatch(gameState, { strategy: pick, total: 10, speed: 60 });
+    return;
+  }
+  if (e.key === 'Escape' && gameState.batch?.active) {
+    abortBatch(gameState);
     return;
   }
   // T — toggle sim harness.

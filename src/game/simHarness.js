@@ -17,6 +17,8 @@
 
 import { MAP } from './map.js';
 import { placeDefense } from './defenses.js';
+import { resetGameState } from './state.js';
+import { applyMode } from '../config.js';
 
 const STRATEGIES = {
   // Minimum viable loadout spread across waves 1-4. Tuned to not crash if
@@ -105,8 +107,24 @@ export function startSim(state, { strategy = 'early-rf', speed = 10 } = {}) {
   state.simStats = newStatsBlock(strategy);
   state.simStrategy = (STRATEGIES[strategy] ?? []).map(s => ({ ...s, done: false }));
   state.simStartWallMs = Date.now();
+  state.simLog = state.simLog ?? [];
+  state.simLastWave = 0;
+  state._simRuns = (state._simRuns ?? 0) + 1;
+  state.simStats.runIdx = state._simRuns;
+  appendLog(state, '-- run ' + state._simRuns + ' --');
   console.log('[sim] start strategy=' + strategy + ' speed=' + speed + 'x');
 }
+
+// Add a line to the rolling log, trim to last ~200 entries so memory stays
+// bounded across many runs. Messages are intentionally short (≤17 chars) so
+// they fit the 120-px sidebar panel at the 6-px Press Start 2P font.
+export function appendLog(state, msg) {
+  if (!state.simLog) state.simLog = [];
+  state.simLog.push(msg);
+  if (state.simLog.length > 200) state.simLog.splice(0, state.simLog.length - 200);
+}
+
+const TYPE_ABBR = { rfJammer: 'rfJ', interceptor: 'int', laser: 'las', hpm: 'hpm' };
 
 export function stopSim(state, outcome = 'abort') {
   if (!state.simMode) return;
@@ -129,6 +147,7 @@ export function stopSim(state, outcome = 'abort') {
     ? Object.values(state.bridgeHp).filter(h => h > 0).length
     : 0;
   const total = appendSimRun(s);
+  appendLog(state, 'end ' + outcome + ' ' + s.wavesSurvived + '/5 c' + s.casualties);
   console.log('[sim] end — recorded run #' + total, s);
   console.table?.([{
     strategy: s.strategy,
@@ -155,23 +174,93 @@ export function tickSim(state) {
     state.briefing.phase = 'idle';
     state.briefing.expandedOnce = true;
   }
-  // Prep phase — try to execute this wave's placements.
-  if (state.wave?.phase !== 'prep') return;
-  const wn = state.wave.number;
-  for (const step of state.simStrategy) {
-    if (step.done) continue;
-    if (step.waveNumber !== wn) continue;
-    const stock = state.inventory?.[step.type] ?? 0;
-    if (stock <= 0) continue;   // wait for supply
-    const d = placeDefense(state, step.type, step.tile, step.facingRad ?? 0);
-    if (d) {
-      step.done = true;
-      console.log('[sim] placed ' + step.type + ' @ (' + step.tile.x + ',' + step.tile.y + ') W' + wn);
+  // Log wave transitions (fires once per new wave).
+  if (state.wave?.number !== state.simLastWave) {
+    state.simLastWave = state.wave.number;
+    appendLog(state, 'W' + state.wave.number + ' ' + state.wave.phase);
+  }
+  if (state.wave?.phase === 'prep') {
+    const wn = state.wave.number;
+    for (const step of state.simStrategy) {
+      if (step.done) continue;
+      if (step.waveNumber !== wn) continue;
+      const stock = state.inventory?.[step.type] ?? 0;
+      if (stock <= 0) continue;
+      const d = placeDefense(state, step.type, step.tile, step.facingRad ?? 0);
+      if (d) {
+        step.done = true;
+        appendLog(state, '+' + (TYPE_ABBR[step.type] ?? step.type) + ' ' + step.tile.x + ',' + step.tile.y);
+      }
     }
   }
   // Detect terminal states for reporting.
   if (state.winFlag) stopSim(state, 'win');
   else if (state.loseFlag) stopSim(state, 'lose');
+}
+
+// Batch mode — runs N sims of the same strategy back-to-back with rendering
+// disabled, so a tuning sweep can finish in a few seconds. Per-run stats land
+// in localStorage via the same path as a single sim, so CSV export works.
+export function startBatch(state, { strategy = 'early-rf', total = 10, speed = 60 } = {}) {
+  if (state.batch?.active) return;
+  state.batch = state.batch ?? {};
+  state.batch.active = true;
+  state.batch.total = Math.max(1, total | 0);
+  state.batch.done = 0;
+  state.batch.wins = 0;
+  state.batch.strategy = strategy;
+  state.batch.abort = false;
+  state.batch._runStarted = false;
+  state.batch._prevSpeed = state.simSpeed ?? 10;
+  state.batch._prevSkip = state.simSkipRender ?? false;
+  state.simSpeed = speed;
+  state.simSkipRender = true;
+  console.log('[batch] start strategy=' + strategy + ' total=' + total + ' speed=' + speed + 'x');
+}
+
+export function abortBatch(state) {
+  if (!state.batch?.active) return;
+  state.batch.abort = true;
+  if (state.simMode) stopSim(state, 'abort');
+}
+
+// Called every frame from main.js. State machine:
+//   - if a run is in progress (simMode), do nothing
+//   - if a previous run just ended, count the outcome
+//   - if we're done (or aborted), finish and restore speed/render
+//   - otherwise reset the world and start the next run
+export function tickBatch(state) {
+  if (!state.batch?.active) return;
+  if (state.simMode) return;
+
+  if (state.batch._runStarted) {
+    state.batch.done += 1;
+    if (state.simStats?.outcome === 'win') state.batch.wins += 1;
+    state.batch._runStarted = false;
+  }
+
+  if (state.batch.abort || state.batch.done >= state.batch.total) {
+    finishBatch(state);
+    return;
+  }
+
+  // Fresh world for the next run.
+  resetGameState();
+  applyMode('campaign');
+  state.screenPhase = 'playing';
+  state.briefing.phase = 'idle';
+  state.briefing.expandedOnce = true;
+  startSim(state, { strategy: state.batch.strategy, speed: state.simSpeed });
+  state.batch._runStarted = true;
+}
+
+function finishBatch(state) {
+  const b = state.batch;
+  console.log('[batch] end ' + (b.abort ? 'aborted ' : '') +
+    b.done + '/' + b.total + ' runs · wins ' + b.wins + ' · ' + b.strategy);
+  b.active = false;
+  state.simSpeed = b._prevSpeed;
+  state.simSkipRender = b._prevSkip;
 }
 
 function newStatsBlock(strategy) {
