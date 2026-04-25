@@ -1,5 +1,5 @@
 import { CONFIG, applyMode } from './config.js';
-import { gameState, resetGameState, applyDelivery, updateTrucks, toggleBackdrop } from './game/state.js';
+import { gameState, resetGameState, applyDelivery, updateTrucks, toggleBackdrop, applyBackdropAutoForPhase } from './game/state.js';
 import { MAP } from './game/map.js';
 import { renderMap, renderTrucks, renderStatsColumn } from './game/mapRenderer.js';
 import { renderChrome } from './ui/uiChrome.js';
@@ -75,6 +75,7 @@ function frame(tMs) {
   updateTrucks(gameState, dt);
   updateMusic(gameState);
   tickBatch(gameState);
+  applyBackdropAutoForPhase(gameState);
 
   // Render skip for sim mode — draw only a minimal banner so the sim can
   // use the full frame budget on updates. Toggle with state.simSkipRender.
