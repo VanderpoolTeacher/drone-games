@@ -24,6 +24,7 @@ import { startSim, stopSim, tickSim, listStrategies, downloadSimData, clearSimDa
 import { updateMusic } from './audio/music.js';
 import { renderStartScreen } from './ui/startScreen.js';
 import { updateTooltip, renderTooltip } from './ui/tooltip.js';
+import { renderChangelog } from './ui/changelog.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -42,7 +43,7 @@ function frame(tMs) {
   prevMs = tMs;
 
   if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
-      && !gameState.helpVisible) {
+      && !gameState.helpVisible && !gameState.changelogVisible) {
     if (gameState.simMode) {
       // Fixed-dt reps let the sim run much faster than real-time. Budget
       // ~8 ms of wall time per frame so the tab stays responsive.
@@ -171,7 +172,7 @@ function frame(tMs) {
     ctx.restore();
   }
   if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
-      && !gameState.helpVisible) {
+      && !gameState.helpVisible && !gameState.changelogVisible) {
     ctx.save();
     ctx.font = '6px "Press Start 2P", monospace';
     ctx.textAlign = 'left';
@@ -181,6 +182,7 @@ function frame(tMs) {
     ctx.restore();
   }
   if (gameState.helpVisible) renderHelp(ctx);
+  if (gameState.changelogVisible) renderChangelog(ctx);
   if (gameState.simMode) {
     ctx.save();
     ctx.font = '8px "Press Start 2P", monospace';
@@ -348,6 +350,15 @@ window.addEventListener('keydown', e => {
   // H toggles the help overlay at any time.
   if (e.key === 'h' || e.key === 'H') {
     gameState.helpVisible = !gameState.helpVisible;
+    return;
+  }
+  // Shift+C toggles the changelog overlay (issue #46).
+  if ((e.key === 'c' || e.key === 'C') && e.shiftKey) {
+    gameState.changelogVisible = !gameState.changelogVisible;
+    return;
+  }
+  if (e.key === 'Escape' && gameState.changelogVisible) {
+    gameState.changelogVisible = false;
     return;
   }
   // S — run the audio test suite (one-shot every 400 ms, continuous blocks
@@ -519,6 +530,7 @@ function renderHelp(ctx) {
     '  B        cycle backdrop opacity',
     '  M        toggle mute',
     '  H        toggle this help',
+    '  Shift+C  toggle changelog',
     '  ESC      cancel placement / exit preview',
     '  type M-A-P at title  open static map preview',
     '',

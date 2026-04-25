@@ -303,6 +303,7 @@ export const gameState = {
   },
   tooltipKey: null,
   helpVisible: false,
+  changelogVisible: false,
   // Sim harness — when true, main loop fast-forwards and auto-places defenses
   // per a scripted strategy. See tools/sim-runner.js + main.js frame loop.
   simMode: false,
