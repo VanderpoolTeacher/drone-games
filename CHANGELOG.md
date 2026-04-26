@@ -36,6 +36,14 @@ load time, splitting on `## ` version headings.
   each with a one-line descriptor. Names show on the INTEL
   FORECAST page header and on the bottom-right HUD during the
   active phase (replaces "INCOMING") (#8)
+- Radar / detection layer (#6): drones outside any defense's detect
+  bubble render as a faint blip (no full sprite) and CAN'T be
+  targeted. New "Radar" defense (sensing-only, no engagement,
+  detectRange=180 px) extends coverage. Each existing defense uses
+  its engage range as innate detect range; RF Jammer is the
+  exception with detectRange=110 (RF-DF realism). Radar deliveries
+  arrive on waves 1 and 3; trickle pool now includes radar.
+  Hotkey: 5 / Y.
 - Repair: click a placed defense (without selecting a defense in the
   palette) to consume 1 of the matching inventory type and restore
   1 HP. A green ring pulses on success. Lets capped supplies (RF

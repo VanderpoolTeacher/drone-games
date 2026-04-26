@@ -53,7 +53,9 @@ function drawGhostAndRange(ctx, state) {
   if (!tile) return;
   const { x: cx, y: cy } = tileToPixel(tile);
   const type = state.placementMode.type;
-  const range = CONFIG.defenses[type]?.range ?? 0;
+  const range = CONFIG.defenses[type]?.range
+    ?? CONFIG.defenses[type]?.detectRange   // radar — sensing-only (#6)
+    ?? 0;
 
   ctx.save();
   ctx.globalAlpha = 0.5;

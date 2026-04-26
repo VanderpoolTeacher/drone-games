@@ -145,6 +145,7 @@ export function spawnDrone(state, type, opts = {}) {
     trailSampleTimer: 0,
     commitLineFrame: 0,
     speedMultiplier: 1,
+    detected: false,                               // sensor gate (#6)
   };
   state.drones.push(drone);
   return drone;
@@ -173,6 +174,12 @@ export function renderDrones(ctx, state) {
 
   const tMs = performance.now();
   for (const d of state.drones) {
+    // Sensor gate (#6): undetected drones render as a faint cyan contact
+    // dot rather than the full sprite. Defenses can't target them either.
+    if (d.detected === false) {
+      drawContactDot(ctx, d, tMs);
+      continue;
+    }
     if (d.type === 'payloadDelivery') {
       drawPayload(ctx, d);
       continue;
@@ -190,6 +197,15 @@ export function renderDrones(ctx, state) {
 
 // Payload = MQ-style reaper drone pixel art (inspired by the reference image):
 // slim fuselage, wide straight wings, V-tail, munitions on pylons.
+// Faint blip for undetected drones (#6). Slow blink so the screen doesn't
+// look empty when nothing's in sensor range.
+function drawContactDot(ctx, d, tMs) {
+  const blink = Math.floor(tMs / 600) % 2 === 0;
+  if (!blink) return;
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(Math.floor(d.x), Math.floor(d.y), 1, 1);
+}
+
 function drawPayload(ctx, d) {
   const heading = Math.atan2(d.vy ?? 0, d.vx ?? 0);
   ctx.save();

@@ -1,13 +1,14 @@
 import { CONFIG } from '../config.js';
 
-const BUTTON_W = 60;
+const BUTTON_W = 50;
 const BUTTON_H = 28;
 const BUTTON_GAP = 4;
 const BUTTONS = [
-  { type: 'rfJammer',        label: 'RF JAM',  enabled: true  },
+  { type: 'rfJammer',        label: 'RF JAM',  enabled: true },
   { type: 'interceptor',     label: 'INTRCPT', enabled: true },
-  { type: 'laser',           label: 'LASER',   enabled: true  },
-  { type: 'hpm',             label: 'HPM',     enabled: true  },
+  { type: 'laser',           label: 'LASER',   enabled: true },
+  { type: 'hpm',             label: 'HPM',     enabled: true },
+  { type: 'radar',           label: 'RADAR',   enabled: true },
 ];
 
 export function renderPalette(ctx, state) {

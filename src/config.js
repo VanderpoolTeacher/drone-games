@@ -62,6 +62,7 @@ export const CONFIG = {
       hp: 3,   // all defenses capped at 3 HP
       installMs: 3000,
       range: 60,
+      detectRange: 110,              // RF-DF — sees beyond jam range (#6)
       effect: 'slow',
       slowFactor: 0.5,               // multiplies drone speed while in range
       // Strong vs ISR (FPV, C2-dependent); weak vs OWA (preprogrammed) and Payload (armored comms)
@@ -113,6 +114,17 @@ export const CONFIG = {
       size: 24,
       // Facing defaults to north when placed; future versions may allow rotation
       defaultFacingDeg: 270,         // 270° = facing up/north in screen coords
+    },
+    // Sensing — passive radar (#6). No engagement; extends the detection
+    // bubble so other defenses can see (and target) drones that would
+    // otherwise be too far for their innate detect range.
+    radar: {
+      displayName: 'Radar',
+      category: 'sensing',
+      hp: 3,
+      installMs: 4000,
+      detectRange: 180,
+      size: 20,
     },
   },
 
@@ -402,6 +414,15 @@ export const CONFIG = {
         'WEAK: Single high-HP targets',
       ],
     },
+    'defense-radar': {
+      header: 'RADAR',
+      headerColor: 'friendlyCyan',
+      body: [
+        'Sensing — wide-area detection',
+        'NO ENGAGEMENT — extends sight only',
+        'Lets other defenses target distant drones',
+      ],
+    },
     'structure-power': {
       header: 'POWER SUBSTATION',
       body: ['Critical infrastructure'],
@@ -637,9 +658,9 @@ CONFIG.modes = {
     },
     prepTimeBetweenWaves: 12000,   // was 20s — less prep
     deliveries: [
-      { rfJammer: 1 },                                 // Wave 1 — one RF only
+      { rfJammer: 1, radar: 1 },                       // Wave 1 — RF + first radar
       { laser: 1 },                                    // Wave 2 — laser as promised
-      { rfJammer: 1, interceptor: 1 },                 // Wave 3
+      { rfJammer: 1, interceptor: 1, radar: 1 },       // Wave 3 — second radar
       {              interceptor: 1, laser: 1 },       // Wave 4
       {              interceptor: 1,            hpm: 1 }, // Wave 5
     ],

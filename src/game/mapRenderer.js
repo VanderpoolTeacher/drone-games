@@ -233,6 +233,7 @@ function drawStatsColumn(ctx, state) {
   ctx.fillText('INT ' + (inv.interceptor ?? 0), lx, ly); ly += 8;
   ctx.fillText('LAS ' + (inv.laser ?? 0), lx, ly); ly += 8;
   ctx.fillText('HPM ' + (inv.hpm ?? 0), lx, ly); ly += 8;
+  ctx.fillText('RAD ' + (inv.radar ?? 0), lx, ly); ly += 8;
 
   // Intel-leak meter + defense-response indicator (#32). Both values feed
   // the next-wave difficulty curve — surface them so the player can react.

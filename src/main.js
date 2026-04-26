@@ -8,7 +8,7 @@ import { renderPlacement, pixelToTile, mapHitTest, isValidZone } from './ui/plac
 import { renderPalette, paletteHitTest } from './ui/palette.js';
 import { updateExplosions, renderExplosions } from './game/explosions.js';
 import { renderDrones, updateDrones } from './game/drones.js';
-import { updateDefenses, renderDefenses, placeDefense, applyJamEffects, renderBeams, renderDefenseDisablePulse, hitTestDefense } from './game/defenses.js';
+import { updateDefenses, renderDefenses, placeDefense, applyJamEffects, renderBeams, renderDefenseDisablePulse, hitTestDefense, updateDetection } from './game/defenses.js';
 import { updateProjectiles, renderProjectiles } from './game/projectiles.js';
 import { updateStructures } from './game/structures.js';
 import { updateWave } from './game/wave.js';
@@ -54,6 +54,7 @@ function frame(tMs) {
       for (let i = 0; i < reps; i++) {
         applyJamEffects(gameState);
         updateDrones(gameState, fixedDt);
+        updateDetection(gameState);
         updateDefenses(gameState, fixedDt);
         updateProjectiles(gameState, fixedDt);
         updateWave(gameState, fixedDt);
@@ -65,6 +66,7 @@ function frame(tMs) {
     } else {
       applyJamEffects(gameState);
       updateDrones(gameState, dt);
+      updateDetection(gameState);
       updateDefenses(gameState, dt);
       updateProjectiles(gameState, dt);
       updateWave(gameState, dt);
@@ -461,7 +463,8 @@ window.addEventListener('keydown', e => {
     const map = { q: 'rfJammer', '1': 'rfJammer',
                   w: 'interceptor', '2': 'interceptor',
                   e: 'laser',       '3': 'laser',
-                  r: 'hpm',         '4': 'hpm' };
+                  r: 'hpm',         '4': 'hpm',
+                  y: 'radar',       '5': 'radar' };
     if (map[key]) {
       const type = map[key];
       const same = gameState.placementMode?.type === type;
@@ -561,8 +564,8 @@ function renderHelp(ctx) {
     '  Right-click              cancel placement',
     '',
     'KEYBOARD',
-    '  Q or 1 / W or 2 / E or 3 / R or 4   select defense',
-    '     (RF Jammer / Interceptor / Laser / HPM)',
+    '  Q or 1 / W or 2 / E or 3 / R or 4 / Y or 5  select defense',
+    '     (RF Jammer / Interceptor / Laser / HPM / Radar)',
     '  B        cycle backdrop opacity',
     '  M        toggle mute',
     '  H        toggle this help',
