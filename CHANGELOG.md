@@ -3,7 +3,9 @@
 Player-facing change log. The in-game overlay (Shift+C) parses this file at
 load time, splitting on `## ` version headings.
 
-## v0.1.1 (in progress)
+## v0.1.2 (in progress)
+
+## v0.1.1 — 2026-04-26
 - Sim harness: live sidebar event log during a run; batch mode runs 10
   sims back-to-back at 60x with no render and exports CSV (#43)
 - Fix: click coords respect `object-fit: contain` letterbox so the
