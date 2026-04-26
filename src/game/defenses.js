@@ -37,6 +37,7 @@ export function placeDefense(state, type, tile, facingRad = 0) {
     pulseFlashFrame: 0,
     laserFiring: false,
     rfJamming: false,
+    ammo: cfg.magazine ?? Infinity,   // interceptor magazine (#7)
   };
   state.defenses.push(defense);
   state.inventory[type] -= 1;
@@ -70,11 +71,13 @@ export function updateDefenses(state, dt) {
 
     if (d.type === 'interceptor') {
       if (d.cooldownMs > 0) continue;
+      if (d.ammo <= 0) { d.targetId = null; continue; }   // empty magazine (#7)
       const target = pickClosestToStructureTarget(state, d, CONFIG.defenses.interceptor.range);
       if (!target) { d.targetId = null; continue; }
       fireInterceptor(state, d, target);
       playSfx('interceptorLaunch');
       d.cooldownMs = CONFIG.defenses.interceptor.cooldown;
+      d.ammo -= 1;
       d.targetId = target.id;
     } else if (d.type === 'rfJammer') {
       // area effect handled by applyJamEffects; jam-sfx transitions also handled there.
@@ -388,21 +391,28 @@ function drawRfJammer(ctx, d) {
 function drawInterceptor(ctx, d) {
   // IN-a: SAM battery — amber square base, 3 upright missile pips on top,
   //       small swivel dot centered so the barrel reads as rotatable.
+  // Pips step-dim as the magazine depletes (#7): 3 lit at full, 0 lit empty.
   const x = Math.floor(d.x), y = Math.floor(d.y);
   ctx.fillStyle = CONFIG.colors.alertAmber;
-  // Base box (5×4)
   ctx.fillRect(x - 2, y - 1, 5, 4);
-  // Missile pips — 3 upright tubes
-  ctx.fillStyle = CONFIG.colors.accentWhite;
-  ctx.fillRect(x - 2, y - 4, 1, 3);
-  ctx.fillRect(x,     y - 5, 1, 4);
-  ctx.fillRect(x + 2, y - 4, 1, 3);
-  // Warhead tips
-  ctx.fillStyle = CONFIG.colors.threatRed;
-  ctx.fillRect(x - 2, y - 4, 1, 1);
-  ctx.fillRect(x,     y - 5, 1, 1);
-  ctx.fillRect(x + 2, y - 4, 1, 1);
-  // Swivel dot
+
+  const ammo = d.ammo ?? Infinity;
+  const mag = CONFIG.defenses.interceptor.magazine ?? 1;
+  const lit = ammo === Infinity ? 3 : Math.ceil((ammo / mag) * 3);
+  const pips = [
+    { x: x - 2, y: y - 4, h: 3 },
+    { x: x,     y: y - 5, h: 4 },
+    { x: x + 2, y: y - 4, h: 3 },
+  ];
+  for (let i = 0; i < pips.length; i++) {
+    const isLit = i < lit;
+    ctx.fillStyle = isLit ? CONFIG.colors.accentWhite : CONFIG.colors.gridLine;
+    ctx.fillRect(pips[i].x, pips[i].y, 1, pips[i].h);
+    if (isLit) {
+      ctx.fillStyle = CONFIG.colors.threatRed;
+      ctx.fillRect(pips[i].x, pips[i].y, 1, 1);
+    }
+  }
   ctx.fillStyle = CONFIG.colors.gridLine;
   ctx.fillRect(x, y + 1, 1, 1);
 }
