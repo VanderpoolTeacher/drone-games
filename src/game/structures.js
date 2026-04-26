@@ -1,6 +1,7 @@
 import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 import { playSfx, startSfx, stopAllContinuous } from '../audio/sfx.js';
+import { isStructureTypeDown } from './state.js';
 
 const FINANCIAL_PENALTY_PER_TILE = 500;
 
@@ -22,7 +23,10 @@ export function applyDamage(state, structureId, amount) {
     state.stats.structuresLost += 1;
     const meta = MAP.structures.find(s => s.id === structureId);
     if (meta?.type === 'financial') {
-      state.financialPenalty = (state.financialPenalty ?? 0) + FINANCIAL_PENALTY_PER_TILE;
+      // Federal Reserve down → financial damage doubles (#10).
+      const fedMult = isStructureTypeDown(state, 'fedReserve') ? 2 : 1;
+      state.financialPenalty = (state.financialPenalty ?? 0)
+        + FINANCIAL_PENALTY_PER_TILE * fedMult;
     }
   } else {
     playSfx('structureHit');

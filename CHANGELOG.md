@@ -36,6 +36,14 @@ load time, splitting on `## ` version headings.
   each with a one-line descriptor. Names show on the INTEL
   FORECAST page header and on the bottom-right HUD during the
   active phase (replaces "INCOMING") (#8)
+- Critical structures now have gameplay consequences when destroyed
+  (#10):
+  · Power Substation → next deliveries arrive at half supply
+  · Comms Tower → RF Jammers operate at 70% range
+  · City Hall → no new commander briefings
+  · UN HQ → INTEL FORECAST page hidden (intel sharing offline)
+  · Water Plant → +50% casualty lethality (stacks with Hospital)
+  · Federal Reserve → financial-tile damage doubles
 
 ## v0.1.0
 - Initial release: Manhattan map, intel loop, commander briefings,

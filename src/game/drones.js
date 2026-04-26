@@ -670,7 +670,11 @@ function executePayloadDrop(d, state, cx, cy) {
   }
   const hospital = MAP.structures.find(s => s.type === 'hospital');
   const hospitalDown = hospital && (state.structureHp[hospital.id] ?? 0) <= 0;
-  const casualtyMult = hospitalDown ? 1.5 : 1;
+  const water = MAP.structures.find(s => s.type === 'water');
+  const waterDown = water && (state.structureHp[water.id] ?? 0) <= 0;
+  // Hospital down → +50% lethality (no triage). Water Plant down → +50%
+  // (no clean water for first responders). They stack (#10).
+  const casualtyMult = (hospitalDown ? 1.5 : 1) * (waterDown ? 1.5 : 1);
   for (const apt of MAP.apartments) {
     const p = tileToPixel(apt.tile);
     const dist = Math.hypot(p.x - cx, p.y - cy);
