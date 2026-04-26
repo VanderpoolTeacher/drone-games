@@ -146,7 +146,16 @@ export const CONFIG = {
         { type: 'owa', count: 8,  spawnInterval: 5000, spawnDelayMs: 5000 },
         { type: 'payloadDelivery', count: 3, spawnInterval: 9000, spawnDelayMs: 15000, targetBridges: true },
       ],
-      briefing: "More ISR, heavier volume this time. Widen your jammer coverage. Don't let 'em slip past on the edges. Intel says Red Cell starts mixing OWA strikes next — keep something kinetic in reserve.",
+      briefing: [
+        "06:31 LOCAL.\n\n" +
+        "That was the probe. They confirmed our perimeter, lit up our positions, scored on the way in. Round two starts now — more ISR, OWA in the mix. They're testing the edges.\n\n" +
+        "Widen RF coverage on the flanks. Whatever you didn't have on the board last wave, get it on now.",
+
+        "What's at stake, Watchfloor:\n\n" +
+        "The neighborhoods they're pushing into. People in Midtown apartments are on the line — they hear the sirens, they're calling 911, they want to know who's holding the line.\n\n" +
+        "That's you.\n\n" +
+        "Don't give them another foothold.",
+      ],
       portrait: 'neutral',
     },
     // Wave 3 — Strike.
@@ -156,7 +165,15 @@ export const CONFIG = {
         { type: 'owa', count: 20, spawnInterval: 3000, spawnDelayMs: 3000 },
         { type: 'payloadDelivery', count: 4, spawnInterval: 9000, spawnDelayMs: 10000 },
       ],
-      briefing: "They're mixing now. ISR north, OWA east. RF won't catch a committed OWA — it's preprogrammed, no link to kill. Interceptors east. Next wave: Payload birds, armored. Laser is the answer — save the delivery.",
+      briefing: [
+        "06:46 LOCAL.\n\n" +
+        "They've stopped probing. ISR spread north, OWA pressing east in commit lanes. RF won't catch a committed OWA — that link is dead the second it launches. Kinetic only east of Park.\n\n" +
+        "And they're staging armored Payload birds for the next push. Save your laser for what burns.",
+
+        "What's at stake, Watchfloor:\n\n" +
+        "Power. Comms. The substations and towers that keep this city talking, that keep the hospitals lit. If those go dark, we go dark.\n\n" +
+        "Hold the corridor. Pick your shots.",
+      ],
       portrait: 'stern',
     },
     // Wave 4 — Heavy.
@@ -166,7 +183,15 @@ export const CONFIG = {
         { type: 'owa', count: 20, spawnInterval: 3500, spawnDelayMs: 0 },
         { type: 'payloadDelivery', count: 10, spawnInterval: 7000, spawnDelayMs: 8000 },
       ],
-      briefing: "Payload birds inbound west — armored, so interceptors'll chip but laser burns through fast. OWA's still pressing east; keep that corridor locked. Next is the saturation run — all three types. HPM comes online in your next delivery. Don't sit on it.",
+      briefing: [
+        "07:02 LOCAL.\n\n" +
+        "Payload birds inbound from the west — armored, slow, but they will land what they carry. Interceptors will chip; lasers burn through fast. Burn them.\n\n" +
+        "OWA is still pressing your eastern corridor. Don't pull defenses off it. HPM comes online in your next delivery. The next wave is the saturation run — sit on HPM and you're done.",
+
+        "What's at stake, Watchfloor:\n\n" +
+        "The bridges. Every supply truck across the Hudson is one of yours. Every bridge they drop is your inventory crashing to zero.\n\n" +
+        "Eight million people are watching. Hold the line.",
+      ],
       portrait: 'stern',
     },
     // Wave 5 — Saturation.
@@ -176,7 +201,16 @@ export const CONFIG = {
         { type: 'owa', count: 32, spawnInterval: 2500, spawnDelayMs: 0 },
         { type: 'payloadDelivery', count: 12, spawnInterval: 5500, spawnDelayMs: 2000 },
       ],
-      briefing: "All of it. Saturation run — ISR, OWA, Payload, everything. You need the full stack. HPM earns its keep here. One pulse, many drones. Good luck, Watchfloor.",
+      briefing: [
+        "07:21 LOCAL.\n\n" +
+        "This is the last wave. ISR, OWA, Payload — all of it, all at once. They want the city.\n\n" +
+        "You have HPM now. Drop it where the swarm is densest — one pulse, many drones. Lasers on the armor, interceptors on the OWA, RF on the recon. Run the full stack.",
+
+        "What's at stake, Watchfloor:\n\n" +
+        "Everything. The grid. The hospitals. The bridges. The eight million people who never asked for any of this.\n\n" +
+        "You hold the line, or no one does.\n\n" +
+        "Good luck, Watchfloor.",
+      ],
       portrait: 'angry',
     },
   ],

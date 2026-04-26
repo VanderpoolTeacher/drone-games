@@ -11,6 +11,10 @@ load time, splitting on `## ` version headings.
 - Backdrop: auto-grid during prep, auto-image during attack; manual
   B-key override wins for the current phase only (#45)
 - Changelog overlay: Shift+C surfaces what changed (#46)
+- Briefings: waves 2-5 expanded into two-page commander briefings
+  matching wave 1's tone — timestamp opening, situational beat,
+  stakes, command voice. Dynamic intel/defense prefix still prepends
+  to page 0 (#34)
 
 ## v0.1.0
 - Initial release: Manhattan map, intel loop, commander briefings,
