@@ -13,6 +13,10 @@ load time, splitting on `## ` version headings.
 - Balance: laser DPS 40 → 25 (felt OP in playtest).
 - Balance: radar detectRange 180 → 130 (a single radar no longer
   covers the entire playable map; meaningful but partial coverage).
+- End screen: numeric SCORE and letter GRADE (S/A/B/C/D/F) now
+  surfaced alongside the existing stats so a run feels graded, not
+  just won/lost. Score weights and grade thresholds live in
+  config.js → scoring (#55).
 
 ## v0.1.1 — 2026-04-26
 - Sim harness: live sidebar event log during a run; batch mode runs 10
