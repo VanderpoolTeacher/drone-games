@@ -187,6 +187,21 @@ export function updateWave(state, dt) {
       });
     }
 
+    // Hard wave timer (#49). Stop spawning 5 s before maxMs so the last
+    // drones in flight have time to die or escape; at maxMs, force-clear
+    // any survivors so the wave-complete check below fires this frame.
+    const maxMs = CONFIG.waves[state.wave.number - 1]?.activeMaxMs;
+    if (maxMs) {
+      if (state.wave.activeElapsedMs >= maxMs - 5000) {
+        for (const p of state.wave.spawnProgress) {
+          if (p.spawned < p.count) p.spawned = p.count;
+        }
+      }
+      if (state.wave.activeElapsedMs >= maxMs) {
+        state.drones.length = 0;
+      }
+    }
+
     const allSpawned = state.wave.spawnProgress.every(p => p.spawned >= p.count);
     if (allSpawned && state.drones.length === 0) {
       if (state.wave.number < CONFIG.waves.length) {
