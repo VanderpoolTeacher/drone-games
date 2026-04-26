@@ -15,6 +15,19 @@ const TRAIL_MAX_SAMPLES = 8;
 const TRAIL_MAX_AGE_S = 1.2;
 const PAYLOAD_AOE_RADIUS = 48;  // TODO(tuning): promote to CONFIG.structures.payloadAoeRadius
 
+// Lane index 0/1/2 (left/center/right) by corridor x-anchor — matches the
+// existing intel-lane mapping used for laneIntel weighting.
+function corridorLane(c) {
+  const laneXs = [6, 16, 26];
+  const cx = (c.dropPoint ?? c.waypoints?.[c.waypoints.length - 1])?.x ?? 0;
+  let nearest = 0, minDx = Infinity;
+  for (let i = 0; i < laneXs.length; i++) {
+    const dx = Math.abs(laneXs[i] - cx);
+    if (dx < minDx) { minDx = dx; nearest = i; }
+  }
+  return nearest;
+}
+
 export function spawnDrone(state, type, opts = {}) {
   let corridors = MAP.corridors[type];
   if (!corridors || corridors.length === 0) return null;
@@ -34,6 +47,12 @@ export function spawnDrone(state, type, opts = {}) {
     if (filtered.length > 0) corridors = filtered;
   }
 
+  // Lane pin (#48 follow-up): bonus OWA from the jammed-lane escalation
+  // arrives with a fixed laneIdx so it concentrates on the jammed area.
+  if (type === 'owa' && opts.laneIdx !== undefined) {
+    const filtered = corridors.filter(c => corridorLane(c) === opts.laneIdx);
+    if (filtered.length > 0) corridors = filtered;
+  }
   // Intel-guided targeting: OWA prefers corridors whose targetStructureId
   // was observed by ISR last wave. Within that, it further prefers structures
   // that ISR saw NOT covered by an RF Jammer — Red Cell routes around the
@@ -359,7 +378,14 @@ function accumulateIntel(d, dt, state) {
       if (dx * dx + dy * dy <= rfRange * rfRange) { jammed = true; break; }
     }
   }
-  if (jammed) return;   // can't see through jamming — no intel banked
+  if (jammed) {
+    // Blocked scanning still tells Red Cell something's worth defending in
+    // this lane — they'll send extra OWA at the area next wave (#48).
+    if (!state.jammedLaneTimeThisWave) state.jammedLaneTimeThisWave = {};
+    const lj = d.corridorIdx ?? 0;
+    state.jammedLaneTimeThisWave[lj] = (state.jammedLaneTimeThisWave[lj] ?? 0) + dt;
+    return;   // no intel banked while jammed
+  }
   d.intel += dt;        // 1 pt/sec scanning unobstructed
   // Accumulate intel by ISR lane so the next wave can pick the "safest" one.
   if (!state.laneIntelThisWave) state.laneIntelThisWave = {};

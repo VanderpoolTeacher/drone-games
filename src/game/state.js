@@ -284,6 +284,8 @@ export const gameState = {
   lastWaveObservedStructures: new Set(),
   observedCoveredStructuresThisWave: new Set(),
   lastWaveObservedCoveredStructures: new Set(),
+  jammedLaneTimeThisWave: {},
+  lastWaveJammedLaneTime: {},
   payloadPool: 60,   // finite enemy payload stockpile per run
   laneIntelThisWave: {},
   lastWaveLaneIntel: {},
@@ -389,6 +391,8 @@ export function resetGameState() {
   gameState.lastWaveObservedStructures?.clear();
   gameState.observedCoveredStructuresThisWave?.clear();
   gameState.lastWaveObservedCoveredStructures?.clear();
+  gameState.jammedLaneTimeThisWave = {};
+  gameState.lastWaveJammedLaneTime = {};
   gameState.payloadPool = 60;
   gameState.stats.droneKills.isr = 0;
   gameState.stats.droneKills.owa = 0;
