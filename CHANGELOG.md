@@ -66,6 +66,11 @@ load time, splitting on `## ` version headings.
   reloads them automatically. Missile pips on the icon step-dim as
   the magazine depletes (3 → 2 → 1 → 0 lit). Forces real layering
   with laser / HPM at the saturation wave (#7)
+- Bridges fragile: a named bridge counts as functional only if every
+  tile of it is still alive. Damaging any tile takes the whole bridge
+  offline for delivery, so multi-tile spans (GW, Queensboro, etc.)
+  no longer absorb damage silently — one hit takes the whole supply
+  route down.
 - Critical structures now have gameplay consequences when destroyed
   (#10):
   · Power Substation → next deliveries arrive at half supply
