@@ -143,7 +143,8 @@ export function updateDefenses(state, dt) {
         }
         d.targetId = target.id;
       } else {
-        d.heatMs = Math.max(0, d.heatMs - dt * 1000);
+        // Heat persists between targets (#52). Reset only happens via the
+        // overheat→cooldown cycle above, or end-of-wave reload (wave.js).
         if (d.laserFiring) {
           stopSfx('laser-' + d.id);
           d.laserFiring = false;
@@ -254,6 +255,23 @@ export function renderDefenses(ctx, state) {
     else if (d.type === 'interceptor') drawInterceptor(ctx, d);
     else if (d.type === 'laser')     drawLaser(ctx, d);
     else if (d.type === 'radar')     drawRadar(ctx, d);
+    if (d.type === 'laser' && d.installMsRemaining <= 0) {
+      const cfg = CONFIG.defenses.laser;
+      let frac, color;
+      if (d.overheated) {
+        frac = d.cooldownMs / cfg.cooldownTime;
+        color = CONFIG.colors.threatRed;
+      } else {
+        frac = d.heatMs / cfg.overheatTime;
+        color = CONFIG.colors.alertAmber;
+      }
+      const barLen = Math.floor(Math.min(1, frac) * (DEFENSE_SIZE - 2));
+      if (barLen > 0) {
+        ctx.fillStyle = color;
+        ctx.fillRect(Math.floor(d.x - DEFENSE_SIZE / 2) + 1, Math.floor(d.y - DEFENSE_SIZE / 2) - 1, barLen, 1);
+      }
+    }
+
     if (d.type === 'hpm') {
       const cfg = CONFIG.defenses.hpm;
       drawHpm(ctx, d);
@@ -484,7 +502,7 @@ function drawLaser(ctx, d) {
   ctx.fillStyle = CONFIG.colors.gridLine;
   ctx.fillRect(x - 1, y - 1, 2, 1);
   // Muzzle glow
-  const firing = d.firingMs > 0 && !d.overheated;
+  const firing = d.laserFiring && !d.overheated;
   ctx.fillStyle = d.overheated ? CONFIG.colors.alertAmber
     : firing ? CONFIG.colors.accentWhite : CONFIG.colors.threatRed;
   ctx.fillRect(x - 1, y - 5, 2, 1);

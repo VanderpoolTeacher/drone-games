@@ -3,7 +3,7 @@
 Player-facing change log. The in-game overlay (Shift+C) parses this file at
 load time, splitting on `## ` version headings.
 
-## v0.1.2 (in progress)
+## v0.1.2-#56 (in progress)
 - Fix: title screen reads the released version from CHANGELOG.md
   instead of a hardcoded literal — was stuck on v0.1.0 even after
   the v0.1.1 cut.
@@ -13,6 +13,17 @@ load time, splitting on `## ` version headings.
 - Balance: laser DPS 40 → 25 (felt OP in playtest).
 - Balance: radar detectRange 180 → 130 (a single radar no longer
   covers the entire playable map; meaningful but partial coverage).
+- Fix: laser overheat now actually triggers in play (#52). Heat
+  used to decay 1:1 the moment a target died, so it reset between
+  every drone and never reached the overheat threshold. Heat now
+  persists across kills within a wave, forcing the laser to stop
+  and recharge under sustained pressure. A small heat/cooldown
+  bar above the laser shows current state. Heat resets at wave
+  end. Also fixes a latent bug where the laser muzzle never
+  showed its firing flare (read the wrong field).
+- Balance: laser overheatTime 3000ms → 4500ms — playtest felt
+  over-corrected with the fix above; this gives the beam ~50%
+  more on-target time before the recharge gate.
 - End screen: numeric SCORE and letter GRADE (S/A/B/C/D/F) now
   surfaced alongside the existing stats so a run feels graded, not
   just won/lost. Score weights and grade thresholds live in

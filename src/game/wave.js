@@ -250,8 +250,15 @@ export function updateWave(state, dt) {
         state.wave.prepMs = CONFIG.prepTimeBetweenWaves;
         state.wave.spawnProgress = [];
         // Reload interceptor magazines between waves (#7).
+        // Also reset laser heat/cooldown so a wave doesn't start with the
+        // beam already half-charged from late-wave kills (#52).
         for (const def of state.defenses) {
           if (def.type === 'interceptor') def.ammo = CONFIG.defenses.interceptor.magazine;
+          if (def.type === 'laser') {
+            def.heatMs = 0;
+            def.overheated = false;
+            def.cooldownMs = 0;
+          }
         }
         applyDelivery(state, state.wave.number - 1);
       } else {

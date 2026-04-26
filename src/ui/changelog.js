@@ -9,14 +9,16 @@ fetch('./CHANGELOG.md')
   .then(text => { entries = parseChangelog(text); })
   .catch(() => { entries = [{ version: '(changelog unavailable)', lines: [] }]; });
 
-// Latest released version (e.g. "v0.1.1") for use on the title screen.
-// Skips any heading marked "(in progress)" so unreleased work doesn't show.
-// Returns "v?.?.?" until the fetch resolves on first load.
+// Most recent version for the title screen. If the top heading is still
+// "(in progress)", show that with a "-dev" suffix so we know we're on an
+// unreleased build. Otherwise show the released version.
+// Heading suffixes like "v0.1.2-#52" are preserved so per-branch labels show.
 export function getReleasedVersion() {
+  const re = /v\d+\.\d+\.\d+(?:-[A-Za-z0-9#]+)?/;
   for (const e of entries) {
-    if (e.version.includes('(in progress)')) continue;
-    const m = e.version.match(/v\d+\.\d+\.\d+/);
-    if (m) return m[0];
+    const m = e.version.match(re);
+    if (!m) continue;
+    return e.version.includes('(in progress)') ? m[0] + '-dev' : m[0];
   }
   return 'v?.?.?';
 }
