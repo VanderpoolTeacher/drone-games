@@ -15,6 +15,9 @@ load time, splitting on `## ` version headings.
   matching wave 1's tone — timestamp opening, situational beat,
   stakes, command voice. Dynamic intel/defense prefix still prepends
   to page 0 (#34)
+- Pause: Space toggles pause during a live run (#12). Briefing
+  dismissal still gets first dibs on Space, so the player can read
+  before pausing.
 
 ## v0.1.0
 - Initial release: Manhattan map, intel loop, commander briefings,

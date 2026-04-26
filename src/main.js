@@ -43,7 +43,7 @@ function frame(tMs) {
   prevMs = tMs;
 
   if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
-      && !gameState.helpVisible && !gameState.changelogVisible) {
+      && !gameState.helpVisible && !gameState.changelogVisible && !gameState.paused) {
     if (gameState.simMode) {
       // Fixed-dt reps let the sim run much faster than real-time. Budget
       // ~8 ms of wall time per frame so the tab stays responsive.
@@ -172,7 +172,7 @@ function frame(tMs) {
     ctx.restore();
   }
   if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag
-      && !gameState.helpVisible && !gameState.changelogVisible) {
+      && !gameState.helpVisible && !gameState.changelogVisible && !gameState.paused) {
     ctx.save();
     ctx.font = '6px "Press Start 2P", monospace';
     ctx.textAlign = 'left';
@@ -183,6 +183,17 @@ function frame(tMs) {
   }
   if (gameState.helpVisible) renderHelp(ctx);
   if (gameState.changelogVisible) renderChangelog(ctx);
+  if (gameState.paused && gameState.screenPhase === 'playing'
+      && !gameState.loseFlag && !gameState.winFlag) {
+    ctx.save();
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = CONFIG.colors.alertAmber;
+    ctx.fillText('PAUSED  ·  SPACE TO RESUME',
+      CONFIG.virtualWidth / 2, CONFIG.virtualHeight / 2);
+    ctx.restore();
+  }
   if (gameState.simMode) {
     ctx.save();
     ctx.font = '8px "Press Start 2P", monospace';
@@ -418,6 +429,14 @@ window.addEventListener('keydown', e => {
     collapseBriefing(gameState);
     return;
   }
+  // Space pauses gameplay (issue #12). Only during a live run; a paused
+  // run still renders, just doesn't tick.
+  if (e.key === ' ' && gameState.screenPhase === 'playing'
+      && !gameState.loseFlag && !gameState.winFlag) {
+    gameState.paused = !gameState.paused;
+    e.preventDefault();   // stop browser scroll
+    return;
+  }
 
   // QWER / 1-4 during play → select defense from palette without clicking.
   if (gameState.screenPhase === 'playing' && !gameState.loseFlag && !gameState.winFlag) {
@@ -531,6 +550,7 @@ function renderHelp(ctx) {
     '  M        toggle mute',
     '  H        toggle this help',
     '  Shift+C  toggle changelog',
+    '  Space    pause / resume',
     '  ESC      cancel placement / exit preview',
     '  type M-A-P at title  open static map preview',
     '',
