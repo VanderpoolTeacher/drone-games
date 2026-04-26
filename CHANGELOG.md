@@ -13,6 +13,14 @@ load time, splitting on `## ` version headings.
 - Balance: laser DPS 40 → 25 (felt OP in playtest).
 - Balance: radar detectRange 180 → 130 (a single radar no longer
   covers the entire playable map; meaningful but partial coverage).
+- Fix: laser overheat now actually triggers in play (#52). Heat
+  used to decay 1:1 the moment a target died, so it reset between
+  every drone and never reached the overheat threshold. Heat now
+  persists across kills within a wave, forcing the laser to stop
+  and recharge under sustained pressure. A small heat/cooldown
+  bar above the laser shows current state. Heat resets at wave
+  end. Also fixes a latent bug where the laser muzzle never
+  showed its firing flare (read the wrong field).
 
 ## v0.1.1 — 2026-04-26
 - Sim harness: live sidebar event log during a run; batch mode runs 10
