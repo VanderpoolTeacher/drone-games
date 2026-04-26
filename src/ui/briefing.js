@@ -51,7 +51,51 @@ function briefingPages(state) {
   if (idx > 0) {
     pages[0] = buildBriefingPrefix(state) + pages[0];
   }
+  pages.push(intelForecastPage(state));
   return pages;
+}
+
+const TIER_TYPE_LABELS = {
+  isr: 'ISR',
+  owa: 'OWA',
+  payloadDelivery: 'Payload',
+};
+
+// Intel forecast page (#11). Each upcoming-wave drone group becomes one line
+// tagged HIGH / MED / LOW based on prior-wave ISR intel. Counts are
+// reported precisely on HIGH, hedged with ~ on MED, and given as "maybe"
+// with an "unconfirmed" caveat on LOW. Wave 1 has no prior recon → LOW.
+function intelForecastPage(state) {
+  const idx = state.briefing.activeBriefingIndex;
+  if (idx < 0 || idx >= CONFIG.waves.length) return '';
+  const wave = CONFIG.waves[idx];
+  const intel = state.lastWaveIsrIntel ?? 0;
+  const baseTier = intel > 45 ? 'HIGH'
+                 : intel > 20 ? 'HIGH'
+                 : intel > 5  ? 'MED'
+                 : 'LOW';
+  // At intel > 20 the LAST drone group steps down one tier (gaps in recon).
+  const stepDown = intel > 20 && intel <= 45;
+  const lines = ['INTEL FORECAST', ''];
+  for (let i = 0; i < wave.drones.length; i++) {
+    const d = wave.drones[i];
+    const tier = (stepDown && i === wave.drones.length - 1) ? 'MED' : baseTier;
+    const label = TIER_TYPE_LABELS[d.type] ?? d.type;
+    let body;
+    if (tier === 'HIGH')      body = String(d.count) + ' ' + label;
+    else if (tier === 'MED')  body = '~' + d.count + ' ' + label;
+    else                       body = 'maybe ' + label + ' (unconfirmed)';
+    lines.push(tier.padEnd(5, ' ') + ' ' + body);
+  }
+  return lines.join('\n');
+}
+
+function tierColorFor(line) {
+  if (line.startsWith('HIGH ')) return CONFIG.colors.successGreen;
+  if (line.startsWith('MED  ')) return CONFIG.colors.alertAmber;
+  if (line.startsWith('LOW  ')) return CONFIG.colors.gridLine;
+  if (line === 'INTEL FORECAST') return CONFIG.colors.friendlyCyan;
+  return null;
 }
 
 function buildBriefingPrefix(state) {
@@ -150,8 +194,8 @@ function drawBubble(ctx, state) {
   const innerW = BUBBLE_W - BUBBLE_PAD_INNER * 2;
   const lines = wrapLines(ctx, currentBriefingText(state), innerW);
   let ty = BUBBLE_Y + BUBBLE_PAD + 22;   // extra padding below title
-  ctx.fillStyle = CONFIG.colors.accentWhite;
   for (const line of lines) {
+    ctx.fillStyle = tierColorFor(line) ?? CONFIG.colors.accentWhite;
     ctx.fillText(line, BUBBLE_X + BUBBLE_PAD_INNER, ty);
     ty += TEXT_LINE_HEIGHT;
     if (ty > BUBBLE_Y + BUBBLE_H - TEXT_SIZE - 18) break;
