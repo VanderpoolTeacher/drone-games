@@ -36,6 +36,10 @@ load time, splitting on `## ` version headings.
   each with a one-line descriptor. Names show on the INTEL
   FORECAST page header and on the bottom-right HUD during the
   active phase (replaces "INCOMING") (#8)
+- Repair: click a placed defense (without selecting a defense in the
+  palette) to consume 1 of the matching inventory type and restore
+  1 HP. A green ring pulses on success. Lets capped supplies (RF
+  caps at 5 etc.) heal damaged turrets instead of stockpiling (#40).
 - Sidebar HUD: live INTEL ticker (current wave's accumulated recon)
   with NONE/LOW/MED/HIGH tier color, plus DEF count and live enemy-
   response multiplier (×1.0…×3.2). Player can see the inputs to the
