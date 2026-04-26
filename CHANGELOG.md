@@ -22,6 +22,10 @@ load time, splitting on `## ` version headings.
   each upcoming drone group HIGH / MED / LOW based on prior-wave
   recon. HIGH gives precise counts; MED hedges with ~; LOW just says
   "maybe" + "(unconfirmed)". Color-coded green / amber / grey (#11)
+- Wave timer: each wave now hard-caps at 60 s (waves 1-2) or 90 s
+  (waves 3-5). Spawning stops 5 s before the cap; surviving drones
+  are cleared when the cap hits so the wave doesn't bleed into prep
+  (#49)
 
 ## v0.1.0
 - Initial release: Manhattan map, intel loop, commander briefings,

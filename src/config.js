@@ -120,6 +120,7 @@ export const CONFIG = {
   waves: [
     // Wave 1 — Probe + opening strike. Target ~90s total.
     {
+      activeMaxMs: 60000,
       drones: [
         { type: 'isr', count: 24, spawnInterval: 2000, spawnDelayMs: 0 },
         { type: 'owa', count: 6,  spawnInterval: 4500, spawnDelayMs: 4000 },
@@ -141,6 +142,7 @@ export const CONFIG = {
     },
     // Wave 2 — Pressure. Target ~90s total.
     {
+      activeMaxMs: 60000,
       drones: [
         { type: 'isr', count: 24, spawnInterval: 2200, spawnDelayMs: 0 },
         { type: 'owa', count: 8,  spawnInterval: 5000, spawnDelayMs: 5000 },
@@ -160,6 +162,7 @@ export const CONFIG = {
     },
     // Wave 3 — Strike.
     {
+      activeMaxMs: 90000,
       drones: [
         { type: 'isr', count: 20, spawnInterval: 2500, spawnDelayMs: 0 },
         { type: 'owa', count: 20, spawnInterval: 3000, spawnDelayMs: 3000 },
@@ -178,6 +181,7 @@ export const CONFIG = {
     },
     // Wave 4 — Heavy.
     {
+      activeMaxMs: 90000,
       drones: [
         { type: 'isr', count: 10, spawnInterval: 4000, spawnDelayMs: 0 },
         { type: 'owa', count: 20, spawnInterval: 3500, spawnDelayMs: 0 },
@@ -196,6 +200,7 @@ export const CONFIG = {
     },
     // Wave 5 — Saturation.
     {
+      activeMaxMs: 90000,
       drones: [
         { type: 'isr', count: 28, spawnInterval: 2500, spawnDelayMs: 0 },
         { type: 'owa', count: 32, spawnInterval: 2500, spawnDelayMs: 0 },
