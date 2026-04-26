@@ -2,6 +2,7 @@ import { CONFIG } from '../config.js';
 import { MAP } from './map.js';
 import { tileToPixel } from './drones.js';
 import { playSfx, startSfx, stopSfx } from '../audio/sfx.js';
+import { isStructureTypeDown } from './state.js';
 
 function isDisabledByIsr(state, def) {
   const rSq = CONFIG.combat.isrDisableRange * CONFIG.combat.isrDisableRange;
@@ -281,6 +282,9 @@ export function renderDefenseDisablePulse(ctx, state, tMs) {
 
 export function applyJamEffects(state) {
   const cfg = CONFIG.defenses.rfJammer;
+  // Comms Tower down → RF Jammers operate at 70% range (#10).
+  const rangeMult = isStructureTypeDown(state, 'comms') ? 0.7 : 1;
+  const effectiveRange = cfg.range * rangeMult;
 
   // Reset per-defense jamming flag; we'll set true for any jammer with
   // at least one drone in range this frame.
@@ -296,7 +300,7 @@ export function applyJamEffects(state) {
       if (isDisabledByIsr(state, def)) continue;
       const dx = d.x - def.x;
       const dy = d.y - def.y;
-      if (Math.hypot(dx, dy) > cfg.range) continue;
+      if (Math.hypot(dx, dy) > effectiveRange) continue;
       jammersActiveThisFrame.add(def.id);
       const eff = cfg.effectivenessVs[d.type] ?? 0;
       const mult = 1 - (1 - cfg.slowFactor) * eff;

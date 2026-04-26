@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { intelMultiplier, defenseMultiplier } from '../game/wave.js';
+import { isStructureTypeDown } from '../game/state.js';
 
 const PORTRAIT_SIZE = 64;
 
@@ -52,7 +53,10 @@ function briefingPages(state) {
   if (idx > 0) {
     pages[0] = buildBriefingPrefix(state) + pages[0];
   }
-  pages.push(intelForecastPage(state));
+  // UN HQ down → intel sharing offline, no forecast page (#10).
+  if (!isStructureTypeDown(state, 'un')) {
+    pages.push(intelForecastPage(state));
+  }
   return pages;
 }
 
@@ -286,11 +290,18 @@ function pointInRect(x, y, rx, ry, rw, rh) {
 export function updateBriefing(state, dt) {
   const waveIdx = state.wave.number - 1;
   if (state.wave.phase === 'prep' && state.briefing.activeBriefingIndex !== waveIdx) {
-    state.briefing.phase = 'visible';
-    state.briefing.visibleMs = 0;
-    state.briefing.expandedOnce = false;
     state.briefing.activeBriefingIndex = waveIdx;
     state.briefing.pageIdx = 0;
+    // City Hall down → administrative blackout, no new briefings (#10).
+    // Mark as already shown so the prep timer isn't held waiting for one.
+    if (isStructureTypeDown(state, 'cityHall')) {
+      state.briefing.phase = 'idle';
+      state.briefing.expandedOnce = true;
+    } else {
+      state.briefing.phase = 'visible';
+      state.briefing.visibleMs = 0;
+      state.briefing.expandedOnce = false;
+    }
     return;
   }
   if (state.briefing.phase === 'visible') {

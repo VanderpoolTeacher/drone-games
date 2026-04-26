@@ -64,10 +64,12 @@ export function applyDelivery(state, waveIdx) {
   const transitsDown = transits.length > 0
     && transits.every(s => (state.structureHp[s.id] ?? 0) <= 0);
   const transitMult = transitsDown ? 0.75 : 1;
+  // Power Substation down → delivery halved (#10).
+  const powerMult = isStructureTypeDown(state, 'power') ? 0.5 : 1;
 
   const scaled = {};
   for (const type of Object.keys(delivery)) {
-    const effective = Math.round(delivery[type] * frac * transitMult);
+    const effective = Math.round(delivery[type] * frac * transitMult * powerMult);
     if (effective <= 0) continue;
     state.inventory[type] = (state.inventory[type] ?? 0) + effective;
     scaled[type] = effective;
@@ -228,6 +230,15 @@ function getBridgeClusters() {
   }
   _bridgeClusters = Array.from(groups.values());
   return _bridgeClusters;
+}
+
+// True only if EVERY structure of the given type is destroyed. Returns false
+// if no structure of that type exists. Used by the cascading-consequences
+// system in #10 — losing a critical degrades a specific subsystem.
+export function isStructureTypeDown(state, type) {
+  const matching = MAP.structures.filter(s => s.type === type);
+  if (matching.length === 0) return false;
+  return matching.every(s => (state.structureHp?.[s.id] ?? 0) <= 0);
 }
 
 export function liveBridgeCount(state) {
