@@ -17,7 +17,7 @@
 
 import { MAP } from './map.js';
 import { placeDefense } from './defenses.js';
-import { resetGameState } from './state.js';
+import { resetGameState, applyDelivery } from './state.js';
 import { applyMode } from '../config.js';
 
 const STRATEGIES = {
@@ -287,12 +287,16 @@ export function tickBatch(state) {
     return;
   }
 
-  // Fresh world for the next run.
+  // Fresh world for the next run. Mirror the keyboard click-to-start path:
+  // resetGameState clears inventory; applyDelivery(0) gives the W1 supplies
+  // so strategies can actually place in W1. (Bug pre-fix: every batch run
+  // after the first started with empty inventory.)
   resetGameState();
   applyMode('campaign');
   state.screenPhase = 'playing';
   state.briefing.phase = 'idle';
   state.briefing.expandedOnce = true;
+  applyDelivery(state, 0);
   startSim(state, { strategy: state.batch.strategy, speed: state.simSpeed });
   state.batch._runStarted = true;
 }

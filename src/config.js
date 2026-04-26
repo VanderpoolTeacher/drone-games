@@ -91,7 +91,7 @@ export const CONFIG = {
       hp: 3,
       installMs: 8000,
       range: 120,
-      dps: 40,                       // damage per second while firing
+      dps: 25,                       // damage per second while firing — was 40, nerfed for v0.1.2 balance pass
       overheatTime: 3000,            // ms of continuous fire before overheat
       cooldownTime: 2000,            // ms to recover from overheat
       // Strong vs Payload (burns armor) and OWA; weak vs ISR (inefficient)
@@ -123,7 +123,7 @@ export const CONFIG = {
       category: 'sensing',
       hp: 3,
       installMs: 4000,
-      detectRange: 180,
+      detectRange: 130,              // was 180 — nerfed so coverage isn't whole-map
       size: 20,
     },
   },
