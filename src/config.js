@@ -92,7 +92,7 @@ export const CONFIG = {
       installMs: 8000,
       range: 120,
       dps: 25,                       // damage per second while firing — was 40, nerfed for v0.1.2 balance pass
-      overheatTime: 3000,            // ms of continuous fire before overheat
+      overheatTime: 4500,            // ms of continuous fire before overheat (#52 follow-up: 3000→4500 — playtest felt over-corrected)
       cooldownTime: 2000,            // ms to recover from overheat
       // Strong vs Payload (burns armor) and OWA; weak vs ISR (inefficient)
       effectivenessVs: { isr: 0.3, owa: 1.0, payloadDelivery: 1.2 },

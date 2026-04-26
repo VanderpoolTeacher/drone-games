@@ -21,6 +21,9 @@ load time, splitting on `## ` version headings.
   bar above the laser shows current state. Heat resets at wave
   end. Also fixes a latent bug where the laser muzzle never
   showed its firing flare (read the wrong field).
+- Balance: laser overheatTime 3000ms → 4500ms — playtest felt
+  over-corrected with the fix above; this gives the beam ~50%
+  more on-target time before the recharge gate.
 
 ## v0.1.1 — 2026-04-26
 - Sim harness: live sidebar event log during a run; batch mode runs 10
