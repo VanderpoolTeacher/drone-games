@@ -36,6 +36,14 @@ load time, splitting on `## ` version headings.
   each with a one-line descriptor. Names show on the INTEL
   FORECAST page header and on the bottom-right HUD during the
   active phase (replaces "INCOMING") (#8)
+- ISR-driven OWA pathing (#48):
+  · ISR records which observed structures had RF Jammer coverage.
+    Next wave's OWA targets observed-uncovered first, falling back
+    to observed-covered then any.
+  · ISR also records per-lane time spent jammed. Lanes that ate ≥6 s
+    of jamming get a bonus OWA push next wave, pinned to that lane
+    (count ≈ jammed-seconds / 2, capped at 8). Heavy RF makes a lane
+    a known hotspot — Red Cell commits OWA at the jam-shadow.
 - Interceptor ammo: each launcher carries a finite magazine (6
   missiles). Empty interceptors stop firing until the next wave
   reloads them automatically. Missile pips on the icon step-dim as

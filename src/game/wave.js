@@ -106,6 +106,24 @@ export function updateWave(state, dt) {
           timerMs: 0, spawned: 0, currentDelay: jitterInterval(3500),
         });
       }
+      // Jammed-scanning escalation (#48 follow-up): each lane that ate a lot
+      // of RF-jamming time last wave gets an extra OWA push pinned to that
+      // lane — Red Cell saw the jam-shadow and is committing where ISR
+      // couldn't see. count ≈ jammedSeconds / 2, capped at 8.
+      const jammedLanes = state.lastWaveJammedLaneTime ?? {};
+      for (const [laneStr, t] of Object.entries(jammedLanes)) {
+        if (t < 6) continue;
+        const laneIdx = parseInt(laneStr, 10);
+        const count = Math.min(8, Math.max(2, Math.round(t / 2)));
+        state.wave.spawnProgress.push({
+          type: 'owa',
+          count,
+          spawnInterval: 3500,
+          spawnDelayMs: 8000,
+          timerMs: 0, spawned: 0, currentDelay: jitterInterval(3500),
+          laneIdx,
+        });
+      }
       // Reset live counters; old values are preserved in lastWaveIsr* fields.
       state.isrEscapedThisWave = 0;
       state.isrIntelThisWave = 0;
@@ -115,6 +133,8 @@ export function updateWave(state, dt) {
       state.wave.carpetBombFired = false;
       state.wave.bridgesLostFired = false;
       state.observedStructuresThisWave = new Set();
+      state.observedCoveredStructuresThisWave = new Set();
+      state.jammedLaneTimeThisWave = {};
       state.laneIntelThisWave = {};
       state.observedDefenseTypesThisWave = { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 };
       playSfx('waveStart');
@@ -132,6 +152,7 @@ export function updateWave(state, dt) {
         spawnDrone(state, p.type, {
           carpetBomb: p.carpetBomb === true,
           targetBridges: p.targetBridges === true,
+          laneIdx: p.laneIdx,
         });
         p.spawned += 1;
         p.timerMs -= p.currentDelay;
@@ -210,6 +231,8 @@ export function updateWave(state, dt) {
         state.lastWaveIsrEscaped = state.isrEscapedThisWave ?? 0;
         state.lastWaveIsrIntel = state.isrIntelThisWave ?? 0;
         state.lastWaveObservedStructures = new Set(state.observedStructuresThisWave ?? []);
+        state.lastWaveObservedCoveredStructures = new Set(state.observedCoveredStructuresThisWave ?? []);
+        state.lastWaveJammedLaneTime = { ...(state.jammedLaneTimeThisWave ?? {}) };
         state.lastWaveLaneIntel = { ...(state.laneIntelThisWave ?? {}) };
         state.lastWaveObservedDefenseTypes = { ...(state.observedDefenseTypesThisWave ?? {}) };
         state.wave.number += 1;
