@@ -8,7 +8,7 @@ import { renderPlacement, pixelToTile, mapHitTest, isValidZone } from './ui/plac
 import { renderPalette, paletteHitTest } from './ui/palette.js';
 import { updateExplosions, renderExplosions } from './game/explosions.js';
 import { renderDrones, updateDrones } from './game/drones.js';
-import { updateDefenses, renderDefenses, placeDefense, applyJamEffects, renderBeams, renderDefenseDisablePulse } from './game/defenses.js';
+import { updateDefenses, renderDefenses, placeDefense, applyJamEffects, renderBeams, renderDefenseDisablePulse, hitTestDefense } from './game/defenses.js';
 import { updateProjectiles, renderProjectiles } from './game/projectiles.js';
 import { updateStructures } from './game/structures.js';
 import { updateWave } from './game/wave.js';
@@ -299,7 +299,24 @@ canvas.addEventListener('click', e => {
     return;
   }
 
-  if (!gameState.placementMode) return;
+  // Repair flow (#40): clicking a placed defense outside placement mode
+  // consumes 1 of the matching type from inventory and restores 1 HP, up
+  // to the configured max. Silent no-op if HP full or inventory empty.
+  if (!gameState.placementMode) {
+    const tile = mapHitTest(vx, vy);
+    const hit = hitTestDefense(gameState, tile);
+    if (hit) {
+      const cfg = CONFIG.defenses[hit.type];
+      const maxHp = cfg?.hp ?? 3;
+      if (hit.hp < maxHp && (gameState.inventory[hit.type] ?? 0) > 0) {
+        hit.hp = Math.min(maxHp, hit.hp + 1);
+        gameState.inventory[hit.type] -= 1;
+        hit.healFlashMs = 600;
+        playSfx('uiClick');
+      }
+    }
+    return;
+  }
 
   // HPM is a two-click placement: first click pins the tile, second click
   // sets the cone direction (aim from pinned tile → click point).

@@ -16,6 +16,16 @@ function isDisabledByIsr(state, def) {
   return false;
 }
 
+// Click-hit test for the repair flow (#40). Returns the defense whose tile
+// matches `tile`, or null if none.
+export function hitTestDefense(state, tile) {
+  if (!tile) return null;
+  for (const d of state.defenses) {
+    if (d.tile.x === tile.x && d.tile.y === tile.y) return d;
+  }
+  return null;
+}
+
 export function placeDefense(state, type, tile, facingRad = 0) {
   const cfg = CONFIG.defenses[type];
   if (!cfg) return null;
@@ -38,6 +48,7 @@ export function placeDefense(state, type, tile, facingRad = 0) {
     laserFiring: false,
     rfJamming: false,
     ammo: cfg.magazine ?? Infinity,   // interceptor magazine (#7)
+    healFlashMs: 0,                   // green pulse on repair (#40)
   };
   state.defenses.push(defense);
   state.inventory[type] -= 1;
@@ -47,6 +58,7 @@ export function placeDefense(state, type, tile, facingRad = 0) {
 export function updateDefenses(state, dt) {
   for (const d of state.defenses) {
     d.cooldownMs = Math.max(0, d.cooldownMs - dt * 1000);
+    if (d.healFlashMs > 0) d.healFlashMs = Math.max(0, d.healFlashMs - dt * 1000);
 
     if (d.installMsRemaining > 0) {
       d.installMsRemaining = Math.max(0, d.installMsRemaining - dt * 1000);
@@ -211,6 +223,13 @@ const DEFENSE_SIZE = 12;   // one grid cell
 
 export function renderDefenses(ctx, state) {
   for (const d of state.defenses) {
+    // Repair heal-pulse — green outline ring around the defense tile (#40).
+    if (d.healFlashMs > 0) {
+      ctx.strokeStyle = CONFIG.colors.successGreen;
+      ctx.lineWidth = 1;
+      const r = MAP.tileSize / 2 + 1;
+      ctx.strokeRect(Math.floor(d.x - r) + 0.5, Math.floor(d.y - r) + 0.5, r * 2 - 1, r * 2 - 1);
+    }
     if (d.type === 'rfJammer')      drawRfJammer(ctx, d);
     else if (d.type === 'interceptor') drawInterceptor(ctx, d);
     else if (d.type === 'laser')     drawLaser(ctx, d);
