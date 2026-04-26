@@ -241,10 +241,15 @@ export function isStructureTypeDown(state, type) {
   return matching.every(s => (state.structureHp?.[s.id] ?? 0) <= 0);
 }
 
+// A bridge counts as "live" only when EVERY tile in its cluster is still
+// alive — any payload hit on any tile takes the whole named bridge offline
+// for delivery purposes. (Earlier behavior was .some, which let multi-tile
+// bridges keep delivering while partially destroyed; design call to make
+// bridges precious.)
 export function liveBridgeCount(state) {
   let live = 0;
   for (const cluster of getBridgeClusters()) {
-    if (cluster.some(id => (state.bridgeHp?.[id] ?? 0) > 0)) live += 1;
+    if (cluster.every(id => (state.bridgeHp?.[id] ?? 0) > 0)) live += 1;
   }
   return live;
 }
