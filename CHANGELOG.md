@@ -36,6 +36,11 @@ load time, splitting on `## ` version headings.
   each with a one-line descriptor. Names show on the INTEL
   FORECAST page header and on the bottom-right HUD during the
   active phase (replaces "INCOMING") (#8)
+- Sidebar HUD: live INTEL ticker (current wave's accumulated recon)
+  with NONE/LOW/MED/HIGH tier color, plus DEF count and live enemy-
+  response multiplier (×1.0…×3.2). Player can see the inputs to the
+  next-wave difficulty curve at a glance, not only in the briefing
+  (#32)
 - ISR-driven OWA pathing (#48):
   · ISR records which observed structures had RF Jammer coverage.
     Next wave's OWA targets observed-uncovered first, falling back

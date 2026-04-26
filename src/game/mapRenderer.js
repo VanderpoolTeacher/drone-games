@@ -2,6 +2,7 @@ import { CONFIG } from '../config.js';
 import { MAP, isLand, STATS_COL_START } from './map.js';
 import { totalCasualties } from '../ui/casualtyHud.js';
 import { liveBridgeCount, totalBridgeCount } from './state.js';
+import { defenseMultiplier } from './wave.js';
 
 const BACKDROP_IMG = new Image();
 BACKDROP_IMG.src = './src/images/manhattan.png';
@@ -233,7 +234,47 @@ function drawStatsColumn(ctx, state) {
   ctx.fillText('LAS ' + (inv.laser ?? 0), lx, ly); ly += 8;
   ctx.fillText('HPM ' + (inv.hpm ?? 0), lx, ly); ly += 8;
 
+  // Intel-leak meter + defense-response indicator (#32). Both values feed
+  // the next-wave difficulty curve — surface them so the player can react.
+  ly += 3;
+  // Live current-wave intel (escapes → ticks up); previous wave's value
+  // is what actually drives the next ENEMY RESPONSE multiplier.
+  const liveIntel = Math.round(state.isrIntelThisWave ?? 0);
+  const intelTier = intelTierLabel(liveIntel);
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillText('INTEL', lx, ly);
+  ctx.fillStyle = intelTierColor(intelTier);
+  ctx.fillText(String(liveIntel) + ' ' + intelTier, lx + 28, ly);
+  ly += 8;
+
+  const defCount = state.defenses?.length ?? 0;
+  const defMult = defenseMultiplier(defCount);
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillText('DEF', lx, ly);
+  ctx.fillStyle = defenseTierColor(defMult);
+  ctx.fillText(defCount + ' x' + defMult.toFixed(1), lx + 28, ly);
+
   ctx.restore();
+}
+
+function intelTierLabel(intel) {
+  if (intel > 45) return 'HIGH';
+  if (intel > 20) return 'MED';
+  if (intel > 5)  return 'LOW';
+  return 'NONE';
+}
+
+function intelTierColor(tier) {
+  if (tier === 'HIGH') return CONFIG.colors.threatRed;
+  if (tier === 'MED')  return CONFIG.colors.alertAmber;
+  if (tier === 'LOW')  return CONFIG.colors.alertAmber;
+  return CONFIG.colors.successGreen;
+}
+
+function defenseTierColor(mult) {
+  if (mult >= 2.7) return CONFIG.colors.threatRed;
+  if (mult >= 1.7) return CONFIG.colors.alertAmber;
+  return CONFIG.colors.successGreen;
 }
 
 // Sim-mode sidebar: replaces the stats column while the harness runs. Shows
