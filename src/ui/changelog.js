@@ -9,6 +9,18 @@ fetch('./CHANGELOG.md')
   .then(text => { entries = parseChangelog(text); })
   .catch(() => { entries = [{ version: '(changelog unavailable)', lines: [] }]; });
 
+// Latest released version (e.g. "v0.1.1") for use on the title screen.
+// Skips any heading marked "(in progress)" so unreleased work doesn't show.
+// Returns "v?.?.?" until the fetch resolves on first load.
+export function getReleasedVersion() {
+  for (const e of entries) {
+    if (e.version.includes('(in progress)')) continue;
+    const m = e.version.match(/v\d+\.\d+\.\d+/);
+    if (m) return m[0];
+  }
+  return 'v?.?.?';
+}
+
 function parseChangelog(md) {
   const out = [];
   let cur = null;

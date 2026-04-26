@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { getReleasedVersion } from './changelog.js';
 
 const IMG_PATH = './src/images/commander-warden-podium.png';
 const portrait = new Image();
@@ -199,6 +200,6 @@ function drawVersion(ctx) {
   ctx.textAlign = 'right';
   ctx.textBaseline = 'bottom';
   ctx.fillStyle = CONFIG.colors.gridLine;
-  ctx.fillText('v0.1.0', CONFIG.virtualWidth - 4, CONFIG.virtualHeight - 2);
+  ctx.fillText(getReleasedVersion(), CONFIG.virtualWidth - 4, CONFIG.virtualHeight - 2);
   ctx.restore();
 }
