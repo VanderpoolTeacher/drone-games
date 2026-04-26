@@ -216,6 +216,10 @@ export function updateWave(state, dt) {
         state.wave.phase = 'prep';
         state.wave.prepMs = CONFIG.prepTimeBetweenWaves;
         state.wave.spawnProgress = [];
+        // Reload interceptor magazines between waves (#7).
+        for (const def of state.defenses) {
+          if (def.type === 'interceptor') def.ammo = CONFIG.defenses.interceptor.magazine;
+        }
         applyDelivery(state, state.wave.number - 1);
       } else {
         // Final wave cleared — no bonus paid; winFlag fires instead.

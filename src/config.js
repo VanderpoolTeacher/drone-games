@@ -76,6 +76,7 @@ export const CONFIG = {
       installMs: 5000,
       range: 100,
       damage: 15,                    // was 30 — ISR/OWA now take 2–3 hits
+      magazine: 6,                   // missiles per launcher; reload at wave end (#7)
       cooldown: 1500,                // ms between shots
       projectileSpeed: 200,          // px/sec
       // Strong vs OWA and Payload; weak vs ISR (overkill, cooldown wasted)

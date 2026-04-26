@@ -36,6 +36,11 @@ load time, splitting on `## ` version headings.
   each with a one-line descriptor. Names show on the INTEL
   FORECAST page header and on the bottom-right HUD during the
   active phase (replaces "INCOMING") (#8)
+- Interceptor ammo: each launcher carries a finite magazine (6
+  missiles). Empty interceptors stop firing until the next wave
+  reloads them automatically. Missile pips on the icon step-dim as
+  the magazine depletes (3 → 2 → 1 → 0 lit). Forces real layering
+  with laser / HPM at the saturation wave (#7)
 - Critical structures now have gameplay consequences when destroyed
   (#10):
   · Power Substation → next deliveries arrive at half supply
