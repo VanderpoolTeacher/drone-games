@@ -32,6 +32,10 @@ load time, splitting on `## ` version headings.
   tier, predicted ENEMY RESPONSE multiplier from current defense
   count (updates live as you place), optional flavor line, then
   the per-drone forecast (#36)
+- Named waves: PROBE / PRESSURE / STRIKE / HEAVY / SATURATION,
+  each with a one-line descriptor. Names show on the INTEL
+  FORECAST page header and on the bottom-right HUD during the
+  active phase (replaces "INCOMING") (#8)
 
 ## v0.1.0
 - Initial release: Manhattan map, intel loop, commander briefings,
