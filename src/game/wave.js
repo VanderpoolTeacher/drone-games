@@ -12,6 +12,59 @@ function jitterCount(base) {
   return Math.max(1, base + delta);
 }
 
+// Active-phase triggers (#41). Each fires at most once per wave when its
+// condition becomes true; firing pushes a new spawnProgress entry. State
+// tracking lives in state.wave.firedTriggers (Set). Adding a new trigger
+// = appending one entry here; no nested-if surgery in updateWave.
+const ACTIVE_TRIGGERS = [
+  {
+    // Annihilation: 45 s in with no defenses placed → fast OWA swarm.
+    name: 'annihilation',
+    condition: (state) =>
+      (state.wave.activeElapsedMs ?? 0) >= 45000
+      && (state.defenses?.length ?? 0) === 0,
+    spawn: () => ({
+      type: 'owa', count: 20,
+      spawnInterval: 1800, spawnDelayMs: 0,
+      timerMs: 0, spawned: 0, currentDelay: jitterInterval(1800),
+    }),
+  },
+  {
+    // All bridges down → finishing carpet-bomb regardless of placement.
+    name: 'bridgesLost',
+    condition: (state) => liveBridgeCount(state) === 0,
+    spawn: () => ({
+      type: 'payloadDelivery', count: 25,
+      spawnInterval: 1200, spawnDelayMs: 1000,
+      timerMs: 0, spawned: 0, currentDelay: jitterInterval(1200),
+      carpetBomb: true,
+    }),
+  },
+  {
+    // 50 s in with no defenses → carpet-bomb of payload across random land.
+    name: 'carpetBomb',
+    condition: (state) =>
+      (state.wave.activeElapsedMs ?? 0) >= 50000
+      && (state.defenses?.length ?? 0) === 0,
+    spawn: () => ({
+      type: 'payloadDelivery', count: 20,
+      spawnInterval: 1500, spawnDelayMs: 0,
+      timerMs: 0, spawned: 0, currentDelay: jitterInterval(1500),
+      carpetBomb: true,
+    }),
+  },
+];
+
+function processActiveTriggers(state) {
+  if (!state.wave.firedTriggers) state.wave.firedTriggers = new Set();
+  for (const t of ACTIVE_TRIGGERS) {
+    if (state.wave.firedTriggers.has(t.name)) continue;
+    if (!t.condition(state)) continue;
+    state.wave.firedTriggers.add(t.name);
+    state.wave.spawnProgress.push(t.spawn());
+  }
+}
+
 // Convert prior-wave ISR intel points (seconds scanned outside RF jamming)
 // into a drone-count multiplier for the CURRENT wave.
 export function intelMultiplier(intelPoints) {
@@ -129,9 +182,7 @@ export function updateWave(state, dt) {
       state.isrIntelThisWave = 0;
       state.wave.activeElapsedMs = 0;
       state.wave.activeStartWallMs = Date.now();   // wall-clock anchor
-      state.wave.annihilationFired = false;
-      state.wave.carpetBombFired = false;
-      state.wave.bridgesLostFired = false;
+      state.wave.firedTriggers = new Set();        // #41 (replaces 3 *Fired flags)
       state.observedStructuresThisWave = new Set();
       state.observedCoveredStructuresThisWave = new Set();
       state.jammedLaneTimeThisWave = {};
@@ -160,53 +211,12 @@ export function updateWave(state, dt) {
       }
     }
 
-    // Annihilation trigger: if the player has placed NOTHING by ~45 s into
-    // an active wave, enemy commits a devastating OWA swarm. Fires once.
-    // Use wall-clock elapsed (Date.now) so lag / dt-capping doesn't drift.
+    // Use wall-clock elapsed (Date.now) so lag / dt-capping doesn't drift
+    // the trigger thresholds.
     state.wave.activeElapsedMs = state.wave.activeStartWallMs
       ? Date.now() - state.wave.activeStartWallMs
       : (state.wave.activeElapsedMs ?? 0) + dt * 1000;
-    const noDefenses = (state.defenses?.length ?? 0) === 0;
-    if (!state.wave.annihilationFired
-        && state.wave.activeElapsedMs >= 45000
-        && noDefenses) {
-      state.wave.annihilationFired = true;
-      state.wave.spawnProgress.push({
-        type: 'owa',
-        count: 20,
-        spawnInterval: 1800,
-        spawnDelayMs: 0,
-        timerMs: 0, spawned: 0, currentDelay: jitterInterval(1800),
-      });
-    }
-    // Carpet-bomb trigger: end-of-wave, still nothing placed → rain payload
-    // drones across the whole map, dropping on RANDOM land tiles.
-    // All-bridges-lost trigger: once the city is cut off from supply, enemy
-    // commits a finishing strike — heavy carpet-bomb payload rush.
-    if (!state.wave.bridgesLostFired && liveBridgeCount(state) === 0) {
-      state.wave.bridgesLostFired = true;
-      state.wave.spawnProgress.push({
-        type: 'payloadDelivery',
-        count: 25,
-        spawnInterval: 1200,
-        spawnDelayMs: 1000,
-        timerMs: 0, spawned: 0, currentDelay: jitterInterval(1200),
-        carpetBomb: true,
-      });
-    }
-    if (!state.wave.carpetBombFired
-        && state.wave.activeElapsedMs >= 50000
-        && noDefenses) {
-      state.wave.carpetBombFired = true;
-      state.wave.spawnProgress.push({
-        type: 'payloadDelivery',
-        count: 20,
-        spawnInterval: 1500,
-        spawnDelayMs: 0,
-        timerMs: 0, spawned: 0, currentDelay: jitterInterval(1500),
-        carpetBomb: true,   // payload spawn reads this to fly straight to random land
-      });
-    }
+    processActiveTriggers(state);
 
     // Hard wave timer (#49). Stop spawning 5 s before maxMs so the last
     // drones in flight have time to die or escape; at maxMs, force-clear
