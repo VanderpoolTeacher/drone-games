@@ -17,7 +17,7 @@
 
 import { MAP } from './map.js';
 import { placeDefense } from './defenses.js';
-import { resetGameState } from './state.js';
+import { resetGameState, applyDelivery } from './state.js';
 import { applyMode } from '../config.js';
 
 const STRATEGIES = {
@@ -33,6 +33,49 @@ const STRATEGIES = {
     { waveNumber: 5, type: 'hpm',        tile: { x: 18, y: 6 }, facingRad: Math.PI / 2 },
   ],
   'no-defenses': [],
+  // Sensor-first archetype (#50): place radar wave 1 before any effector,
+  // layer effectors as deliveries arrive.
+  'radar-first': [
+    { waveNumber: 1, type: 'radar',       tile: { x: 18, y: 9 } },
+    { waveNumber: 2, type: 'laser',       tile: { x: 22, y: 9 } },
+    { waveNumber: 3, type: 'rfJammer',    tile: { x: 16, y: 9 } },
+    { waveNumber: 3, type: 'interceptor', tile: { x: 24, y: 8 } },
+    { waveNumber: 3, type: 'radar',       tile: { x: 12, y: 8 } },
+    { waveNumber: 4, type: 'interceptor', tile: { x: 14, y: 10 } },
+    { waveNumber: 4, type: 'laser',       tile: { x: 20, y: 10 } },
+    { waveNumber: 5, type: 'hpm',         tile: { x: 18, y: 6 }, facingRad: Math.PI / 2 },
+  ],
+  // Kinetic-only archetype (#50): interceptors only. Tests finite magazine
+  // + no DEW + no RF. Scripts more attempts than per-wave delivery to ride
+  // on the auto-trickle.
+  'kinetic-only': [
+    { waveNumber: 3, type: 'interceptor', tile: { x: 22, y: 9 } },
+    { waveNumber: 4, type: 'interceptor', tile: { x: 14, y: 10 } },
+    { waveNumber: 4, type: 'interceptor', tile: { x: 25, y: 9 } },
+    { waveNumber: 5, type: 'interceptor', tile: { x: 16, y: 9 } },
+    { waveNumber: 5, type: 'interceptor', tile: { x: 20, y: 9 } },
+  ],
+  // DEW-only archetype (#50): laser + HPM only. Tests directed-energy
+  // economy under saturation; no kinetic, no RF, no sensors.
+  'dew-only': [
+    { waveNumber: 2, type: 'laser', tile: { x: 18, y: 9 } },
+    { waveNumber: 4, type: 'laser', tile: { x: 22, y: 9 } },
+    { waveNumber: 4, type: 'laser', tile: { x: 14, y: 10 } },
+    { waveNumber: 5, type: 'hpm',   tile: { x: 18, y: 6 }, facingRad: Math.PI / 2 },
+  ],
+  // Optimal layered (#50): one of every defense type as it becomes
+  // available. Should be the high-water mark for win rate.
+  'balanced-stack': [
+    { waveNumber: 1, type: 'rfJammer',    tile: { x: 16, y: 9 } },
+    { waveNumber: 1, type: 'radar',       tile: { x: 22, y: 9 } },
+    { waveNumber: 2, type: 'laser',       tile: { x: 14, y: 10 } },
+    { waveNumber: 3, type: 'rfJammer',    tile: { x: 25, y: 9 } },
+    { waveNumber: 3, type: 'interceptor', tile: { x: 18, y: 6 } },
+    { waveNumber: 3, type: 'radar',       tile: { x: 12, y: 8 } },
+    { waveNumber: 4, type: 'interceptor', tile: { x: 20, y: 10 } },
+    { waveNumber: 4, type: 'laser',       tile: { x: 27, y: 9 } },
+    { waveNumber: 5, type: 'hpm',         tile: { x: 18, y: 7 }, facingRad: Math.PI / 2 },
+  ],
 };
 
 export function listStrategies() { return Object.keys(STRATEGIES); }
@@ -244,12 +287,16 @@ export function tickBatch(state) {
     return;
   }
 
-  // Fresh world for the next run.
+  // Fresh world for the next run. Mirror the keyboard click-to-start path:
+  // resetGameState clears inventory; applyDelivery(0) gives the W1 supplies
+  // so strategies can actually place in W1. (Bug pre-fix: every batch run
+  // after the first started with empty inventory.)
   resetGameState();
   applyMode('campaign');
   state.screenPhase = 'playing';
   state.briefing.phase = 'idle';
   state.briefing.expandedOnce = true;
+  applyDelivery(state, 0);
   startSim(state, { strategy: state.batch.strategy, speed: state.simSpeed });
   state.batch._runStarted = true;
 }

@@ -417,7 +417,7 @@ window.addEventListener('keydown', e => {
     }
     const strategies = listStrategies();
     const pick = strategies[(simStrategyIdx++) % strategies.length];
-    startBatch(gameState, { strategy: pick, total: 10, speed: 60 });
+    startBatch(gameState, { strategy: pick, total: 100, speed: 60 });
     return;
   }
   if (e.key === 'Escape' && gameState.batch?.active) {

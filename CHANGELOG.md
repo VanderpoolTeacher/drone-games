@@ -7,6 +7,12 @@ load time, splitting on `## ` version headings.
 - Fix: title screen reads the released version from CHANGELOG.md
   instead of a hardcoded literal — was stuck on v0.1.0 even after
   the v0.1.1 cut.
+- Fix: sim batch mode (#43) now calls applyDelivery(0) between runs.
+  Was missing W1 supplies on every run after the first, producing
+  bogus 0% win rates.
+- Balance: laser DPS 40 → 25 (felt OP in playtest).
+- Balance: radar detectRange 180 → 130 (a single radar no longer
+  covers the entire playable map; meaningful but partial coverage).
 
 ## v0.1.1 — 2026-04-26
 - Sim harness: live sidebar event log during a run; batch mode runs 10
