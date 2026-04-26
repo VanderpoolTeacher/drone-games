@@ -26,6 +26,10 @@ load time, splitting on `## ` version headings.
   (waves 3-5). Spawning stops 5 s before the cap; surviving drones
   are cleared when the cap hits so the wave doesn't bleed into prep
   (#49)
+- Wave-start banner: when each wave goes active, a 2.5 s banner
+  shows the leaked-intel tier (NONE/LOW/MED/HIGH) and the resulting
+  defense multiplier, plus an optional flavor line at high totals,
+  so the player can feel WHY the wave got heavier (#36)
 
 ## v0.1.0
 - Initial release: Manhattan map, intel loop, commander briefings,

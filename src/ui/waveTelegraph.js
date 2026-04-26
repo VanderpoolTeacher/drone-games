@@ -7,20 +7,82 @@ const ICON_SIZE = 8;
 const ICON_GAP = 4;
 
 export function renderWaveTelegraph(ctx, state, tMs) {
-  if (state.wave.phase !== 'prep') return;
+  if (state.wave.phase === 'prep') {
+    drawPrepChevrons(ctx, state, tMs);
+    return;
+  }
+  // Wave-start announcement (#36): for the first 2.5 s of active phase show
+  // a banner with the leaked-intel tier and the resulting defense multiplier
+  // so the player can feel WHY the wave got heavier.
+  if (state.wave.phase === 'active' && (state.wave.activeElapsedMs ?? 0) < 2500) {
+    drawWaveStartBanner(ctx, state);
+  }
+}
 
+function drawPrepChevrons(ctx, state, tMs) {
   const waveIdx = state.wave.number - 1;
   const waveDrones = CONFIG.waves[waveIdx]?.drones;
   if (!waveDrones) return;
-
   const bright = Math.floor(tMs / 500) % 2 === 0;
   const chevronColor = bright ? CONFIG.colors.alertAmber : CONFIG.colors.gridLine;
-
   for (const d of waveDrones) {
     const edge = findSpawnEdgeForType(d.type);
     if (!edge) continue;
     drawChevronAndIcon(ctx, edge, d.type, chevronColor);
   }
+}
+
+function intelTierLabel(intelPoints) {
+  if (intelPoints > 45) return 'HIGH';
+  if (intelPoints > 20) return 'MED';
+  if (intelPoints > 5)  return 'LOW';
+  return 'NONE';
+}
+
+function flavorLineFor(totalMult) {
+  if (totalMult >= 3.0) return 'RED CELL COMMITTING EVERYTHING';
+  if (totalMult >= 2.0) return 'HEAVY ORDNANCE INBOUND';
+  if (totalMult >= 1.5) return 'ENEMY ESCALATING';
+  return null;
+}
+
+function drawWaveStartBanner(ctx, state) {
+  const intelMult = state.wave.intelMult ?? 1;
+  const defMult = state.wave.defenseMult ?? 1;
+  const intel = state.lastWaveIsrIntel ?? 0;
+  const tier = state.wave.number === 1 ? 'NONE' : intelTierLabel(intel);
+  const total = intelMult * defMult;
+  const flavor = flavorLineFor(total);
+
+  const cx = CONFIG.virtualWidth / 2;
+  const top = CONFIG.topBarHeight + 8;
+  const lineH = 11;
+
+  ctx.save();
+  ctx.font = '8px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  // Subtle bg panel so text is legible over the map.
+  const panelW = 280;
+  const panelH = (flavor ? 3 : 2) * lineH + 12;
+  ctx.fillStyle = CONFIG.colors.bgDark;
+  ctx.globalAlpha = 0.85;
+  ctx.fillRect(cx - panelW / 2, top - 4, panelW, panelH);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = CONFIG.colors.alertAmber;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - panelW / 2 + 0.5, top - 4 + 0.5, panelW - 1, panelH - 1);
+
+  ctx.fillStyle = CONFIG.colors.alertAmber;
+  ctx.fillText('INTEL LEAKED LAST RUN: ' + tier, cx, top);
+  ctx.fillStyle = CONFIG.colors.threatRed;
+  ctx.fillText('ENEMY RESPONSE: ×' + defMult.toFixed(1), cx, top + lineH);
+  if (flavor) {
+    ctx.fillStyle = CONFIG.colors.accentWhite;
+    ctx.fillText(flavor, cx, top + lineH * 2);
+  }
+  ctx.restore();
 }
 
 function findSpawnEdgeForType(type) {
