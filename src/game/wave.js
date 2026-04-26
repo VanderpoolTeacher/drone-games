@@ -14,7 +14,7 @@ function jitterCount(base) {
 
 // Convert prior-wave ISR intel points (seconds scanned outside RF jamming)
 // into a drone-count multiplier for the CURRENT wave.
-function intelMultiplier(intelPoints) {
+export function intelMultiplier(intelPoints) {
   if (intelPoints <= 5)  return 1.0;
   if (intelPoints <= 20) return 1.25;
   if (intelPoints <= 45) return 1.50;
@@ -23,7 +23,7 @@ function intelMultiplier(intelPoints) {
 
 // The more defenses the player has on the board, the more committed the
 // enemy response. Dynamic difficulty: player investment → enemy intensity.
-function defenseMultiplier(defenseCount) {
+export function defenseMultiplier(defenseCount) {
   if (defenseCount <= 2)  return 1.0;
   if (defenseCount <= 5)  return 1.30;
   if (defenseCount <= 9)  return 1.70;
