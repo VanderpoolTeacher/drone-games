@@ -3,7 +3,7 @@
 Player-facing change log. The in-game overlay (Shift+C) parses this file at
 load time, splitting on `## ` version headings.
 
-## v0.1.2 (in progress)
+## v0.1.2-#52 (in progress)
 - Fix: title screen reads the released version from CHANGELOG.md
   instead of a hardcoded literal — was stuck on v0.1.0 even after
   the v0.1.1 cut.
