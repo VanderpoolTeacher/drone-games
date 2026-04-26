@@ -254,6 +254,30 @@ export const CONFIG = {
     autoCollapseMs: 8000,
   },
 
+  scoring: {
+    // End-of-run score (#55). Composite from existing stats; surfaced on the
+    // end screen as both a number and a letter grade. Tune freely — gradeThresholds
+    // is a descending list of [minScore, letter] pairs.
+    weights: {
+      wavesCleared:    1000,
+      structuresAlive:  500,
+      bridgesAlive:     100,
+      casualties:        -1,
+      structuresLost: -1500,
+      financialPenalty:  -1,
+    },
+    perfectRunBonus: 5000,   // 0 casualties + 0 structures lost + all bridges alive
+    gradeThresholds: [
+      [15000, 'S'],
+      [11000, 'A'],
+      [ 8000, 'B'],
+      [ 4000, 'C'],
+      [ 1000, 'D'],
+      [-Infinity, 'F'],
+    ],
+    gradeColors: { S: 'successGreen', A: 'successGreen', B: 'alertAmber', C: 'alertAmber', D: 'threatRed', F: 'threatRed' },
+  },
+
   endScreens: {
     // Perfect — no civilian losses, no structures lost, all bridges intact.
     winPerfect: {

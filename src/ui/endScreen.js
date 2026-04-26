@@ -6,9 +6,11 @@ import { liveBridgeCount, totalBridgeCount } from '../game/state.js';
 const TEXT_COL_X = 60;
 const TEXT_COL_W = 360;
 const HEADLINE_Y = 36;
-const BODY_TOP_Y = 80;
-const BODY_BOTTOM_Y = 190;
+const BODY_TOP_Y = 70;
+const BODY_BOTTOM_Y = 158;
 const LINE_HEIGHT = 11;
+const SCORE_GRADE_Y = 165;       // top of big grade letter / score number
+const SCORE_LABEL_Y = 192;       // small "GRADE" / "SCORE" labels under each
 const PROMPT_Y = 252;
 
 const images = {};
@@ -124,9 +126,69 @@ export function renderEndScreen(ctx, state, tMs) {
   drawBackdrop(ctx, key);
   drawHeadline(ctx, entry, tMs, modeTag);
   drawBody(ctx, entry);
+  drawScoreGrade(ctx, state);
   drawCasualties(ctx, state);
   drawPrompt(ctx, tMs);
   ctx.restore();
+}
+
+export function computeScore(state) {
+  const w = CONFIG.scoring.weights;
+  const wavesCleared = state.winFlag ? 5 : Math.max(0, (state.wave?.number ?? 1) - 1);
+  let structuresAlive = 0;
+  for (const id of Object.keys(state.structureHp ?? {})) {
+    if ((state.structureHp[id] ?? 0) > 0) structuresAlive += 1;
+  }
+  const bridgesAlive = liveBridgeCount(state);
+  const casualties = totalCasualties(state);
+  const structuresLost = state.stats?.structuresLost ?? 0;
+  const financialPenalty = state.financialPenalty ?? 0;
+
+  let score =
+      wavesCleared    * w.wavesCleared
+    + structuresAlive * w.structuresAlive
+    + bridgesAlive    * w.bridgesAlive
+    + casualties      * w.casualties
+    + structuresLost  * w.structuresLost
+    + financialPenalty* w.financialPenalty;
+
+  if (casualties === 0 && structuresLost === 0 && bridgesAlive === totalBridgeCount()) {
+    score += CONFIG.scoring.perfectRunBonus;
+  }
+
+  let grade = 'F';
+  for (const [min, letter] of CONFIG.scoring.gradeThresholds) {
+    if (score >= min) { grade = letter; break; }
+  }
+  const color = CONFIG.colors[CONFIG.scoring.gradeColors[grade]] ?? CONFIG.colors.accentWhite;
+  return { score, grade, color };
+}
+
+function drawScoreGrade(ctx, state) {
+  const { score, grade, color } = computeScore(state);
+  const cx = CONFIG.virtualWidth / 2;
+
+  ctx.textBaseline = 'top';
+
+  // Big GRADE letter, left of center, color-coded.
+  ctx.font = '24px "Press Start 2P", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = color;
+  ctx.fillText(grade, cx - 24, SCORE_GRADE_Y);
+
+  ctx.font = '6px "Press Start 2P", monospace';
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillText('GRADE', cx - 24, SCORE_LABEL_Y);
+
+  // SCORE number, right of center.
+  ctx.font = '16px "Press Start 2P", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = CONFIG.colors.accentWhite;
+  ctx.fillText(String(score), cx + 24, SCORE_GRADE_Y + 4);
+
+  ctx.font = '6px "Press Start 2P", monospace';
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillText('SCORE', cx + 24, SCORE_LABEL_Y);
 }
 
 function formatRunTime(ms) {

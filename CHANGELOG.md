@@ -3,7 +3,7 @@
 Player-facing change log. The in-game overlay (Shift+C) parses this file at
 load time, splitting on `## ` version headings.
 
-## v0.1.2-#52 (in progress)
+## v0.1.2-#56 (in progress)
 - Fix: title screen reads the released version from CHANGELOG.md
   instead of a hardcoded literal — was stuck on v0.1.0 even after
   the v0.1.1 cut.
@@ -24,6 +24,10 @@ load time, splitting on `## ` version headings.
 - Balance: laser overheatTime 3000ms → 4500ms — playtest felt
   over-corrected with the fix above; this gives the beam ~50%
   more on-target time before the recharge gate.
+- End screen: numeric SCORE and letter GRADE (S/A/B/C/D/F) now
+  surfaced alongside the existing stats so a run feels graded, not
+  just won/lost. Score weights and grade thresholds live in
+  config.js → scoring (#55).
 
 ## v0.1.1 — 2026-04-26
 - Sim harness: live sidebar event log during a run; batch mode runs 10
