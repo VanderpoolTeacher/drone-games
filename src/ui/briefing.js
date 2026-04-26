@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { intelMultiplier, defenseMultiplier } from '../game/wave.js';
 
 const PORTRAIT_SIZE = 64;
 
@@ -61,22 +62,34 @@ const TIER_TYPE_LABELS = {
   payloadDelivery: 'Payload',
 };
 
-// Intel forecast page (#11). Each upcoming-wave drone group becomes one line
-// tagged HIGH / MED / LOW based on prior-wave ISR intel. Counts are
-// reported precisely on HIGH, hedged with ~ on MED, and given as "maybe"
-// with an "unconfirmed" caveat on LOW. Wave 1 has no prior recon → LOW.
+// Intel forecast page (#11 + #36). Headers show the leaked-intel tier from
+// the prior wave, the predicted enemy-response multiplier from current
+// defense count, and a flavor line at high totals. Below: each upcoming
+// drone group tagged HIGH / MED / LOW with counts (HIGH precise, MED ~, LOW
+// "maybe ... (unconfirmed)"). Wave 1 has no prior recon → LOW + NONE.
 function intelForecastPage(state) {
   const idx = state.briefing.activeBriefingIndex;
   if (idx < 0 || idx >= CONFIG.waves.length) return '';
   const wave = CONFIG.waves[idx];
   const intel = state.lastWaveIsrIntel ?? 0;
-  const baseTier = intel > 45 ? 'HIGH'
-                 : intel > 20 ? 'HIGH'
-                 : intel > 5  ? 'MED'
-                 : 'LOW';
-  // At intel > 20 the LAST drone group steps down one tier (gaps in recon).
-  const stepDown = intel > 20 && intel <= 45;
+  const isWave1 = idx === 0;
+
+  const tierLabel = isWave1 ? 'NONE' : intelTierLabel(intel);
+  const intelMult = isWave1 ? 1 : intelMultiplier(intel);
+  const defMult = defenseMultiplier(state.defenses?.length ?? 0);
+  const totalMult = intelMult * defMult;
+  const flavor = flavorLineFor(totalMult);
+
   const lines = ['INTEL FORECAST', ''];
+  lines.push('INTEL LEAKED LAST RUN: ' + tierLabel);
+  lines.push('ENEMY RESPONSE: ×' + defMult.toFixed(1));
+  if (flavor) lines.push(flavor);
+  lines.push('');
+
+  const baseTier = intel > 5 && intel <= 20 ? 'MED'
+                 : intel > 20             ? 'HIGH'
+                 : 'LOW';
+  const stepDown = intel > 20 && intel <= 45;
   for (let i = 0; i < wave.drones.length; i++) {
     const d = wave.drones[i];
     const tier = (stepDown && i === wave.drones.length - 1) ? 'MED' : baseTier;
@@ -90,11 +103,30 @@ function intelForecastPage(state) {
   return lines.join('\n');
 }
 
+function intelTierLabel(intelPoints) {
+  if (intelPoints > 45) return 'HIGH';
+  if (intelPoints > 20) return 'MED';
+  if (intelPoints > 5)  return 'LOW';
+  return 'NONE';
+}
+
+function flavorLineFor(totalMult) {
+  if (totalMult >= 3.0) return 'RED CELL COMMITTING EVERYTHING';
+  if (totalMult >= 2.0) return 'HEAVY ORDNANCE INBOUND';
+  if (totalMult >= 1.5) return 'ENEMY ESCALATING';
+  return null;
+}
+
 function tierColorFor(line) {
   if (line.startsWith('HIGH ')) return CONFIG.colors.successGreen;
   if (line.startsWith('MED  ')) return CONFIG.colors.alertAmber;
   if (line.startsWith('LOW  ')) return CONFIG.colors.gridLine;
   if (line === 'INTEL FORECAST') return CONFIG.colors.friendlyCyan;
+  if (line.startsWith('INTEL LEAKED')) return CONFIG.colors.alertAmber;
+  if (line.startsWith('ENEMY RESPONSE')) return CONFIG.colors.threatRed;
+  if (line === 'RED CELL COMMITTING EVERYTHING'
+      || line === 'HEAVY ORDNANCE INBOUND'
+      || line === 'ENEMY ESCALATING') return CONFIG.colors.threatRed;
   return null;
 }
 
