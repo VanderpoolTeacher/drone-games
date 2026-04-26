@@ -28,6 +28,25 @@ Template:
 
 <!-- First playtest goes below. Most recent at the top once there are multiple. -->
 
+## 2026-04-26 — solo (laser overheat fix #52)
+
+**Build:** feat/52-laser-overheat — heat persists across kills, resets at wave end, heat/cooldown bar above tile
+**Session length:** brief
+**Result:** N/A (feel-check on the fix)
+
+### What happened
+- Laser now visibly stops and recharges under sustained pressure (intended).
+
+### What felt off
+- Game is harder overall after the change. Direction is right; magnitude may be over-corrected.
+
+### What worked
+- The "fire → stop → recharge" rhythm is finally readable in play.
+
+### Questions raised
+- Tune `overheatTime` (currently 3000ms) up, or `cooldownTime` (2000ms) down, to soften? Or leave it and let the rest of #51's balance pass account for it?
+- Does the increased difficulty push players to lean on Interceptor + RF more? If so, that's a healthier mix than laser-dominant.
+
 ## 2026-04-22 — solo (Victory + game-over screens)
 
 **Build:** feat/end-screens — Liberty backdrops + paragraph monologues
