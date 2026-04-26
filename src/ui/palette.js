@@ -79,7 +79,8 @@ function renderWaveHud(ctx, state, paletteY) {
     line2Text = `NEXT 0:${String(Math.max(0, secs)).padStart(2, '0')}`;
     line2Color = CONFIG.colors.alertAmber;
   } else if (state.wave.phase === 'active') {
-    line2Text = 'INCOMING';
+    const name = CONFIG.waves[state.wave.number - 1]?.name;
+    line2Text = name ?? 'INCOMING';
     line2Color = CONFIG.colors.alertAmber;
   } else {
     line2Text = 'COMPLETE';

@@ -80,7 +80,9 @@ function intelForecastPage(state) {
   const totalMult = intelMult * defMult;
   const flavor = flavorLineFor(totalMult);
 
-  const lines = ['INTEL FORECAST', ''];
+  const lines = ['WAVE ' + (idx + 1) + ' — ' + (wave.name ?? '?'), ''];
+  if (wave.descriptor) lines.push(wave.descriptor, '');
+  lines.push('INTEL FORECAST', '');
   lines.push('INTEL LEAKED LAST RUN: ' + tierLabel);
   lines.push('ENEMY RESPONSE: ×' + defMult.toFixed(1));
   if (flavor) lines.push(flavor);
@@ -121,6 +123,7 @@ function tierColorFor(line) {
   if (line.startsWith('HIGH ')) return CONFIG.colors.successGreen;
   if (line.startsWith('MED  ')) return CONFIG.colors.alertAmber;
   if (line.startsWith('LOW  ')) return CONFIG.colors.gridLine;
+  if (line.startsWith('WAVE ') && line.includes(' — ')) return CONFIG.colors.alertAmber;
   if (line === 'INTEL FORECAST') return CONFIG.colors.friendlyCyan;
   if (line.startsWith('INTEL LEAKED')) return CONFIG.colors.alertAmber;
   if (line.startsWith('ENEMY RESPONSE')) return CONFIG.colors.threatRed;
