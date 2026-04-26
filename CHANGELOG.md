@@ -18,6 +18,10 @@ load time, splitting on `## ` version headings.
 - Pause: Space toggles pause during a live run (#12). Briefing
   dismissal still gets first dibs on Space, so the player can read
   before pausing.
+- Briefings: every wave now ends with an INTEL FORECAST page tagging
+  each upcoming drone group HIGH / MED / LOW based on prior-wave
+  recon. HIGH gives precise counts; MED hedges with ~; LOW just says
+  "maybe" + "(unconfirmed)". Color-coded green / amber / grey (#11)
 
 ## v0.1.0
 - Initial release: Manhattan map, intel loop, commander briefings,
