@@ -115,6 +115,7 @@ export function updateWave(state, dt) {
       state.wave.carpetBombFired = false;
       state.wave.bridgesLostFired = false;
       state.observedStructuresThisWave = new Set();
+      state.observedCoveredStructuresThisWave = new Set();
       state.laneIntelThisWave = {};
       state.observedDefenseTypesThisWave = { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 };
       playSfx('waveStart');
@@ -210,6 +211,7 @@ export function updateWave(state, dt) {
         state.lastWaveIsrEscaped = state.isrEscapedThisWave ?? 0;
         state.lastWaveIsrIntel = state.isrIntelThisWave ?? 0;
         state.lastWaveObservedStructures = new Set(state.observedStructuresThisWave ?? []);
+        state.lastWaveObservedCoveredStructures = new Set(state.observedCoveredStructuresThisWave ?? []);
         state.lastWaveLaneIntel = { ...(state.laneIntelThisWave ?? {}) };
         state.lastWaveObservedDefenseTypes = { ...(state.observedDefenseTypesThisWave ?? {}) };
         state.wave.number += 1;

@@ -36,6 +36,11 @@ load time, splitting on `## ` version headings.
   each with a one-line descriptor. Names show on the INTEL
   FORECAST page header and on the bottom-right HUD during the
   active phase (replaces "INCOMING") (#8)
+- ISR-driven OWA pathing: ISR drones now record which observed
+  structures had RF Jammer coverage. Next wave's OWA targets the
+  observed-but-uncovered structures first, falling back to observed
+  (covered) then any. Players can soak intel leaks on RF-shadowed
+  corridors and route Red Cell around their layered defense (#48)
 - Interceptor ammo: each launcher carries a finite magazine (6
   missiles). Empty interceptors stop firing until the next wave
   reloads them automatically. Missile pips on the icon step-dim as

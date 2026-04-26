@@ -34,11 +34,17 @@ export function spawnDrone(state, type, opts = {}) {
     if (filtered.length > 0) corridors = filtered;
   }
 
-  // Intel-guided targeting: OWA drones prefer corridors whose targetStructureId
-  // was observed by ISR in the previous wave (if any). Falls back to all.
+  // Intel-guided targeting: OWA prefers corridors whose targetStructureId
+  // was observed by ISR last wave. Within that, it further prefers structures
+  // that ISR saw NOT covered by an RF Jammer — Red Cell routes around the
+  // jammed corridors (#48). Falls back to observed-covered, then all.
   if (type === 'owa' && state.lastWaveObservedStructures?.size > 0) {
-    const filtered = corridors.filter(c => state.lastWaveObservedStructures.has(c.targetStructureId));
-    if (filtered.length > 0) corridors = filtered;
+    const observed = state.lastWaveObservedStructures;
+    const covered = state.lastWaveObservedCoveredStructures ?? new Set();
+    const observedCorridors = corridors.filter(c => observed.has(c.targetStructureId));
+    const uncovered = observedCorridors.filter(c => !covered.has(c.targetStructureId));
+    if (uncovered.length > 0) corridors = uncovered;
+    else if (observedCorridors.length > 0) corridors = observedCorridors;
   }
 
   // Lane-weighted pick: OWA/payload favor corridors routed through the ISR
@@ -293,6 +299,10 @@ export function updateDrones(state, dt) {
         for (const id of (d.observedStructures ?? [])) {
           state.observedStructuresThisWave.add(id);
         }
+        if (!state.observedCoveredStructuresThisWave) state.observedCoveredStructuresThisWave = new Set();
+        for (const id of (d.observedCoveredStructures ?? [])) {
+          state.observedCoveredStructuresThisWave.add(id);
+        }
       }
       return false;
     }
@@ -355,11 +365,26 @@ function accumulateIntel(d, dt, state) {
   if (!state.laneIntelThisWave) state.laneIntelThisWave = {};
   const laneIdx = d.corridorIdx ?? 0;
   state.laneIntelThisWave[laneIdx] = (state.laneIntelThisWave[laneIdx] ?? 0) + dt;
-  // Log any structure within ~60 px of this ISR — "photographed" for next wave.
+  // Log any structure within ~60 px of this ISR — "photographed" for next
+  // wave. Also record whether each observed structure has an RF Jammer
+  // bubble overlapping it; OWA will prefer uncovered targets next wave (#48).
+  if (!d.observedCoveredStructures) d.observedCoveredStructures = new Set();
   for (const s of MAP.structures) {
     const p = tileToPixel(s.tile);
     const dx = p.x - d.x, dy = p.y - d.y;
-    if (dx * dx + dy * dy <= 60 * 60) d.observedStructures.add(s.id);
+    if (dx * dx + dy * dy <= 60 * 60) {
+      d.observedStructures.add(s.id);
+      // RF coverage of the STRUCTURE itself (jammer near the structure,
+      // independent of where the ISR is sitting).
+      let covered = false;
+      for (const def of state.defenses) {
+        if (def.type !== 'rfJammer') continue;
+        if (def.installMsRemaining > 0) continue;
+        const sdx = def.x - p.x, sdy = def.y - p.y;
+        if (sdx * sdx + sdy * sdy <= rfRange * rfRange) { covered = true; break; }
+      }
+      if (covered) d.observedCoveredStructures.add(s.id);
+    }
   }
   // Count defense types within ~60 px — fuels counter-meta for next wave.
   if (!state.observedDefenseTypesThisWave) {
