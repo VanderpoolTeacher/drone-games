@@ -144,13 +144,13 @@ export function updateTrucks(state, dt) {
     // Each type caps at 5 in stockpile — once full, that type is skipped.
     // Forces the player to actually place defenses instead of hoarding them.
     const CAP = 5;
-    const available = () => ['rfJammer', 'interceptor', 'laser', 'hpm']
+    const available = () => ['rfJammer', 'interceptor', 'laser', 'hpm', 'radar']
       .filter(t => (state.inventory?.[t] ?? 0) < CAP);
     for (let i = 0; i < count; i++) {
       const pool = available();
       if (pool.length === 0) break;   // nothing to deliver — full up
       // Same weighting (40/30/22/8) but filtered through what's not capped.
-      const weights = { rfJammer: 0.4, interceptor: 0.3, laser: 0.22, hpm: 0.08 };
+      const weights = { rfJammer: 0.35, interceptor: 0.28, laser: 0.20, hpm: 0.07, radar: 0.10 };
       let total = 0;
       for (const t of pool) total += weights[t];
       let r = Math.random() * total;
@@ -262,7 +262,7 @@ export const gameState = {
   defenseIdCounter: 0,
   projectileIdCounter: 0,
   devSpawnTimer: { isr: 0, owa: 0, payloadDelivery: 0 },
-  inventory: { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0 },
+  inventory: { rfJammer: 0, interceptor: 0, laser: 0, hpm: 0, radar: 0 },
   trucks: [],
   placementMode: null,
   hoverTile: null,
@@ -363,6 +363,7 @@ export function resetGameState() {
   gameState.inventory.interceptor = 0;
   gameState.inventory.laser = 0;
   gameState.inventory.hpm = 0;
+  gameState.inventory.radar = 0;
   gameState.trucks.length = 0;
   applyDelivery(gameState, 0);
   gameState.placementMode = null;

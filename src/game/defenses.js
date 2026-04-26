@@ -16,6 +16,25 @@ function isDisabledByIsr(state, def) {
   return false;
 }
 
+// Sensor gate (#6). Each drone gets `detected = true` if any installed
+// defense's detect-range bubble contains it. Detection range falls back to
+// engagement range / cone range so legacy defenses still see what they fire
+// at; radar is sensing-only with no engagement of its own.
+export function updateDetection(state) {
+  for (const dr of state.drones) {
+    dr.detected = false;
+    for (const def of state.defenses) {
+      if (def.installMsRemaining > 0) continue;
+      const cfg = CONFIG.defenses[def.type];
+      const r = cfg?.detectRange ?? cfg?.range ?? cfg?.coneRange ?? 0;
+      if (r === 0) continue;
+      const dx = def.x - dr.x;
+      const dy = def.y - dr.y;
+      if (dx * dx + dy * dy <= r * r) { dr.detected = true; break; }
+    }
+  }
+}
+
 // Click-hit test for the repair flow (#40). Returns the defense whose tile
 // matches `tile`, or null if none.
 export function hitTestDefense(state, tile) {
@@ -175,6 +194,7 @@ function pickClosestToStructureTarget(state, d, range) {
   let bestId = Infinity;
   for (const dr of state.drones) {
     if (dr.hp <= 0 || dr.phase === 'done') continue;
+    if (dr.detected === false) continue;            // sensor gate (#6)
     const dx = dr.x - d.x;
     const dy = dr.y - d.y;
     if (Math.hypot(dx, dy) > range) continue;
@@ -233,6 +253,7 @@ export function renderDefenses(ctx, state) {
     if (d.type === 'rfJammer')      drawRfJammer(ctx, d);
     else if (d.type === 'interceptor') drawInterceptor(ctx, d);
     else if (d.type === 'laser')     drawLaser(ctx, d);
+    else if (d.type === 'radar')     drawRadar(ctx, d);
     if (d.type === 'hpm') {
       const cfg = CONFIG.defenses.hpm;
       drawHpm(ctx, d);
@@ -405,6 +426,18 @@ function drawRfJammer(ctx, d) {
     ctx.fillStyle = CONFIG.colors.threatRed;
     ctx.fillRect(x, y - 4, 1, 1);
   }
+}
+
+function drawRadar(ctx, d) {
+  // RA-a: passive sensor — small dish on a pedestal, cyan to read as
+  // sensing/friendly. No engagement, no muzzle. (#6)
+  const x = Math.floor(d.x), y = Math.floor(d.y);
+  ctx.fillStyle = CONFIG.colors.gridLine;
+  ctx.fillRect(x - 1, y + 1, 2, 3);                 // pedestal
+  ctx.fillStyle = CONFIG.colors.friendlyCyan;
+  ctx.fillRect(x - 2, y - 2, 5, 1);                 // dish flat
+  ctx.fillRect(x - 1, y - 3, 3, 1);                 // dish curve
+  ctx.fillRect(x, y, 1, 1);                         // feed dot
 }
 
 function drawInterceptor(ctx, d) {
