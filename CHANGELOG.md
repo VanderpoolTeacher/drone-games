@@ -4,6 +4,9 @@ Player-facing change log. The in-game overlay (Shift+C) parses this file at
 load time, splitting on `## ` version headings.
 
 ## v0.1.3 (in progress)
+- Fix: defenses can no longer be placed on water tiles (#57). The
+  placement validator was treating any non-asset tile as buildable
+  road, so the rivers around Manhattan accepted defenses.
 
 ## v0.1.2 — 2026-04-26
 - Fix: title screen reads the released version from CHANGELOG.md
