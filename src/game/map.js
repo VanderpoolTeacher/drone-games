@@ -49,6 +49,7 @@ function inPark(x, y) {
 // Every playable tile is one of these types. Defenses render on top of the
 // underlying asset; placement validity checks this function.
 export function getTileType(x, y) {
+  if (!isLand(x, y)) return 'water';
   if (BRIDGES.some(b => b.tile.x === x && b.tile.y === y)) return 'bridge';
   if (APARTMENTS.some(a => a.tile.x === x && a.tile.y === y)) return 'apartment';
   if (SKYSCRAPERS.some(s => s.tile.x === x && s.tile.y === y)) return 'skyscraper';
@@ -63,8 +64,7 @@ export function getTileType(x, y) {
 
 export function isBuildableType(type) {
   // Defenses may sit on top of roads/apartments/skyscrapers.
-  // Blocked: bridge (supply line), park (green space), structure (anchor),
-  // water (outside grid — caller filters).
+  // Blocked: bridge (supply line), park (green space), structure (anchor), water.
   return type === 'road' || type === 'apartment' || type === 'skyscraper';
 }
 
